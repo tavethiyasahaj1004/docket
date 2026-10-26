@@ -1,0 +1,137 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /api/v1/config (characterization) > passes through the 401 Response thrown by requireApiKey 1`] = `
+{
+  "body": {
+    "error": "Missing API key.",
+  },
+  "status": 401,
+}
+`;
+
+exports[`GET /api/v1/config (characterization) > returns categories, priorities, statuses, custom fields and tags 1`] = `
+{
+  "body": {
+    "categories": [
+      {
+        "color": "red",
+        "label": "Bug",
+        "slug": "bug",
+      },
+      {
+        "color": "orange",
+        "label": "Issue",
+        "slug": "issue",
+      },
+      {
+        "color": "purple",
+        "label": "Feature Request",
+        "slug": "feature_request",
+      },
+      {
+        "color": "green",
+        "label": "Billing",
+        "slug": "billing",
+      },
+      {
+        "color": "slate",
+        "label": "General Query",
+        "slug": "general_query",
+      },
+    ],
+    "customFields": [
+      {
+        "key": "order_ref",
+        "label": "Order Ref",
+        "required": true,
+        "type": "text",
+      },
+      {
+        "key": "plan",
+        "label": "Plan",
+        "options": [
+          "free",
+          "pro",
+          "enterprise",
+        ],
+        "required": false,
+        "type": "select",
+      },
+      {
+        "key": "satisfied",
+        "label": "Satisfied",
+        "required": false,
+        "type": "checkbox",
+      },
+    ],
+    "priorities": [
+      {
+        "color": "slate",
+        "isDefault": false,
+        "label": "Low",
+        "slug": "low",
+      },
+      {
+        "color": "blue",
+        "isDefault": true,
+        "label": "Normal",
+        "slug": "normal",
+      },
+      {
+        "color": "amber",
+        "isDefault": false,
+        "label": "High",
+        "slug": "high",
+      },
+      {
+        "color": "red",
+        "isDefault": false,
+        "label": "Urgent",
+        "slug": "urgent",
+      },
+    ],
+    "statuses": [
+      {
+        "color": "blue",
+        "isClosedState": false,
+        "isDefault": true,
+        "label": "Open",
+        "slug": "open",
+      },
+      {
+        "color": "amber",
+        "isClosedState": false,
+        "isDefault": false,
+        "label": "In Progress",
+        "slug": "in_progress",
+      },
+      {
+        "color": "slate",
+        "isClosedState": true,
+        "isDefault": false,
+        "label": "Closed",
+        "slug": "closed",
+      },
+    ],
+    "tags": [
+      {
+        "id": "tag-alpha",
+        "name": "alpha",
+      },
+      {
+        "id": "tag-billing",
+        "name": "billing",
+      },
+      {
+        "id": "tag-vip",
+        "name": "vip",
+      },
+      {
+        "id": "tag-zeta",
+        "name": "zeta",
+      },
+    ],
+  },
+  "status": 200,
+}
+`;

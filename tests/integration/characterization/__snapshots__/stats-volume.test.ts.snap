@@ -1,0 +1,254 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /api/stats/volume (characterization) > RECORDS what ?days=abc does today (NaN edge case; not fixed) 1`] = `
+{
+  "kind": "threw",
+  "message": "Invalid time value",
+  "name": "RangeError",
+}
+`;
+
+exports[`GET /api/stats/volume (characterization) > RECORDS what an empty ?days= does today (parseInt of empty string is NaN too) 1`] = `
+{
+  "kind": "threw",
+  "message": "Invalid time value",
+  "name": "RangeError",
+}
+`;
+
+exports[`GET /api/stats/volume (characterization) > days=14 returns 14 days 1`] = `
+{
+  "body": {
+    "days": [
+      {
+        "count": 0,
+        "date": "2026-03-02",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-03",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-04",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-05",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-06",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-07",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-08",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-09",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-10",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-11",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-12",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-13",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-14",
+      },
+      {
+        "count": 2,
+        "date": "2026-03-15",
+      },
+    ],
+  },
+  "kind": "response",
+  "status": 200,
+}
+`;
+
+exports[`GET /api/stats/volume (characterization) > days=30 returns 30 days 1`] = `
+{
+  "body": {
+    "days": [
+      {
+        "count": 1,
+        "date": "2026-02-14",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-15",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-16",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-17",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-18",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-19",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-20",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-21",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-22",
+      },
+      {
+        "count": 1,
+        "date": "2026-02-23",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-24",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-25",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-26",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-27",
+      },
+      {
+        "count": 0,
+        "date": "2026-02-28",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-01",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-02",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-03",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-04",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-05",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-06",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-07",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-08",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-09",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-10",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-11",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-12",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-13",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-14",
+      },
+      {
+        "count": 2,
+        "date": "2026-03-15",
+      },
+    ],
+  },
+  "kind": "response",
+  "status": 200,
+}
+`;
+
+exports[`GET /api/stats/volume (characterization) > defaults to 7 days when ?days is absent 1`] = `
+{
+  "body": {
+    "days": [
+      {
+        "count": 1,
+        "date": "2026-03-09",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-10",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-11",
+      },
+      {
+        "count": 0,
+        "date": "2026-03-12",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-13",
+      },
+      {
+        "count": 1,
+        "date": "2026-03-14",
+      },
+      {
+        "count": 2,
+        "date": "2026-03-15",
+      },
+    ],
+  },
+  "kind": "response",
+  "status": 200,
+}
+`;

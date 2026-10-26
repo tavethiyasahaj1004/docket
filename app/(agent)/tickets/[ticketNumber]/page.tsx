@@ -18,12 +18,7 @@ import { ScrollToBottomOnMount } from "@/components/common/scroll-to-bottom-on-m
 import { ADMIN_ROLE } from "@/config/platform";
 import { user } from "@/db/schema/auth";
 import { customers } from "@/db/schema/customers";
-import {
-  ticketActivity,
-  ticketAttachments,
-  ticketComments,
-  tickets,
-} from "@/db/schema/tickets";
+import { tickets } from "@/db/schema/tickets";
 import { requireAgent } from "@/lib/authz";
 import { getCannedResponses } from "@/lib/canned-responses";
 import { getCustomFieldValues } from "@/lib/custom-fields";
@@ -48,6 +43,7 @@ import { resolveAttachmentLimits } from "@/lib/tickets/attachment-limits";
 import { canDeleteAttachment } from "@/lib/tickets/attachment-permissions";
 import { ticketLinkLabel } from "@/lib/tickets/link-types";
 import { getTicketLinks } from "@/lib/tickets/links";
+import { getTicketThread } from "@/lib/tickets/queries";
 import { getReplyDraft } from "@/lib/tickets/reply-drafts";
 import {
   buildTicketsWhereClause,
@@ -330,17 +326,7 @@ export default async function AgentTicketDetailPage({
   const statusMap = Object.fromEntries(statuses.map((s) => [s.slug, s]));
   const categoryMap = Object.fromEntries(categories.map((c) => [c.slug, c]));
 
-  // All comments — agents see internal notes too
-  const comments = await db
-    .select()
-    .from(ticketComments)
-    .where(eq(ticketComments.ticketId, ticket.id))
-    .orderBy(asc(ticketComments.createdAt));
-
-  const attachments = await db
-    .select()
-    .from(ticketAttachments)
-    .where(eq(ticketAttachments.ticketId, ticket.id));
+  const { comments, attachments, activity } = await getTicketThread(ticket.id);
 
   const ticketLevelAttachments = attachments.filter((a) => !a.commentId);
   const attachmentsByComment = new Map<string, typeof attachments>();
@@ -352,12 +338,6 @@ export default async function AgentTicketDetailPage({
       attachmentsByComment.get(a.commentId)!.push(a);
     }
   }
-
-  const activity = await db
-    .select()
-    .from(ticketActivity)
-    .where(eq(ticketActivity.ticketId, ticket.id))
-    .orderBy(desc(ticketActivity.createdAt));
 
   // Agents for assignment dropdown
   const agents = await db

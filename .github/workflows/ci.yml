@@ -121,3 +121,47 @@ jobs:
           fi
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/docket_ci
+
+  integration:
+    name: Integration tests (guarded test database)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Runs the same disposable embedded Postgres used locally (port 54330,
+    # database docket_test), not a service container: the harness's live
+    # guard requires the server itself to report port 54330 on a local
+    # address, which a port-mapped container cannot. See tests/integration/guard.ts.
+    env:
+      NODE_ENV: test
+      TEST_DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54330/docket_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Start disposable test database
+        run: |
+          pnpm test:db:start > test-db.log 2>&1 &
+          for i in $(seq 1 90); do
+            if grep -q "Test Postgres ready" test-db.log; then
+              break
+            fi
+            sleep 1
+          done
+          cat test-db.log
+          grep -q "Test Postgres ready" test-db.log
+
+      - name: Initialize test database (migrate + marker)
+        run: pnpm test:db:setup
+
+      - name: Run integration tests
+        run: pnpm test:integration

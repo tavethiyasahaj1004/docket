@@ -1,0 +1,388 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /api/canned-responses (characterization) > allows an admin 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Alpha"}]}]}",
+      "createdAt": "2026-02-01T00:07:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-alpha",
+      "title": "Alpha",
+      "updatedAt": "2026-02-01T00:07:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > filters by title with ?q= (substring) 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Greeting"}]}]}",
+      "createdAt": "2026-02-01T00:02:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greeting",
+      "title": "Greeting",
+      "updatedAt": "2026-02-01T00:02:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of greeting follow-up"}]}]}",
+      "createdAt": "2026-02-01T00:06:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greet2",
+      "title": "greeting follow-up",
+      "updatedAt": "2026-02-01T00:06:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > is case-insensitive 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Greeting"}]}]}",
+      "createdAt": "2026-02-01T00:02:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greeting",
+      "title": "Greeting",
+      "updatedAt": "2026-02-01T00:02:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of greeting follow-up"}]}]}",
+      "createdAt": "2026-02-01T00:06:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greet2",
+      "title": "greeting follow-up",
+      "updatedAt": "2026-02-01T00:06:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > records 100 followed by a percent matching every title containing 100 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of 100 days"}]}]}",
+      "createdAt": "2026-02-01T00:08:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-digits",
+      "title": "100 days",
+      "updatedAt": "2026-02-01T00:08:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Refund policy 100%"}]}]}",
+      "createdAt": "2026-02-01T00:04:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-pct",
+      "title": "Refund policy 100%",
+      "updatedAt": "2026-02-01T00:04:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > records an underscore acting as a single-character wildcard between letters 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of snake_case tips"}]}]}",
+      "createdAt": "2026-02-01T00:05:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-snake",
+      "title": "snake_case tips",
+      "updatedAt": "2026-02-01T00:05:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > records today's LIKE wildcard behaviour for a percent in q (not escaped) 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of 100 days"}]}]}",
+      "createdAt": "2026-02-01T00:08:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-digits",
+      "title": "100 days",
+      "updatedAt": "2026-02-01T00:08:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Alpha"}]}]}",
+      "createdAt": "2026-02-01T00:07:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-alpha",
+      "title": "Alpha",
+      "updatedAt": "2026-02-01T00:07:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Greeting"}]}]}",
+      "createdAt": "2026-02-01T00:02:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greeting",
+      "title": "Greeting",
+      "updatedAt": "2026-02-01T00:02:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Refund policy 100%"}]}]}",
+      "createdAt": "2026-02-01T00:04:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-pct",
+      "title": "Refund policy 100%",
+      "updatedAt": "2026-02-01T00:04:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Zebra reply"}]}]}",
+      "createdAt": "2026-02-01T00:01:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-zebra",
+      "title": "Zebra reply",
+      "updatedAt": "2026-02-01T00:01:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of apology template"}]}]}",
+      "createdAt": "2026-02-01T00:03:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-apology",
+      "title": "apology template",
+      "updatedAt": "2026-02-01T00:03:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of greeting follow-up"}]}]}",
+      "createdAt": "2026-02-01T00:06:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greet2",
+      "title": "greeting follow-up",
+      "updatedAt": "2026-02-01T00:06:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of snake_case tips"}]}]}",
+      "createdAt": "2026-02-01T00:05:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-snake",
+      "title": "snake_case tips",
+      "updatedAt": "2026-02-01T00:05:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > records today's LIKE wildcard behaviour for an underscore in q (not escaped) 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of 100 days"}]}]}",
+      "createdAt": "2026-02-01T00:08:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-digits",
+      "title": "100 days",
+      "updatedAt": "2026-02-01T00:08:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Alpha"}]}]}",
+      "createdAt": "2026-02-01T00:07:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-alpha",
+      "title": "Alpha",
+      "updatedAt": "2026-02-01T00:07:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Greeting"}]}]}",
+      "createdAt": "2026-02-01T00:02:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greeting",
+      "title": "Greeting",
+      "updatedAt": "2026-02-01T00:02:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Refund policy 100%"}]}]}",
+      "createdAt": "2026-02-01T00:04:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-pct",
+      "title": "Refund policy 100%",
+      "updatedAt": "2026-02-01T00:04:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Zebra reply"}]}]}",
+      "createdAt": "2026-02-01T00:01:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-zebra",
+      "title": "Zebra reply",
+      "updatedAt": "2026-02-01T00:01:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of apology template"}]}]}",
+      "createdAt": "2026-02-01T00:03:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-apology",
+      "title": "apology template",
+      "updatedAt": "2026-02-01T00:03:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of greeting follow-up"}]}]}",
+      "createdAt": "2026-02-01T00:06:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greet2",
+      "title": "greeting follow-up",
+      "updatedAt": "2026-02-01T00:06:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of snake_case tips"}]}]}",
+      "createdAt": "2026-02-01T00:05:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-snake",
+      "title": "snake_case tips",
+      "updatedAt": "2026-02-01T00:05:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > returns 403 for a role that is not agent/admin 1`] = `
+{
+  "body": {
+    "error": "Forbidden",
+  },
+  "status": 403,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > returns 403 when the proxy headers are absent (unauthenticated) 1`] = `
+{
+  "body": {
+    "error": "Forbidden",
+  },
+  "status": 403,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > returns every response ordered by title when q is absent 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of 100 days"}]}]}",
+      "createdAt": "2026-02-01T00:08:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-digits",
+      "title": "100 days",
+      "updatedAt": "2026-02-01T00:08:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Alpha"}]}]}",
+      "createdAt": "2026-02-01T00:07:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-alpha",
+      "title": "Alpha",
+      "updatedAt": "2026-02-01T00:07:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Greeting"}]}]}",
+      "createdAt": "2026-02-01T00:02:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greeting",
+      "title": "Greeting",
+      "updatedAt": "2026-02-01T00:02:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Refund policy 100%"}]}]}",
+      "createdAt": "2026-02-01T00:04:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-pct",
+      "title": "Refund policy 100%",
+      "updatedAt": "2026-02-01T00:04:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Zebra reply"}]}]}",
+      "createdAt": "2026-02-01T00:01:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-zebra",
+      "title": "Zebra reply",
+      "updatedAt": "2026-02-01T00:01:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of apology template"}]}]}",
+      "createdAt": "2026-02-01T00:03:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-apology",
+      "title": "apology template",
+      "updatedAt": "2026-02-01T00:03:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of greeting follow-up"}]}]}",
+      "createdAt": "2026-02-01T00:06:00.000Z",
+      "createdById": "user-alice",
+      "createdByName": "Alice Agent",
+      "id": "cr-greet2",
+      "title": "greeting follow-up",
+      "updatedAt": "2026-02-01T00:06:00.000Z",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of snake_case tips"}]}]}",
+      "createdAt": "2026-02-01T00:05:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-snake",
+      "title": "snake_case tips",
+      "updatedAt": "2026-02-01T00:05:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;
+
+exports[`GET /api/canned-responses (characterization) > trims q, and treats empty or whitespace-only q as no filter 1`] = `
+{
+  "body": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"body of Zebra reply"}]}]}",
+      "createdAt": "2026-02-01T00:01:00.000Z",
+      "createdById": null,
+      "createdByName": "Deleted Agent",
+      "id": "cr-zebra",
+      "title": "Zebra reply",
+      "updatedAt": "2026-02-01T00:01:00.000Z",
+    },
+  ],
+  "status": 200,
+}
+`;

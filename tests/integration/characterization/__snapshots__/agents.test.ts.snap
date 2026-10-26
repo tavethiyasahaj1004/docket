@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /api/agents (characterization) > lists non-banned agents and admins only (no user role, no banned) 1`] = `
+{
+  "body": [
+    {
+      "email": "alice@example.test",
+      "id": "user-alice",
+      "name": "Alice Agent",
+      "role": "agent",
+    },
+    {
+      "email": "bob@example.test",
+      "id": "user-bob",
+      "name": "Bob Admin",
+      "role": "admin",
+    },
+  ],
+  "status": 200,
+}
+`;

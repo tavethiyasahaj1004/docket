@@ -165,3 +165,18 @@ export async function updateCustomerNote(
     .returning();
   return updated ?? null;
 }
+
+/** Read-only counterpart of findOrCreateCustomer: the customer with this
+ * email (normalized the same way), or null. Never creates one. */
+export async function findCustomerByEmail(
+  email: string
+): Promise<Customer | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const [existing] = await db
+    .select()
+    .from(customers)
+    .where(eq(customers.email, normalizedEmail))
+    .limit(1);
+  return existing ?? null;
+}

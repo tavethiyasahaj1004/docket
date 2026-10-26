@@ -7,7 +7,6 @@ import { customers, ticketActivity, tickets } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getTicketTags } from "@/lib/tags";
 import {
   getTicketCategories,
   getTicketPriorities,
@@ -16,9 +15,9 @@ import {
 import {
   deleteTicketsWithMergedShells,
   MERGED_TICKET_CHANGE_MESSAGE,
-  resolveMergedTicketId,
 } from "@/lib/tickets/merge";
 import { notifyTicketStatusChange } from "@/lib/tickets/notify-status-change";
+import { getTicketDetail } from "@/lib/tickets/queries";
 import {
   dispatchWebhookEvent,
   ticketPayloadData,
@@ -46,35 +45,11 @@ export async function GET(
   }
 
   const { id: requestedId } = await params;
-  // A merged ticket forwards to the ticket it was merged into (lib/tickets/merge.ts).
-  const id = await resolveMergedTicketId(requestedId);
-  const [ticket] = await db
-    .select({
-      id: tickets.id,
-      ticketNumber: tickets.ticketNumber,
-      subject: tickets.subject,
-      description: tickets.description,
-      category: tickets.category,
-      status: tickets.status,
-      priority: tickets.priority,
-      customerId: tickets.customerId,
-      customerName: customers.name,
-      customerEmail: customers.email,
-      assignedAgentId: tickets.assignedAgentId,
-      closedAt: tickets.closedAt,
-      createdAt: tickets.createdAt,
-      updatedAt: tickets.updatedAt,
-    })
-    .from(tickets)
-    .innerJoin(customers, eq(tickets.customerId, customers.id))
-    .where(eq(tickets.id, id))
-    .limit(1);
-
+  const ticket = await getTicketDetail(requestedId);
   if (!ticket) {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
-  const tags = await getTicketTags(id);
-  return NextResponse.json({ ...ticket, tags });
+  return NextResponse.json(ticket);
 }
 
 // PATCH /api/tickets/[id] — update status, category, or assignedAgentId

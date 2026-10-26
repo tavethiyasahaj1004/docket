@@ -60,7 +60,10 @@
     "db:seed": "tsx scripts/seed-defaults.ts",
     "setup": "tsx scripts/setup.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:db:start": "tsx scripts/test-db.ts",
+    "test:db:setup": "tsx scripts/test-db-setup.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1086.0",

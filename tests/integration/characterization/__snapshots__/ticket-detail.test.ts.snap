@@ -1,0 +1,147 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /api/tickets/[id] (characterization) > checks auth before existence (unknown id + no session -> 401) 1`] = `
+{
+  "body": {
+    "error": "Unauthorized.",
+  },
+  "status": 401,
+}
+`;
+
+exports[`GET /api/tickets/[id] (characterization) > forwards a merged ticket id to the ticket it was merged into 1`] = `
+{
+  "body": {
+    "assignedAgentId": "user-alice",
+    "category": "bug",
+    "closedAt": null,
+    "createdAt": "2026-03-15T06:00:00.000Z",
+    "customerEmail": "ann@example.test",
+    "customerId": "cust-ann",
+    "customerName": "Ann Adams",
+    "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+    "id": "t-101",
+    "priority": "high",
+    "status": "open",
+    "subject": "Cannot log in",
+    "tags": [],
+    "ticketNumber": 101,
+    "updatedAt": "2026-03-15T09:00:00.000Z",
+  },
+  "status": 200,
+}
+`;
+
+exports[`GET /api/tickets/[id] (characterization) > forwards a second merged ticket to its target 1`] = `
+{
+  "body": {
+    "assignedAgentId": "user-alice",
+    "category": "feature_request",
+    "closedAt": null,
+    "createdAt": "2026-03-01T10:00:00.000Z",
+    "customerEmail": "ann@example.test",
+    "customerId": "cust-ann",
+    "customerName": "Ann Adams",
+    "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Feature: dark mode"}]}]}",
+    "id": "t-105",
+    "priority": "normal",
+    "status": "open",
+    "subject": "Feature: dark mode",
+    "tags": [],
+    "ticketNumber": 105,
+    "updatedAt": "2026-03-02T10:00:00.000Z",
+  },
+  "status": 200,
+}
+`;
+
+exports[`GET /api/tickets/[id] (characterization) > returns 401 for a session whose role is not agent/admin 1`] = `
+{
+  "body": {
+    "error": "Unauthorized.",
+  },
+  "status": 401,
+}
+`;
+
+exports[`GET /api/tickets/[id] (characterization) > returns 401 for a session without a user 1`] = `
+{
+  "body": {
+    "error": "Unauthorized.",
+  },
+  "status": 401,
+}
+`;
+
+exports[`GET /api/tickets/[id] (characterization) > returns 401 with no session 1`] = `
+{
+  "body": {
+    "error": "Unauthorized.",
+  },
+  "status": 401,
+}
+`;
+
+exports[`GET /api/tickets/[id] (characterization) > returns 404 for an unknown id 1`] = `
+{
+  "body": {
+    "error": "Not found.",
+  },
+  "status": 404,
+}
+`;
+
+exports[`GET /api/tickets/[id] (characterization) > returns a ticket with no tags and an assignee 1`] = `
+{
+  "body": {
+    "assignedAgentId": "user-bob",
+    "category": "bug",
+    "closedAt": null,
+    "createdAt": "2026-03-10T09:30:00.000Z",
+    "customerEmail": "pat@example.test",
+    "customerId": "cust-pat",
+    "customerName": "Pat Percent",
+    "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of snake_case error in export"}]}]}",
+    "id": "t-103",
+    "priority": "urgent",
+    "status": "in_progress",
+    "subject": "snake_case error in export",
+    "tags": [],
+    "ticketNumber": 103,
+    "updatedAt": "2026-03-12T09:00:00.000Z",
+  },
+  "status": 200,
+}
+`;
+
+exports[`GET /api/tickets/[id] (characterization) > returns the agent view of a normal ticket (with tags) 1`] = `
+{
+  "body": {
+    "assignedAgentId": "user-alice",
+    "category": "issue",
+    "closedAt": null,
+    "createdAt": "2026-03-12T08:00:00.000Z",
+    "customerEmail": "zed@example.test",
+    "customerId": "cust-zed",
+    "customerName": "Zed Zimmer",
+    "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Tagged ticket one"}]}]}",
+    "id": "t-110",
+    "priority": "normal",
+    "status": "in_progress",
+    "subject": "Tagged ticket one",
+    "tags": [
+      {
+        "id": "tag-billing",
+        "name": "billing",
+      },
+      {
+        "id": "tag-vip",
+        "name": "vip",
+      },
+    ],
+    "ticketNumber": 110,
+    "updatedAt": "2026-03-13T08:00:00.000Z",
+  },
+  "status": 200,
+}
+`;

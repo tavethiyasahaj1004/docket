@@ -3,7 +3,7 @@ import {
   CaretRightIcon,
   TicketIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import { and, asc, count, desc, eq, inArray, or } from "drizzle-orm";
+import { and, count, desc, eq, inArray, or } from "drizzle-orm";
 import Link from "next/link";
 import { Suspense } from "react";
 import { TicketsListRealtime } from "@/components/agent/tickets-list-realtime";
@@ -33,11 +33,14 @@ import {
   type TicketStatus,
 } from "@/lib/ticket-config";
 import { getLinkedTicketNumbers } from "@/lib/tickets/links";
+import {
+  DEFAULT_PAGE_SIZE,
+  listTicketsForAgent,
+  PAGE_SIZE_OPTIONS,
+} from "@/lib/tickets/queries";
 import { getDraftTicketIds } from "@/lib/tickets/reply-drafts";
 import {
   buildTicketsWhereClause,
-  parseTicketListSort,
-  SORT_COLUMNS,
   type TicketListSearchParams,
 } from "@/lib/tickets-list-query";
 import type { ColumnPref } from "@/lib/tickets-table-columns";
@@ -52,11 +55,6 @@ import { TicketViewTabs } from "./_components/ticket-view-tabs";
 import { TicketsTable } from "./_components/tickets-table";
 
 export const metadata = { title: "All Tickets" };
-
-const DEFAULT_PAGE_SIZE = 25;
-// 2 is included alongside the "real" sizes so pagination can be exercised
-// with a handful of seeded tickets during local development.
-const PAGE_SIZE_OPTIONS = [2, 10, 25, 50, 100];
 
 type SearchParams = TicketListSearchParams;
 
@@ -245,11 +243,6 @@ async function TicketsResults({
   const categoryMap = Object.fromEntries(categories.map((c) => [c.slug, c]));
   const priorityMap = Object.fromEntries(priorities.map((p) => [p.slug, p]));
 
-  const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
-  const requestedPageSize = Number.parseInt(params.pageSize ?? "", 10);
-  const pageSize = PAGE_SIZE_OPTIONS.includes(requestedPageSize)
-    ? requestedPageSize
-    : DEFAULT_PAGE_SIZE;
   const search = params.q?.trim() ?? "";
   const statusFilter =
     params.status && params.status !== "all" ? params.status : null;
@@ -266,50 +259,12 @@ async function TicketsResults({
   const mineFilter = params.mine === "1";
   const viewFilter =
     params.view === "awaiting" || params.view === "open" ? params.view : null;
-  const { sortKey, sortOrder } = parseTicketListSort(params);
 
   const openStatusSlugs = statuses
     .filter((s) => !s.isClosedState)
     .map((s) => s.slug);
-  const whereClause = buildTicketsWhereClause(params, agentId, openStatusSlugs);
-
-  const [{ total }] = await db
-    .select({ total: count() })
-    .from(tickets)
-    .innerJoin(customers, eq(tickets.customerId, customers.id))
-    .where(whereClause);
-
-  const rows = await db
-    .select({
-      id: tickets.id,
-      ticketNumber: tickets.ticketNumber,
-      subject: tickets.subject,
-      status: tickets.status,
-      category: tickets.category,
-      priority: tickets.priority,
-      customerId: tickets.customerId,
-      customerName: customers.name,
-      assignedAgentId: tickets.assignedAgentId,
-      assignedAgentName: user.name,
-      createdAt: tickets.createdAt,
-      updatedAt: tickets.updatedAt,
-      closedAt: tickets.closedAt,
-      awaitingReply: tickets.awaitingReply,
-      waitingSince: tickets.waitingSince,
-      firstRespondedAt: tickets.firstRespondedAt,
-      slaActiveSeconds: tickets.slaActiveSeconds,
-    })
-    .from(tickets)
-    .innerJoin(customers, eq(tickets.customerId, customers.id))
-    .leftJoin(user, eq(tickets.assignedAgentId, user.id))
-    .where(whereClause)
-    .orderBy(
-      sortOrder === "asc"
-        ? asc(SORT_COLUMNS[sortKey])
-        : desc(SORT_COLUMNS[sortKey])
-    )
-    .limit(pageSize)
-    .offset((page - 1) * pageSize);
+  const { total, rows, page, pageSize, sortKey, sortOrder } =
+    await listTicketsForAgent({ params, agentId, openStatusSlugs });
 
   const visibleColumnIds = new Set(
     columnPrefs.filter((c) => c.visible).map((c) => c.id)

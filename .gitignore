@@ -37,6 +37,7 @@ pnpm-debug.log*
 # embedded postgres (dev)
 /.pgdata
 /.docket-postgres
+/.docket-postgres-test
 
 # local file storage driver (ticket attachments) — see lib/storage.ts.
 # Docker mounts this as the docket_uploads volume instead.

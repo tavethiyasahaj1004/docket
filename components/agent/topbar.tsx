@@ -12,6 +12,7 @@ import {
   ListChecksIcon,
   PaintBrushIcon,
   PlugsIcon,
+  RobotIcon,
   SquaresFourIcon,
   TagIcon,
   TicketIcon,
@@ -104,6 +105,12 @@ const ROUTE_META: Record<string, RouteMeta> = {
     title: "API Documentation",
     description: "Reference for integrating with the public API.",
     icon: BookOpenIcon,
+  },
+  "/admin/mcp": {
+    title: "AI assistant (MCP)",
+    description:
+      "Let agents and admins connect an AI assistant to read Docket data.",
+    icon: RobotIcon,
   },
   "/admin/webhooks": {
     title: "Webhooks",

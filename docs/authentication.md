@@ -188,6 +188,10 @@ if (!['agent', 'admin'].includes(session.user.role)) {
 }
 ```
 
+### MCP Personal Access Tokens
+
+A third credential type exists for AI assistants: an agent or admin can create a personal access token (prefix `dkm_`) that authenticates requests to the MCP endpoint `/api/mcp` with `Authorization: Bearer <token>`. Tokens act as the user who created them, are limited to the scopes chosen at creation, and expire after at most 90 days. Only a hash is stored, so a token is shown once at creation. They are separate from session cookies and from `dk_live_` API keys, work only while an admin has enabled MCP (`docs/admin-portal.md` § 6), and are revoked when the user signs out their other sessions or is deactivated. They are not revoked by a password reset. See `docs/agent-portal.md` § Settings.
+
 ### Customer API Routes
 
 Customer-facing routes (e.g. posting a reply on a ticket) validate the customer token:

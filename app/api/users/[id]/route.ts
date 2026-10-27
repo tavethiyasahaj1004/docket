@@ -5,10 +5,11 @@ import { NextResponse } from "next/server";
 import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
 import { account, session, user } from "@/db/schema";
 import { tickets } from "@/db/schema/tickets";
-import { audit } from "@/lib/audit";
+import { audit, auditOrThrow } from "@/lib/audit";
 import { auth } from "@/lib/auth";
 import { requireAdminFromRequest } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { revokeAllMcpTokensForUser } from "@/lib/mcp-tokens";
 import { getPlatformSettings } from "@/lib/settings";
 import { anonymizeUserContent } from "@/lib/user-deletion";
 
@@ -103,14 +104,57 @@ export async function PATCH(
       );
     }
 
-    await db
-      .update(user)
-      .set({
-        banned: body.banned,
-        banReason: body.banned ? (body.banReason ?? null) : null,
-        updatedAt: now,
-      })
-      .where(eq(user.id, id));
+    // Order matters. Lock the user row first (this blocks a concurrent MCP token
+    // creation, which takes FOR SHARE on it), revoke + audit the tokens with the
+    // admin as actor, and only THEN set banned — so the database trigger that
+    // revokes tokens on ban finds nothing left and the actor audit is never
+    // skipped. An audit failure rolls the whole ban back.
+    try {
+      await db.transaction(async (tx) => {
+        await tx
+          .select({ id: user.id })
+          .from(user)
+          .where(eq(user.id, id))
+          .for("update");
+
+        const revoked = body.banned
+          ? await revokeAllMcpTokensForUser(tx, id, "user_banned")
+          : [];
+
+        await tx
+          .update(user)
+          .set({
+            banned: body.banned,
+            banReason: body.banned ? (body.banReason ?? null) : null,
+            updatedAt: now,
+          })
+          .where(eq(user.id, id));
+
+        for (const t of revoked) {
+          await auditOrThrow(tx, {
+            action: "mcp_token.revoked",
+            actorEmail: adminUser.email,
+            actorId: adminUser.id,
+            description: `Revoked MCP token ${t.keyPrefix}… for ${target.email} (user banned)`,
+            entityId: t.id,
+            entityType: "mcp_token",
+            metadata: {
+              keyPrefix: t.keyPrefix,
+              name: t.name,
+              reason: "user_banned",
+              targetUserId: id,
+              targetEmail: target.email,
+            },
+          });
+        }
+      });
+    } catch (error) {
+      console.error("[users] ban/unban failed", error);
+      return NextResponse.json(
+        { error: "Failed to update user." },
+        { status: 500 }
+      );
+    }
 
     // Revoke all active sessions on ban
     if (body.banned) {

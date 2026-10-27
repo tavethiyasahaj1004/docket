@@ -32,11 +32,16 @@ export function SessionsCard({ sessions }: { sessions: SessionRow[] }) {
           </p>
         </div>
         {otherSessionCount > 0 && (
-          <form action={signOutOtherSessionsAction}>
-            <Button size="sm" type="submit" variant="outline">
-              Sign out other sessions
-            </Button>
-          </form>
+          <div className="space-y-1.5 sm:max-w-60 sm:text-right">
+            <form action={signOutOtherSessionsAction}>
+              <Button size="sm" type="submit" variant="outline">
+                Sign out other sessions
+              </Button>
+            </form>
+            <p className="text-xs text-base-content-muted">
+              This also revokes all your AI assistant (MCP) tokens.
+            </p>
+          </div>
         )}
       </div>
       <div className="overflow-x-auto">

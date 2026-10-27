@@ -387,7 +387,7 @@ export function UserActions({
             <DialogDescription className="text-base-content-muted">
               {userDeactivated
                 ? `Restore sign-in access for ${userName}. They become assignable again and will start receiving notifications.`
-                : `${userName} will be signed out immediately and can no longer sign in or be assigned new tickets. Their existing tickets stay assigned to them and their reply history is unchanged. Reversible at any time.`}
+                : `${userName} will be signed out immediately and can no longer sign in or be assigned new tickets. Their existing tickets stay assigned to them and their reply history is unchanged. Reversible at any time. This also permanently revokes their AI assistant (MCP) tokens — reactivating the account won't restore them.`}
             </DialogDescription>
           </DialogHeader>
           {!userDeactivated && (

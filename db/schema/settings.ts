@@ -77,6 +77,8 @@ export const platformSettings = pgTable("platform_settings", {
   attachmentMaxPerTicketSizeMb: integer("attachment_max_per_ticket_size_mb")
     .notNull()
     .default(250),
+  // Admin toggle for the MCP endpoint — off by default.
+  mcpEnabled: boolean("mcp_enabled").notNull().default(false),
   // Set only once the wizard's Integrations step is finished or skipped. Null
   // means the admin account exists but the wizard doesn't, so `/setup` resumes
   // rather than treating setup as done — see isSetupComplete vs hasAdminUser.

@@ -4,9 +4,10 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
 import { user } from "@/db/schema";
-import { audit } from "@/lib/audit";
+import { audit, auditOrThrow } from "@/lib/audit";
 import { requireAdmin } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { revokeAllMcpTokensForUser } from "@/lib/mcp-tokens";
 
 export async function setUserRoleAction(formData: FormData): Promise<void> {
   const admin = await requireAdmin();
@@ -47,14 +48,47 @@ export async function toggleUserBanAction(formData: FormData): Promise<void> {
     return;
   }
 
-  await db
-    .update(user)
-    .set({
-      banReason: banned ? "Disabled by Orbit admin" : null,
-      banned,
-      updatedAt: new Date(),
-    })
-    .where(eq(user.id, userId));
+  // Order matters: lock the user row first (blocks a concurrent MCP token
+  // creation), revoke + audit the tokens with this admin as actor, and only THEN
+  // set banned — so the trigger that revokes tokens on ban finds nothing left and
+  // the actor audit is never skipped. An audit failure rolls the ban back.
+  await db.transaction(async (tx) => {
+    await tx
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.id, userId))
+      .for("update");
+
+    const revoked = banned
+      ? await revokeAllMcpTokensForUser(tx, userId, "user_banned")
+      : [];
+
+    await tx
+      .update(user)
+      .set({
+        banReason: banned ? "Disabled by Orbit admin" : null,
+        banned,
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, userId));
+
+    for (const t of revoked) {
+      await auditOrThrow(tx, {
+        action: "mcp_token.revoked",
+        actorEmail: admin.email,
+        actorId: admin.id,
+        description: `Revoked MCP token ${t.keyPrefix}… (user banned)`,
+        entityId: t.id,
+        entityType: "mcp_token",
+        metadata: {
+          keyPrefix: t.keyPrefix,
+          name: t.name,
+          reason: "user_banned",
+          targetUserId: userId,
+        },
+      });
+    }
+  });
 
   await audit({
     action: banned ? "orbit.user_banned" : "orbit.user_unbanned",

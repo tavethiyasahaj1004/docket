@@ -38,6 +38,7 @@ export const getPlatformSettings = cache(async () => {
       magicLinkEnabled: false,
       googleLoginEnabled: false,
       ticketEmailNotificationsEnabled: true,
+      mcpEnabled: false,
       ...DEFAULT_TICKET_ACTION_SETTINGS,
       attachmentMaxPerMessage: DEFAULT_ATTACHMENT_LIMITS.maxPerMessage,
       attachmentMaxFileSizeMb: DEFAULT_ATTACHMENT_LIMITS.maxFileSizeMb,

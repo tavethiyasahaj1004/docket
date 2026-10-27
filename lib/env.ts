@@ -65,6 +65,10 @@ const envSchema = z.object({
   // letting served URLs skip signing. Unset is fine — Docket always proxies file
   // reads through /api/files/[...key] rather than handing out cloud URLs.
   STORAGE_PUBLIC_BASE_URL: optionalString,
+  // MCP endpoint (optional): extra browser Origins, comma-separated, allowed to
+  // call /api/mcp in addition to NEXT_PUBLIC_APP_URL's own origin. Requests with
+  // no Origin header (the usual MCP client) are always accepted.
+  MCP_ALLOWED_ORIGINS: optionalString,
 });
 
 const parsed = envSchema.safeParse(process.env);

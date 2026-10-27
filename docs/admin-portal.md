@@ -274,14 +274,35 @@ Every report has its own "Download CSV" link — a plain download, no dialog or 
 
 A system-wide, admin-only trail of sensitive actions — separate from `ticket_activity` (which is per-ticket and shown in the ticket detail sidebar; see `docs/tickets.md`). Newest first, paginated 25 per page.
 
-Logged today: user role changes/bans/deletes, ticket deletion (single and bulk), ticket bulk actions, every ticket-config change (statuses/categories/priorities/SLA policies/custom fields), email template edits, platform/appearance settings changes (including the sign-in method toggles), API key create/revoke, plus all the auth/profile/session events from the Better Auth side. See `docs/plans/07-audit-log-viewer.md`'s addendum for the full list and the reasoning behind what's deliberately *not* logged (read-only routes, field-level renames that don't change access or config).
+Logged today: user role changes/bans/deletes, ticket deletion (single and bulk), ticket bulk actions, every ticket-config change (statuses/categories/priorities/SLA policies/custom fields), email template edits, platform/appearance settings changes (including the sign-in method toggles), API key create/revoke, MCP token create/revoke and the MCP on/off switch (`mcp_token.created`, `mcp_token.revoked`, `mcp.enabled_changed`), plus all the auth/profile/session events from the Better Auth side. See `docs/plans/07-audit-log-viewer.md`'s addendum for the full list and the reasoning behind what's deliberately *not* logged (read-only routes, field-level renames that don't change access or config).
 
 - **Search** — matches `description` or `actorEmail` (`ilike`).
 - **Action filter** — a dropdown populated from a live `SELECT DISTINCT action` over the table itself, not a hardcoded list, so it can never miss an action type that's actually been logged.
 - Click a row with metadata to expand the raw JSON — useful for debugging without a dedicated column per possible shape.
 - Failing to write an audit entry never breaks the action it's describing — `audit()` swallows its own errors (logged to the server console) rather than throwing.
 
-## 6. Admin Access to Orbit Panel
+## 6. AI Assistant (MCP) (`/admin/mcp`)
+
+Admin-only page that controls whether agents and admins can connect an AI assistant (for example Claude Code) to Docket over the Model Context Protocol, and shows every token that has been issued.
+
+### 6a. MCP Access
+
+- A single switch turns the MCP endpoint on or off. It is **off by default**; while it is off the endpoint refuses every request and no one can create a token. Changes apply immediately.
+- A **Data-sharing notice** callout sits next to the switch. Its wording is a placeholder for now and will be replaced once the final text is approved.
+- In production the switch can only be turned on when `NEXT_PUBLIC_APP_URL` uses `https://`, because tokens travel in a request header. When that is not the case the page shows a warning and the switch cannot be turned on; if the server still rejects the request, its message is shown.
+- While enabled, the endpoint URL (`<app URL>/api/mcp`) is shown read-only for client setup.
+
+### 6b. Token Oversight
+
+A table of **all** tokens from all users: owner (name and email), token name, key prefix (`dkm_xxxxxxxx…` — the secret itself is never shown or retrievable), scopes, created, last used, expires, and status (`active`, `expired`, `revoked`). Active tokens have a **Revoke** button that opens a confirmation dialog; revoking takes effect immediately and cannot be undone.
+
+Tokens are also revoked automatically when their owner is deactivated, when the owner signs out their other sessions, and when the owner's role stops being agent or admin. See `docs/agent-portal.md` § Settings for what agents see.
+
+The sidebar entry is **AI assistant (MCP)**, next to API Keys.
+
+---
+
+## 7. Admin Access to Orbit Panel
 
 Admins also have access to the Better Auth Orbit panel at `/orbit`:
 - View all user sessions.
@@ -293,7 +314,7 @@ This is provided by the scaffold — no custom implementation needed.
 
 ---
 
-## 7. Business Rules
+## 8. Business Rules
 
 1. There must always be at least one admin in the system. Prevent the last admin from being demoted or deleted.
 2. An admin cannot deactivate themselves.
@@ -305,7 +326,7 @@ This is provided by the scaffold — no custom implementation needed.
 
 ---
 
-## 8. UI Notes
+## 9. UI Notes
 
 - Admin-only items (Delete Ticket button, Users/Reports nav links) are conditionally rendered based on `session.user.role === 'admin'`.
 - The Users and Reports pages (`/admin/users`, `/admin/reports`) are not linked in the agent sidebar — only visible to admins.

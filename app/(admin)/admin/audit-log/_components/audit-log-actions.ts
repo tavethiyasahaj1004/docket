@@ -51,6 +51,9 @@ export const AUDIT_ACTIONS: { label: string; value: string }[] = [
   { label: "Platform Settings Updated", value: "settings.updated" },
   { label: "API Key Created", value: "api_key.created" },
   { label: "API Key Revoked", value: "api_key.revoked" },
+  { label: "MCP Token Created", value: "mcp_token.created" },
+  { label: "MCP Token Revoked", value: "mcp_token.revoked" },
+  { label: "MCP Enabled Changed", value: "mcp.enabled_changed" },
 ];
 
 const AUDIT_ACTION_LABEL_MAP: Record<string, string> = Object.fromEntries(

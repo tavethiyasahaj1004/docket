@@ -8,6 +8,7 @@ import { account, session as sessionTable, user } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { requireSession } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { revokeAllMcpTokensForUser } from "@/lib/mcp-tokens";
 import { createPasswordSetupToken } from "@/lib/password-setup-token";
 import { anonymizeUserContent } from "@/lib/user-deletion";
 
@@ -157,6 +158,29 @@ export async function signOutOtherSessionsAction(): Promise<void> {
     await db.delete(sessionTable).where(inArray(sessionTable.id, ids));
   }
 
+  // MCP tokens are bearer credentials that outlive sessions, so signing out
+  // everywhere revokes them too.
+  const revokedTokens = await revokeAllMcpTokensForUser(
+    db,
+    current.user.id,
+    "sessions_signed_out"
+  );
+  for (const t of revokedTokens) {
+    await audit({
+      action: "mcp_token.revoked",
+      actorEmail: current.user.email,
+      actorId: current.user.id,
+      description: `Revoked MCP token ${t.keyPrefix}… (signed out of other sessions)`,
+      entityId: t.id,
+      entityType: "mcp_token",
+      metadata: {
+        keyPrefix: t.keyPrefix,
+        name: t.name,
+        reason: "sessions_signed_out",
+      },
+    });
+  }
+
   await audit({
     action: "profile.other_sessions_revoked",
     actorEmail: current.user.email,
@@ -164,7 +188,10 @@ export async function signOutOtherSessionsAction(): Promise<void> {
     description: `Signed out ${ids.length} other session(s)`,
     entityId: current.user.id,
     entityType: "user",
-    metadata: { revokedCount: ids.length },
+    metadata: {
+      revokedCount: ids.length,
+      mcpTokensRevoked: revokedTokens.length,
+    },
   });
 
   revalidatePath("/dashboard/profile");

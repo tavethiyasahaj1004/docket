@@ -71,6 +71,7 @@
     "@aws-sdk/s3-request-presigner": "^3.1086.0",
     "@floating-ui/react": "^0.27.20",
     "@headlessui/react": "^2.2.10",
+    "@modelcontextprotocol/server": "2.4.0",
     "@paralleldrive/cuid2": "^3.3.0",
     "@phosphor-icons/react": "^2.1.10",
     "@pusher/push-notifications-server": "^1.2.7",
@@ -112,6 +113,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.0",
+    "@modelcontextprotocol/client": "2.4.0",
     "@tailwindcss/postcss": "^4.3.1",
     "@types/node": "^25.9.3",
     "@types/nodemailer": "^8.0.1",

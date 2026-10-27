@@ -22,3 +22,4 @@ export * from "@/db/schema/sla-policies";
 export * from "@/db/schema/reply-drafts";
 export * from "@/db/schema/push-subscriptions";
 export * from "@/db/schema/ticket-links";
+export * from "@/db/schema/mcp";

@@ -13,6 +13,7 @@ import {
   ListChecksIcon,
   PaintBrushIcon,
   PlugsIcon,
+  RobotIcon,
   ShieldCheckIcon,
   SquaresFourIcon,
   TagIcon,
@@ -74,6 +75,7 @@ const adminItems = [
     icon: ClockCounterClockwiseIcon,
   },
   { href: "/admin/api-keys", label: "API Keys", icon: KeyIcon },
+  { href: "/admin/mcp", label: "AI assistant (MCP)", icon: RobotIcon },
   { href: "/admin/webhooks", label: "Webhooks", icon: WebhooksLogoIcon },
 ];
 

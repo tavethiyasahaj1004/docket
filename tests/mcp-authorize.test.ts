@@ -17,31 +17,70 @@ function principal(scopes: McpScope[], role = "agent"): McpPrincipal {
   };
 }
 
+const AGENT_TOOLS = [
+  "whoami",
+  "get_ticket_config",
+  "list_tickets",
+  "get_ticket",
+  "get_ticket_thread",
+  "get_customer",
+  "list_agents",
+  "search_canned_responses",
+  "get_ticket_stats",
+];
+
 describe("permittedToolNames", () => {
-  it("lists both tools, in registry order, for read scopes", () => {
-    expect(
-      permittedToolNames(principal(["tickets:read", "customers:read"]))
-    ).toEqual(["whoami", "get_ticket_config"]);
+  it("lists the nine agent tools, in registry order, for the default scopes", () => {
+    const names = permittedToolNames(
+      principal(["tickets:read", "customers:read"])
+    );
+    expect(names).toEqual(AGENT_TOOLS);
+    expect(names).toHaveLength(9);
   });
 
-  it("lists only whoami without tickets:read", () => {
+  it("lists all ten tools for an admin with the three read scopes", () => {
+    const names = permittedToolNames(
+      principal(["tickets:read", "customers:read", "reports:read"], "admin")
+    );
+    expect(names).toEqual([...AGENT_TOOLS, "get_report"]);
+    expect(names).toHaveLength(10);
+  });
+
+  it("never lists get_report for an agent, even if the token carries reports:read", () => {
+    const names = permittedToolNames(
+      principal(["tickets:read", "customers:read", "reports:read"], "agent")
+    );
+    expect(names).not.toContain("get_report");
+  });
+
+  it("does not list get_customer without customers:read", () => {
+    const names = permittedToolNames(principal(["tickets:read"]));
+    expect(names).not.toContain("get_customer");
+    expect(names).toEqual(AGENT_TOOLS.filter((n) => n !== "get_customer"));
+  });
+
+  it("lists only whoami and get_customer without tickets:read", () => {
     expect(permittedToolNames(principal(["customers:read"]))).toEqual([
       "whoami",
+      "get_customer",
     ]);
     expect(permittedToolNames(principal([]))).toEqual(["whoami"]);
   });
 
-  it("lists nothing for an ineligible role", () => {
-    for (const role of ["", "user", "customer", "agent,admin", "Admin"]) {
-      expect(permittedToolNames(principal(["tickets:read"], role))).toEqual([]);
-    }
+  it("does not turn tickets:read_internal into a tool", () => {
+    expect(permittedToolNames(principal(["tickets:read_internal"]))).toEqual([
+      "whoami",
+    ]);
   });
 
-  it("admins are eligible too", () => {
-    expect(permittedToolNames(principal(["tickets:read"], "admin"))).toEqual([
-      "whoami",
-      "get_ticket_config",
-    ]);
+  it("lists nothing for an ineligible role", () => {
+    for (const role of ["", "user", "customer", "agent,admin", "Admin"]) {
+      expect(
+        permittedToolNames(
+          principal(["tickets:read", "customers:read", "reports:read"], role)
+        )
+      ).toEqual([]);
+    }
   });
 });
 
@@ -54,6 +93,20 @@ describe("canUseTool", () => {
     const p = principal(["customers:read"]);
     expect(canUseTool(p, "whoami")).toBe(true);
     expect(canUseTool(p, "get_ticket_config")).toBe(false);
+    expect(canUseTool(p, "get_customer")).toBe(true);
+    expect(canUseTool(p, "list_tickets")).toBe(false);
+  });
+
+  it("requires the admin role on top of reports:read for get_report", () => {
+    expect(canUseTool(principal(["reports:read"], "admin"), "get_report")).toBe(
+      true
+    );
+    expect(canUseTool(principal(["reports:read"], "agent"), "get_report")).toBe(
+      false
+    );
+    expect(canUseTool(principal(["tickets:read"], "admin"), "get_report")).toBe(
+      false
+    );
   });
 
   it("re-checks the role on every call", () => {

@@ -1,8 +1,11 @@
 /** Hard limits for the MCP endpoint. Fixed defaults — not admin-configurable. */
 
 export const MCP_MAX_BODY_BYTES = 1_048_576;
-/** A serialized tool result above this is shrunk, then treated as an internal error. */
+/** A serialized tool result above this (even after shrinking) is an internal error. */
 export const MCP_RESULT_HARD_CAP_CHARS = 40_000;
+/** A result above this is shrunk by tools that can (dropping trailing items or
+ * shortening bodies) until it fits. */
+export const MCP_RESULT_TARGET_CHARS = 30_000;
 export const MCP_TAG_LIMIT = 200;
 export const MCP_INSTRUCTIONS_MAX_CHARS = 2000;
 export const MCP_TOOL_CALL_RETENTION_DAYS = 30;

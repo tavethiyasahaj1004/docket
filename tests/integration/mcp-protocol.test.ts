@@ -94,14 +94,29 @@ const MODES: [string, VersionNegotiationMode][] = [
   ["pinned 2026-07-28", { pin: "2026-07-28" }],
 ];
 
+// A default agent token (tickets:read + customers:read): every read tool except
+// the admin-only report.
+const AGENT_TOOLS = [
+  "whoami",
+  "get_ticket_config",
+  "list_tickets",
+  "get_ticket",
+  "get_ticket_thread",
+  "get_customer",
+  "list_agents",
+  "search_canned_responses",
+  "get_ticket_stats",
+];
+const TICKETS_READ_ONLY_TOOLS = AGENT_TOOLS.filter((n) => n !== "get_customer");
+
 describe("tools/list", () => {
   for (const [label, mode] of MODES) {
-    it(`lists exactly whoami then get_ticket_config for a default token (${label})`, async () => {
+    it(`lists exactly the nine agent tools, in order, for a default token (${label})`, async () => {
       const token = await addToken(world.db, ALICE);
       const client = await connect(token.raw, mode);
       const { tools } = await client.listTools();
 
-      expect(tools.map((t) => t.name)).toEqual(["whoami", "get_ticket_config"]);
+      expect(tools.map((t) => t.name)).toEqual(AGENT_TOOLS);
       for (const tool of tools) {
         expect(tool.annotations).toEqual({
           readOnlyHint: true,
@@ -114,18 +129,21 @@ describe("tools/list", () => {
         expect((tool.description ?? "").length).toBeLessThanOrEqual(1000);
         expect(tool.inputSchema.type).toBe("object");
         expect(tool.inputSchema.additionalProperties).toBe(false);
+        for (const keyword of ["anyOf", "oneOf", "allOf"]) {
+          expect(tool.inputSchema).not.toHaveProperty(keyword);
+        }
         expect(tool.outputSchema).toBeDefined();
       }
     });
   }
 
-  it("lists only whoami for a customers:read-only token", async () => {
+  it("lists whoami and get_customer for a customers:read-only token", async () => {
     const token = await addToken(world.db, ALICE, {
       scopes: ["customers:read"],
     });
     const client = await connect(token.raw);
     const { tools } = await client.listTools();
-    expect(tools.map((t) => t.name)).toEqual(["whoami"]);
+    expect(tools.map((t) => t.name)).toEqual(["whoami", "get_customer"]);
   });
 
   it("never grants more than the owner's role allows", async () => {
@@ -186,7 +204,7 @@ describe("whoami", () => {
           name: "my laptop",
           expiresAt: new Date(row.expires_at).toISOString(),
         },
-        tools: ["whoami", "get_ticket_config"],
+        tools: AGENT_TOOLS,
       });
       expect(JSON.parse(text(result))).toEqual(dto);
       expect(text(result)).not.toContain(token.raw);
@@ -313,7 +331,7 @@ describe("get_ticket_config", () => {
     const token = await addToken(world.db, BOB, { scopes: ["tickets:read"] });
     const client = await connect(token.raw);
     const { tools } = await client.listTools();
-    expect(tools.map((t) => t.name)).toEqual(["whoami", "get_ticket_config"]);
+    expect(tools.map((t) => t.name)).toEqual(TICKETS_READ_ONLY_TOOLS);
   });
 });
 
@@ -346,13 +364,16 @@ describe("exception suppression", () => {
       status: "failed",
       error_code: "internal",
     });
-    // The detail reached the server log (with the same ref), not the client.
+    // The server log gets the ref and the error class, but never the message:
+    // exception text can carry query parameters, hosts or credentials.
     const logged = vi
       .mocked(console.error)
       .mock.calls.map((args) => args.map(String).join(" "))
       .join("\n");
     expect(logged).toContain(`ref=${ref}`);
-    expect(logged).toContain(detail);
+    expect(logged).toContain("Error");
+    expect(logged).not.toContain("hunter2");
+    expect(logged).not.toContain("10.1.2.3");
   });
 });
 

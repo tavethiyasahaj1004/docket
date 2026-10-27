@@ -22,6 +22,12 @@ describe("MCP server instructions", () => {
     }
   });
 
+  it("say what search covers", () => {
+    expect(MCP_INSTRUCTIONS).toContain(
+      "- Search matches subject, customer name/email and ticket number only, not message bodies."
+    );
+  });
+
   it("only name tools that exist in this phase", () => {
     const named = [...MCP_INSTRUCTIONS.matchAll(/`([a-z_]+)`/g)].map(
       (m) => m[1]

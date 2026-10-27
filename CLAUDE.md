@@ -284,6 +284,7 @@ Ticket **descriptions** (submit form) and **replies** (both customer and agent) 
 | In-App Notifications | `docs/in-app-notifications.md` |
 | Real-Time Updates | `docs/realtime-updates.md` |
 | Deployment & Zammad Migration | `docs/deployment-and-zammad-migration.md` |
+| AI Assistant Access (MCP) | `docs/mcp.md` |
 
 ---
 

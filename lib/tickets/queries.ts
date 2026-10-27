@@ -28,16 +28,22 @@ export async function listTicketsForAgent({
   params,
   agentId,
   openStatusSlugs,
+  pageSizeOverride,
 }: {
   params: TicketListSearchParams;
   agentId: string;
   openStatusSlugs: string[];
+  /** An exact page size that skips the PAGE_SIZE_OPTIONS check on
+   * `params.pageSize`. The agent page never sets it; MCP list_tickets does. */
+  pageSizeOverride?: number;
 }) {
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
   const requestedPageSize = Number.parseInt(params.pageSize ?? "", 10);
-  const pageSize = PAGE_SIZE_OPTIONS.includes(requestedPageSize)
-    ? requestedPageSize
-    : DEFAULT_PAGE_SIZE;
+  const pageSize =
+    pageSizeOverride ??
+    (PAGE_SIZE_OPTIONS.includes(requestedPageSize)
+      ? requestedPageSize
+      : DEFAULT_PAGE_SIZE);
   const { sortKey, sortOrder } = parseTicketListSort(params);
 
   const whereClause = buildTicketsWhereClause(params, agentId, openStatusSlugs);

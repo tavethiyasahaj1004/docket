@@ -5,7 +5,12 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import type { McpPrincipal } from "@/lib/mcp/auth";
 import { canUseTool } from "@/lib/mcp/authorize";
-import { MCP_RESULT_HARD_CAP_CHARS, type McpErrorCode } from "@/lib/mcp/limits";
+import { McpToolError } from "@/lib/mcp/errors";
+import {
+  MCP_RESULT_HARD_CAP_CHARS,
+  MCP_RESULT_TARGET_CHARS,
+  type McpErrorCode,
+} from "@/lib/mcp/limits";
 
 type ToolContext<T extends Record<string, unknown>> = {
   tool: string;
@@ -15,6 +20,14 @@ type ToolContext<T extends Record<string, unknown>> = {
   args: unknown;
   /** Returns a smaller version of an oversized result. */
   shrink?: (result: T) => T;
+};
+
+type CallTarget = { ticketId?: string; customerId?: string };
+
+/** What a tool tells the handler while it runs, for the trace row. */
+export type ToolCallInfo = {
+  /** Records the entity a call resolved to (ids only, never names or bodies). */
+  setTarget(target: CallTarget): void;
 };
 
 let argsHmacKey: Buffer | null = null;
@@ -52,18 +65,59 @@ export function hmacToolArgs(args: unknown): string {
     .digest("hex");
 }
 
-function errorResult(code: McpErrorCode, message: string): CallToolResult {
+function errorResult(
+  code: McpErrorCode,
+  message: string,
+  details?: Record<string, unknown>
+): CallToolResult {
   return {
     content: [{ type: "text", text: message }],
-    structuredContent: { error: { code, message } },
+    structuredContent: {
+      error: { code, message, ...(details ? { details } : {}) },
+    },
     isError: true,
   };
+}
+
+/** A log-safe description of an unexpected error: class names, database error
+ * codes and stack frames only. Messages are dropped because a failed query's
+ * message embeds its parameters, which can be a customer email or note text. */
+export function describeErrorForLog(error: unknown): string {
+  const parts: string[] = [];
+  let current: unknown = error;
+  for (let depth = 0; current && depth < 4; depth++) {
+    if (!(current instanceof Error)) {
+      parts.push(typeof current);
+      break;
+    }
+    const code = (current as Error & { code?: unknown }).code;
+    parts.push(
+      typeof code === "string" ? `${current.name} code=${code}` : current.name
+    );
+    current = (current as Error & { cause?: unknown }).cause;
+  }
+  // Frames are taken only from after the message: a multi-line message can hold
+  // lines that look like frames (a query parameter such as "\n    at x@y").
+  const messageEnd =
+    error instanceof Error && error.stack
+      ? error.stack.indexOf(error.message)
+      : -1;
+  const frames =
+    error instanceof Error && error.stack && messageEnd >= 0
+      ? error.stack
+          .slice(messageEnd + error.message.length)
+          .split("\n")
+          .filter((l) => /^\s+at /.test(l))
+          .slice(0, 8)
+      : [];
+  return [parts.join(" <- "), ...frames].join("\n");
 }
 
 async function recordCall(
   ctx: Pick<ToolContext<never>, "tool" | "principal" | "requestId" | "args">,
   outcome: { status: "succeeded" | "failed"; errorCode: McpErrorCode | null },
-  durationMs: number
+  durationMs: number,
+  target: CallTarget = {}
 ): Promise<void> {
   try {
     await db.insert(mcpToolCalls).values({
@@ -75,20 +129,26 @@ async function recordCall(
       status: outcome.status,
       errorCode: outcome.errorCode,
       argsHmac: hmacToolArgs(ctx.args),
+      targetTicketId: target.ticketId ?? null,
+      targetCustomerId: target.customerId ?? null,
       durationMs,
     });
   } catch (error) {
     // The trace is best-effort: a failed write never fails the tool call.
-    console.error(`[mcp] tool_call_record_failed ref=${ctx.requestId}`, error);
+    console.error(
+      `[mcp] tool_call_record_failed ref=${ctx.requestId}`,
+      describeErrorForLog(error)
+    );
   }
 }
 
 /** Wraps every tool handler: re-checks authorization, turns any thrown error
- * into an opaque "Internal error (ref: ...)" (the message only goes to the server
- * log), caps result size, and records one trace row plus one log line per call. */
+ * into an opaque "Internal error (ref: ...)" (only its class, code and stack
+ * frames go to the server log), caps result size, and records one trace row plus
+ * one log line per call. */
 export async function safeHandler<T extends Record<string, unknown>>(
   ctx: ToolContext<T>,
-  fn: () => Promise<T>
+  fn: (call: ToolCallInfo) => Promise<T>
 ): Promise<CallToolResult> {
   const started = Date.now();
   const { tool, principal, requestId } = ctx;
@@ -106,10 +166,19 @@ export async function safeHandler<T extends Record<string, unknown>>(
     );
   }
 
+  const target: CallTarget = {};
+  const call: ToolCallInfo = {
+    setTarget: (t) => {
+      Object.assign(target, t);
+    },
+  };
+
   try {
-    let result = await fn();
+    let result = await fn(call);
     let text = JSON.stringify(result);
-    if (text.length > MCP_RESULT_HARD_CAP_CHARS && ctx.shrink) {
+    // Tools that can shrink are trimmed back to the target size; the hard cap
+    // is the limit nothing may exceed.
+    if (text.length > MCP_RESULT_TARGET_CHARS && ctx.shrink) {
       result = ctx.shrink(result);
       text = JSON.stringify(result);
     }
@@ -118,16 +187,32 @@ export async function safeHandler<T extends Record<string, unknown>>(
     }
     const ms = Date.now() - started;
     console.log(line("ok", ms));
-    await recordCall(ctx, { status: "succeeded", errorCode: null }, ms);
+    await recordCall(ctx, { status: "succeeded", errorCode: null }, ms, target);
     return {
       content: [{ type: "text", text }],
       structuredContent: result,
     };
   } catch (error) {
     const ms = Date.now() - started;
+    if (error instanceof McpToolError) {
+      // A deliberate domain error: its message was written for the model.
+      console.log(line(error.code, ms));
+      await recordCall(
+        ctx,
+        { status: "failed", errorCode: error.code },
+        ms,
+        target
+      );
+      return errorResult(error.code, error.message, error.details);
+    }
     // The detail goes to the server log only, never into the result.
-    console.error(line("internal", ms), error);
-    await recordCall(ctx, { status: "failed", errorCode: "internal" }, ms);
+    console.error(line("internal", ms), describeErrorForLog(error));
+    await recordCall(
+      ctx,
+      { status: "failed", errorCode: "internal" },
+      ms,
+      target
+    );
     return errorResult("internal", `Internal error (ref: ${requestId})`);
   }
 }

@@ -234,8 +234,8 @@ mcp_tool_calls
 ├── args_hmac           text, nullable            ← keyed HMAC of the arguments, never the arguments
 ├── planned_entity_id   text, nullable
 ├── lock_group          text, nullable
-├── target_ticket_id    text, nullable            ← no foreign key
-├── target_customer_id  text, nullable            ← no foreign key
+├── target_ticket_id    text, nullable            ← no foreign key; read tools record the ticket a call resolved to
+├── target_customer_id  text, nullable            ← no foreign key; `get_customer` records the customer it resolved to
 ├── body_hmac           text, nullable            ← keyed HMAC of a message body, never the body
 ├── lease_expires_at    timestamp with time zone, nullable
 ├── attempts            integer NOT NULL DEFAULT 1

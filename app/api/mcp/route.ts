@@ -11,6 +11,7 @@ import {
   secondsUntilWindowEnds,
 } from "@/lib/mcp/http";
 import { MCP_MAX_BODY_BYTES, MCP_RATE_LIMITS } from "@/lib/mcp/limits";
+import { describeErrorForLog } from "@/lib/mcp/safe-handler";
 import { mcpHandler, toMcpAuthInfo } from "@/lib/mcp/server";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { getPlatformSettings } from "@/lib/settings";
@@ -80,7 +81,10 @@ export async function POST(request: NextRequest) {
       headers,
     });
   } catch (error) {
-    console.error(`[mcp] handler_failed ref=${requestId}`, error);
+    console.error(
+      `[mcp] handler_failed ref=${requestId}`,
+      describeErrorForLog(error)
+    );
     return mcpJson({ error: "Internal server error." }, 500);
   }
 }

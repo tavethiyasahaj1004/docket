@@ -349,7 +349,15 @@ describe("exception suppression", () => {
     });
 
     expect(result.isError).toBe(true);
-    expect(text(result)).toMatch(/^Internal error \(ref: [a-z0-9]+\)$/);
+    // The text block is the serialized structuredContent, and carries nothing
+    // but the code and an opaque reference.
+    expect(text(result)).toBe(JSON.stringify(result.structuredContent));
+    expect(JSON.parse(text(result))).toEqual({
+      error: {
+        code: "internal",
+        message: expect.stringMatching(/^Internal error \(ref: [a-z0-9]+\)$/),
+      },
+    });
     expect(JSON.stringify(result)).not.toContain("hunter2");
     expect(JSON.stringify(result)).not.toContain("10.1.2.3");
     const ref = /ref: ([a-z0-9]+)/.exec(text(result))?.[1];

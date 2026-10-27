@@ -1,0 +1,1595 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PATCH /api/tickets/[id] (characterization) > category / priority / assignment > assign an unassigned ticket, then unassign it (assignedAgentId: null) 1`] = `
+{
+  "assign": {
+    "activity": [
+      {
+        "action": "assigned",
+        "actorId": "user-alice",
+        "actorName": "Alice Agent",
+        "actorRole": "agent",
+        "createdAt": 2026-03-15T12:00:00.000Z,
+        "id": "<id:1>",
+        "metadata": {
+          "agentId": "user-bob",
+        },
+        "ticketId": "t-104",
+      },
+    ],
+    "attachments": [],
+    "calls": [
+      {
+        "call": "enqueueJob",
+        "job": "webhook.send",
+        "payload": {
+          "deliveryId": "<id:2>",
+        },
+      },
+    ],
+    "comments": [],
+    "deliveries": [
+      {
+        "attemptCount": 0,
+        "entityId": "t-104",
+        "entityType": "ticket",
+        "event": "ticket.assigned",
+        "id": "<id:2>",
+        "payload": {
+          "createdAt": "2026-03-15T12:00:00.000Z",
+          "data": {
+            "assignedAgentId": "user-bob",
+            "ticket": {
+              "category": "billing",
+              "createdAt": "2026-03-08T10:00:00.000Z",
+              "customerEmail": "una_under@example.test",
+              "customerName": "Una Under_score",
+              "id": "t-104",
+              "priority": "low",
+              "status": "open",
+              "subject": "Order 1005 delayed",
+              "ticketNumber": 104,
+              "updatedAt": "2026-03-15T12:00:00.000Z",
+            },
+          },
+          "event": "ticket.assigned",
+          "id": "evt_<id:3>",
+        },
+        "status": "queued",
+        "webhookId": "wh-1",
+      },
+    ],
+    "drafts": [],
+    "emails": [],
+    "newTags": [],
+    "notifications": [],
+    "response": {
+      "body": {
+        "changed": true,
+        "ok": true,
+      },
+      "status": 200,
+    },
+    "ticketDiff": {
+      "t-104": {
+        "assignedAgentId": {
+          "from": null,
+          "to": "user-bob",
+        },
+        "updatedAt": {
+          "from": 2026-03-08T11:00:00.000Z,
+          "to": 2026-03-15T12:00:00.000Z,
+        },
+      },
+    },
+    "ticketTags": [],
+    "tickets": [
+      {
+        "apiKeyId": null,
+        "assignedAgentId": "user-bob",
+        "awaitingReply": false,
+        "category": "billing",
+        "closedAt": null,
+        "createdAt": 2026-03-08T10:00:00.000Z,
+        "customerId": "cust-una",
+        "customerToken": "token-104",
+        "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+        "firstRespondedAt": null,
+        "id": "t-104",
+        "mergedAt": null,
+        "mergedIntoTicketId": null,
+        "pendingReplies": 0,
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "source": "portal",
+        "status": "open",
+        "subject": "Order 1005 delayed",
+        "ticketNumber": 104,
+        "updatedAt": 2026-03-15T12:00:00.000Z,
+        "waitingSince": null,
+      },
+    ],
+  },
+  "unassign": {
+    "activity": [
+      {
+        "action": "unassigned",
+        "actorId": "user-alice",
+        "actorName": "Alice Agent",
+        "actorRole": "agent",
+        "createdAt": 2026-03-15T12:00:00.000Z,
+        "id": "<id:1>",
+        "metadata": null,
+        "ticketId": "t-104",
+      },
+    ],
+    "attachments": [],
+    "calls": [
+      {
+        "call": "enqueueJob",
+        "job": "webhook.send",
+        "payload": {
+          "deliveryId": "<id:2>",
+        },
+      },
+    ],
+    "comments": [],
+    "deliveries": [
+      {
+        "attemptCount": 0,
+        "entityId": "t-104",
+        "entityType": "ticket",
+        "event": "ticket.unassigned",
+        "id": "<id:2>",
+        "payload": {
+          "createdAt": "2026-03-15T12:00:00.000Z",
+          "data": {
+            "assignedAgentId": null,
+            "ticket": {
+              "category": "billing",
+              "createdAt": "2026-03-08T10:00:00.000Z",
+              "customerEmail": "una_under@example.test",
+              "customerName": "Una Under_score",
+              "id": "t-104",
+              "priority": "low",
+              "status": "open",
+              "subject": "Order 1005 delayed",
+              "ticketNumber": 104,
+              "updatedAt": "2026-03-15T12:00:00.000Z",
+            },
+          },
+          "event": "ticket.unassigned",
+          "id": "evt_<id:3>",
+        },
+        "status": "queued",
+        "webhookId": "wh-1",
+      },
+    ],
+    "drafts": [],
+    "emails": [],
+    "newTags": [],
+    "notifications": [],
+    "response": {
+      "body": {
+        "changed": true,
+        "ok": true,
+      },
+      "status": 200,
+    },
+    "ticketDiff": {
+      "t-104": {
+        "assignedAgentId": {
+          "from": "user-bob",
+          "to": null,
+        },
+      },
+    },
+    "ticketTags": [],
+    "tickets": [
+      {
+        "apiKeyId": null,
+        "assignedAgentId": null,
+        "awaitingReply": false,
+        "category": "billing",
+        "closedAt": null,
+        "createdAt": 2026-03-08T10:00:00.000Z,
+        "customerId": "cust-una",
+        "customerToken": "token-104",
+        "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+        "firstRespondedAt": null,
+        "id": "t-104",
+        "mergedAt": null,
+        "mergedIntoTicketId": null,
+        "pendingReplies": 0,
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "source": "portal",
+        "status": "open",
+        "subject": "Order 1005 delayed",
+        "ticketNumber": 104,
+        "updatedAt": 2026-03-15T12:00:00.000Z,
+        "waitingSince": null,
+      },
+    ],
+  },
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > category / priority / assignment > category change: category_changed + ticket.category_changed (previousCategory) 1`] = `
+{
+  "activity": [
+    {
+      "action": "category_changed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "billing",
+        "to": "bug",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.category_changed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "previousCategory": "billing",
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "low",
+            "status": "open",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.category_changed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "changed": true,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-104": {
+      "category": {
+        "from": "billing",
+        "to": "bug",
+      },
+      "updatedAt": {
+        "from": 2026-03-08T11:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > category / priority / assignment > priority change: priority_changed + ticket.priority_changed (previousPriority) 1`] = `
+{
+  "activity": [
+    {
+      "action": "priority_changed",
+      "actorId": "user-bob",
+      "actorName": "Bob Admin",
+      "actorRole": "admin",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "low",
+        "to": "urgent",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.priority_changed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "previousPriority": "low",
+          "ticket": {
+            "category": "billing",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "urgent",
+            "status": "open",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.priority_changed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "changed": true,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-104": {
+      "priority": {
+        "from": "low",
+        "to": "urgent",
+      },
+      "updatedAt": {
+        "from": 2026-03-08T11:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "urgent",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > category / priority / assignment > reassign to another agent is a plain 'assigned' (no unassigned step) 1`] = `
+{
+  "activity": [
+    {
+      "action": "assigned",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "agentId": "user-bob",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.assigned",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "assignedAgentId": "user-bob",
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T06:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "open",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.assigned",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "changed": true,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "assignedAgentId": {
+        "from": "user-alice",
+        "to": "user-bob",
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-bob",
+      "awaitingReply": true,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": 2026-03-15T08:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > category / priority / assignment > unknown or empty-string assignee is NOT caught: the FK violation escapes the handler (no 4xx) 1`] = `
+{
+  "emptyString": {
+    "body": {
+      "constraint": "tickets_assigned_agent_id_user_id_fk",
+      "name": "Error",
+      "pgCode": "23503",
+      "thrown": true,
+    },
+    "status": 599,
+  },
+  "unknown": {
+    "body": {
+      "constraint": "tickets_assigned_agent_id_user_id_fk",
+      "name": "Error",
+      "pgCode": "23503",
+      "thrown": true,
+    },
+    "status": 599,
+  },
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > combined / partial / no-op bodies > no-op bodies (same values / empty / null on unassigned) -> changed:false, nothing written 1`] = `
+{
+  "empty": {
+    "body": {
+      "changed": false,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "nullOnUnassigned": {
+    "body": {
+      "changed": false,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "same": {
+    "activity": [],
+    "attachments": [],
+    "calls": [],
+    "comments": [],
+    "deliveries": [],
+    "drafts": [
+      {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+        "createdAt": 2026-03-15T08:00:00.000Z,
+        "isInternal": false,
+        "ticketId": "t-101",
+        "updatedAt": 2026-03-15T08:00:00.000Z,
+        "userId": "user-bob",
+      },
+    ],
+    "emails": [],
+    "newTags": [],
+    "notifications": [],
+    "response": {
+      "body": {
+        "changed": false,
+        "ok": true,
+      },
+      "status": 200,
+    },
+    "ticketDiff": {},
+    "ticketTags": [],
+    "tickets": [
+      {
+        "apiKeyId": null,
+        "assignedAgentId": "user-alice",
+        "awaitingReply": true,
+        "category": "bug",
+        "closedAt": null,
+        "createdAt": 2026-03-15T06:00:00.000Z,
+        "customerId": "cust-ann",
+        "customerToken": "token-101",
+        "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+        "firstRespondedAt": null,
+        "id": "t-101",
+        "mergedAt": null,
+        "mergedIntoTicketId": null,
+        "pendingReplies": 0,
+        "priority": "high",
+        "slaActiveSeconds": 0,
+        "source": "portal",
+        "status": "open",
+        "subject": "Cannot log in",
+        "ticketNumber": 101,
+        "updatedAt": 2026-03-15T09:00:00.000Z,
+        "waitingSince": 2026-03-15T08:00:00.000Z,
+      },
+    ],
+  },
+  "unknownKey": {
+    "body": {
+      "changed": false,
+      "ok": true,
+    },
+    "status": 200,
+  },
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > combined / partial / no-op bodies > status + category + priority + assignee in one request: four events, payloads built from the PRE-change ticket 1`] = `
+{
+  "activity": [
+    {
+      "action": "assigned",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "agentId": "user-alice",
+      },
+      "ticketId": "t-104",
+    },
+    {
+      "action": "category_changed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:2>",
+      "metadata": {
+        "from": "billing",
+        "to": "bug",
+      },
+      "ticketId": "t-104",
+    },
+    {
+      "action": "priority_changed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:3>",
+      "metadata": {
+        "from": "low",
+        "to": "urgent",
+      },
+      "ticketId": "t-104",
+    },
+    {
+      "action": "status_changed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:4>",
+      "metadata": {
+        "from": "open",
+        "to": "in_progress",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:11>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:7>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:9>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:5>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.assigned",
+      "id": "<id:5>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "assignedAgentId": "user-alice",
+          "ticket": {
+            "category": "billing",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "low",
+            "status": "open",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.assigned",
+        "id": "evt_<id:6>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.category_changed",
+      "id": "<id:7>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "previousCategory": "billing",
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "low",
+            "status": "open",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.category_changed",
+        "id": "evt_<id:8>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.priority_changed",
+      "id": "<id:9>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "previousPriority": "low",
+          "ticket": {
+            "category": "billing",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "urgent",
+            "status": "open",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.priority_changed",
+        "id": "evt_<id:10>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.status_changed",
+      "id": "<id:11>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "billing",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "low",
+            "status": "in_progress",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.status_changed",
+        "id": "evt_<id:12>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "changed": true,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-104": {
+      "assignedAgentId": {
+        "from": null,
+        "to": "user-alice",
+      },
+      "category": {
+        "from": "billing",
+        "to": "bug",
+      },
+      "priority": {
+        "from": "low",
+        "to": "urgent",
+      },
+      "status": {
+        "from": "open",
+        "to": "in_progress",
+      },
+      "updatedAt": {
+        "from": 2026-03-08T11:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "urgent",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "in_progress",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > combined / partial / no-op bodies > valid category + invalid priority -> 400, category already persisted; later fields never run 1`] = `
+{
+  "activity": [
+    {
+      "action": "category_changed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "billing",
+        "to": "bug",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.category_changed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "previousCategory": "billing",
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "low",
+            "status": "open",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.category_changed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "error": "Invalid priority.",
+    },
+    "status": 400,
+  },
+  "ticketDiff": {
+    "t-104": {
+      "category": {
+        "from": "billing",
+        "to": "bug",
+      },
+      "updatedAt": {
+        "from": 2026-03-08T11:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > combined / partial / no-op bodies > valid status + invalid category -> 400, but the status change is ALREADY persisted (with its activity + webhook) 1`] = `
+{
+  "activity": [
+    {
+      "action": "status_changed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "in_progress",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.status_changed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "billing",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "low",
+            "status": "in_progress",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.status_changed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "error": "Invalid category.",
+    },
+    "status": 400,
+  },
+  "ticketDiff": {
+    "t-104": {
+      "status": {
+        "from": "open",
+        "to": "in_progress",
+      },
+      "updatedAt": {
+        "from": 2026-03-08T11:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "in_progress",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > errors > invalid JSON body -> 400, checked before the ticket is looked up 1`] = `
+{
+  "body": {
+    "error": "Invalid request body.",
+  },
+  "status": 400,
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > errors > merged shell -> 409 (not forwarded); unknown -> 404 1`] = `
+{
+  "merged": {
+    "body": {
+      "error": "This ticket was merged into another ticket, so it can't be changed. Refresh the page to open the ticket it was merged into.",
+    },
+    "status": 409,
+  },
+  "unknown": {
+    "body": {
+      "error": "Not found.",
+    },
+    "status": 404,
+  },
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > errors > no session / non-agent role -> 401 (auth before existence) 1`] = `
+{
+  "anon": {
+    "body": {
+      "error": "Unauthorized.",
+    },
+    "status": 401,
+  },
+  "plain": {
+    "body": {
+      "error": "Unauthorized.",
+    },
+    "status": 401,
+  },
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > status > closed -> open status: closedAt cleared, status_changed activity, ticket.reopened webhook 1`] = `
+{
+  "activity": [
+    {
+      "action": "status_changed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "closed",
+        "to": "open",
+      },
+      "ticketId": "t-108",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-108",
+      "entityType": "ticket",
+      "event": "ticket.reopened",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "issue",
+            "createdAt": "2026-01-05T09:00:00.000Z",
+            "customerEmail": "pat@example.test",
+            "customerName": "Pat Percent",
+            "id": "t-108",
+            "priority": "low",
+            "status": "open",
+            "subject": "Old issue resolved",
+            "ticketNumber": 108,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.reopened",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "changed": true,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-108": {
+      "closedAt": {
+        "from": 2026-01-05T12:00:00.000Z,
+        "to": null,
+      },
+      "status": {
+        "from": "closed",
+        "to": "open",
+      },
+      "updatedAt": {
+        "from": 2026-01-05T12:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "issue",
+      "closedAt": null,
+      "createdAt": 2026-01-05T09:00:00.000Z,
+      "customerId": "cust-pat",
+      "customerToken": "token-108",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Old issue resolved"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-108",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Old issue resolved",
+      "ticketNumber": 108,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > status > invalid status -> 400 and nothing written 1`] = `
+{
+  "activity": [],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "error": "Invalid status.",
+    },
+    "status": 400,
+  },
+  "ticketDiff": {},
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-08T11:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > status > open -> another open status: status_changed activity + ticket.status_changed webhook 1`] = `
+{
+  "activity": [
+    {
+      "action": "status_changed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "in_progress",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.status_changed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "billing",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "low",
+            "status": "in_progress",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.status_changed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "changed": true,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-104": {
+      "status": {
+        "from": "open",
+        "to": "in_progress",
+      },
+      "updatedAt": {
+        "from": 2026-03-08T11:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "in_progress",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id] (characterization) > status > open -> closed (generic close): ticket_closed + ticket.closed, but NO email, NO flag/SLA reset 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_closed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "closed",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.closed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T06:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "closed",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.closed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "changed": true,
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "closedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "status": {
+        "from": "open",
+        "to": "closed",
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": true,
+      "category": "bug",
+      "closedAt": 2026-03-15T12:00:00.000Z,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": 2026-03-15T08:00:00.000Z,
+    },
+  ],
+}
+`;

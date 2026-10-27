@@ -31,6 +31,10 @@ import {
 import { resolveTicketPortalUrl } from "@/lib/tickets/portal-url";
 import { deleteReplyDraft } from "@/lib/tickets/reply-drafts";
 import {
+  addTicketComment,
+  loadCommentTarget,
+} from "@/lib/tickets/services/comments";
+import {
   dispatchWebhookEvent,
   ticketPayloadData,
 } from "@/lib/webhooks/dispatch";
@@ -176,26 +180,7 @@ export async function POST(
     authorRole = session.user.role as "agent" | "admin";
     isInternal = formData.get("isInternal") === "true";
 
-    const [ticket] = await db
-      .select({
-        status: tickets.status,
-        customerName: customers.name,
-        customerEmail: customers.email,
-        customerToken: tickets.customerToken,
-        ticketNumber: tickets.ticketNumber,
-        subject: tickets.subject,
-        category: tickets.category,
-        priority: tickets.priority,
-        assignedAgentId: tickets.assignedAgentId,
-        apiKeyId: tickets.apiKeyId,
-        awaitingReply: tickets.awaitingReply,
-        waitingSince: tickets.waitingSince,
-        firstRespondedAt: tickets.firstRespondedAt,
-      })
-      .from(tickets)
-      .innerJoin(customers, eq(tickets.customerId, customers.id))
-      .where(eq(tickets.id, ticketId))
-      .limit(1);
+    const ticket = await loadCommentTarget(ticketId);
     if (!ticket) {
       return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
     }
@@ -288,6 +273,49 @@ export async function POST(
   }
 
   try {
+    // Agent/admin replies run through the shared write service; the customer
+    // pipeline below is unchanged.
+    if (authorId && authorRole !== "customer") {
+      const result = await addTicketComment({
+        ticketId,
+        target: ticketData!,
+        actor: { id: authorId, name: authorName, role: authorRole },
+        content,
+        contentText,
+        isInternal,
+        attachments: uploadedAttachments,
+        maxPerTicketSizeBytes: limits.maxPerTicketSizeBytes,
+        now,
+      });
+      if (result.status === "ok") {
+        return NextResponse.json({ id: result.commentId }, { status: 201 });
+      }
+      if (result.status === "exists") {
+        // Unreachable: this route never supplies a commentId. Falls into the
+        // catch below, which removes the uploads.
+        throw new Error("Comment id collision.");
+      }
+      for (const a of uploadedAttachments) {
+        await storage.delete(a.storageKey).catch(() => undefined);
+      }
+      if (result.status === "storage") {
+        return NextResponse.json(
+          {
+            error: ticketStorageError(
+              result.check,
+              uploadedAttachments.reduce((n, a) => n + a.fileSize, 0),
+              limits.maxPerTicketSizeBytes
+            ),
+          },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json(
+        { error: MERGED_DURING_REPLY_MESSAGE },
+        { status: 409 }
+      );
+    }
+
     const inserted = await insertReplyUnlessMerged(
       ticketId,
       {

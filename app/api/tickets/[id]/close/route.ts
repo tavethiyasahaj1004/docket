@@ -13,6 +13,7 @@ import { getClosedStatus, isClosedStatusSlug } from "@/lib/ticket-config";
 import { MERGED_TICKET_CHANGE_MESSAGE } from "@/lib/tickets/merge";
 import { notifyTicketStatusChange } from "@/lib/tickets/notify-status-change";
 import { resolveTicketPortalUrl } from "@/lib/tickets/portal-url";
+import { closeTicket } from "@/lib/tickets/services/close";
 
 export async function PATCH(
   request: NextRequest,
@@ -37,7 +38,6 @@ export async function PATCH(
   // Determine actor
   let actorName: string | undefined;
   let actorRole: string;
-  let actorId: string | undefined;
 
   const session = await auth.api.getSession({ headers: request.headers });
 
@@ -46,15 +46,41 @@ export async function PATCH(
     session?.user &&
     (session.user.role === "agent" || session.user.role === "admin")
   ) {
-    [ticket] = await db
-      .select()
-      .from(tickets)
-      .where(eq(tickets.id, ticketId))
-      .limit(1);
-    actorId = session.user.id;
-    actorName = session.user.name ?? session.user.email;
-    actorRole = session.user.role;
-  } else if (body.token) {
+    const result = await closeTicket({
+      ticketId,
+      actor: {
+        id: session.user.id,
+        name: session.user.name ?? session.user.email,
+        role: session.user.role,
+      },
+      now,
+    });
+    switch (result.status) {
+      case "not_found":
+        return NextResponse.json(
+          { error: "Ticket not found." },
+          { status: 404 }
+        );
+      case "merged":
+        return NextResponse.json(
+          { error: MERGED_TICKET_CHANGE_MESSAGE },
+          { status: 409 }
+        );
+      case "already_closed":
+        return NextResponse.json(
+          { error: "Ticket is already closed." },
+          { status: 400 }
+        );
+      case "no_closed_status":
+        return NextResponse.json(
+          { error: "No closed status is configured." },
+          { status: 400 }
+        );
+      default:
+        return NextResponse.json({ status: result.slug });
+    }
+  }
+  if (body.token) {
     const { allowed } = await checkRateLimit({
       action: "ticket_close",
       key: getClientIp(request),
@@ -146,7 +172,7 @@ export async function PATCH(
   await db.insert(ticketActivity).values({
     id: createId(),
     ticketId,
-    actorId: actorId ?? null,
+    actorId: null,
     actorName,
     actorRole,
     action: "ticket_closed",

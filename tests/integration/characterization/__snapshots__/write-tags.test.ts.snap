@@ -1,0 +1,562 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`tags routes (characterization) > DELETE /api/tickets/[id]/tags/[tagId] > a merged shell id is forwarded to the target 1`] = `
+{
+  "activity": [
+    {
+      "action": "tag_removed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "tag": "vip",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": true,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T09:00:00.000Z,
+      "waitingSince": 2026-03-15T08:00:00.000Z,
+    },
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": 2026-03-14T09:30:00.000Z,
+      "createdAt": 2026-03-14T09:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-120",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Duplicate login problem"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-120",
+      "mergedAt": 2026-03-14T09:30:00.000Z,
+      "mergedIntoTicketId": "t-101",
+      "pendingReplies": 0,
+      "priority": "normal",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Duplicate login problem",
+      "ticketNumber": 120,
+      "updatedAt": 2026-03-14T09:30:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`tags routes (characterization) > DELETE /api/tickets/[id]/tags/[tagId] > no session / plain user -> 401 1`] = `
+{
+  "body": {
+    "error": "Unauthorized.",
+  },
+  "status": 401,
+}
+`;
+
+exports[`tags routes (characterization) > DELETE /api/tickets/[id]/tags/[tagId] > not linked / unknown tag / unknown ticket -> 404; wrong ticket does not unlink 1`] = `
+{
+  "body": {
+    "error": "Tag not found on ticket.",
+  },
+  "status": 404,
+}
+`;
+
+exports[`tags routes (characterization) > DELETE /api/tickets/[id]/tags/[tagId] > unlinks a linked tag: tag_removed activity, tag stays in the shared pool 1`] = `
+{
+  "activity": [
+    {
+      "action": "tag_removed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "tag": "vip",
+      },
+      "ticketId": "t-110",
+    },
+  ],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "ok": true,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [
+    {
+      "id": "tt-110-billing",
+      "name": "billing",
+      "tagId": "tag-billing",
+      "ticketId": "t-110",
+    },
+  ],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "issue",
+      "closedAt": null,
+      "createdAt": 2026-03-12T08:00:00.000Z,
+      "customerId": "cust-zed",
+      "customerToken": "token-110",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Tagged ticket one"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-110",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "normal",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "in_progress",
+      "subject": "Tagged ticket one",
+      "ticketNumber": 110,
+      "updatedAt": 2026-03-13T08:00:00.000Z,
+      "waitingSince": 2026-03-12T08:30:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`tags routes (characterization) > POST /api/tickets/[id]/tags > a merged shell id is forwarded: the tag lands on the target ticket 1`] = `
+{
+  "activity": [
+    {
+      "action": "tag_added",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "tag": "vip",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": [
+      {
+        "id": "tag-vip",
+        "name": "vip",
+      },
+    ],
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [
+    {
+      "id": "<id:2>",
+      "name": "vip",
+      "tagId": "tag-vip",
+      "ticketId": "t-101",
+    },
+  ],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": true,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T09:00:00.000Z,
+      "waitingSince": 2026-03-15T08:00:00.000Z,
+    },
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": 2026-03-14T09:30:00.000Z,
+      "createdAt": 2026-03-14T09:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-120",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Duplicate login problem"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-120",
+      "mergedAt": 2026-03-14T09:30:00.000Z,
+      "mergedIntoTicketId": "t-101",
+      "pendingReplies": 0,
+      "priority": "normal",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Duplicate login problem",
+      "ticketNumber": 120,
+      "updatedAt": 2026-03-14T09:30:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`tags routes (characterization) > POST /api/tickets/[id]/tags > adding an already-linked tag is a no-op (no new rows, no activity), still returns the list 1`] = `
+{
+  "activity": [],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": [
+      {
+        "id": "tag-billing",
+        "name": "billing",
+      },
+      {
+        "id": "tag-vip",
+        "name": "vip",
+      },
+    ],
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [
+    {
+      "id": "tt-110-billing",
+      "name": "billing",
+      "tagId": "tag-billing",
+      "ticketId": "t-110",
+    },
+    {
+      "id": "tt-110-vip",
+      "name": "vip",
+      "tagId": "tag-vip",
+      "ticketId": "t-110",
+    },
+  ],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "issue",
+      "closedAt": null,
+      "createdAt": 2026-03-12T08:00:00.000Z,
+      "customerId": "cust-zed",
+      "customerToken": "token-110",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Tagged ticket one"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-110",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "normal",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "in_progress",
+      "subject": "Tagged ticket one",
+      "ticketNumber": 110,
+      "updatedAt": 2026-03-13T08:00:00.000Z,
+      "waitingSince": 2026-03-12T08:30:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`tags routes (characterization) > POST /api/tickets/[id]/tags > adds a brand-new tag: name normalized, tag created, linked, tag_added activity, full tag list returned 1`] = `
+{
+  "activity": [
+    {
+      "action": "tag_added",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:2>",
+      "metadata": {
+        "tag": "refund request",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [],
+  "emails": [],
+  "newTags": [
+    {
+      "id": "<id:1>",
+      "name": "refund request",
+    },
+  ],
+  "notifications": [],
+  "response": {
+    "body": [
+      {
+        "id": "<id:1>",
+        "name": "refund request",
+      },
+    ],
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [
+    {
+      "id": "<id:3>",
+      "name": "refund request",
+      "tagId": "<id:1>",
+      "ticketId": "t-104",
+    },
+  ],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-08T11:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`tags routes (characterization) > POST /api/tickets/[id]/tags > invalid JSON -> 400; a non-string name is NOT validated and throws out of the handler 1`] = `
+{
+  "badJson": {
+    "body": {
+      "error": "Invalid request body.",
+    },
+    "status": 400,
+  },
+  "numeric": {
+    "body": {
+      "message": "raw.trim is not a function",
+      "name": "TypeError",
+      "thrown": true,
+    },
+    "status": 599,
+  },
+}
+`;
+
+exports[`tags routes (characterization) > POST /api/tickets/[id]/tags > links an existing pool tag without creating a new one 1`] = `
+{
+  "activity": [
+    {
+      "action": "tag_added",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "tag": "unused-tag",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": [
+      {
+        "id": "tag-unused",
+        "name": "unused-tag",
+      },
+    ],
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [
+    {
+      "id": "<id:2>",
+      "name": "unused-tag",
+      "tagId": "tag-unused",
+      "ticketId": "t-104",
+    },
+  ],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-08T11:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`tags routes (characterization) > POST /api/tickets/[id]/tags > no session / plain user -> 401 1`] = `
+{
+  "body": {
+    "error": "Unauthorized.",
+  },
+  "status": 401,
+}
+`;
+
+exports[`tags routes (characterization) > POST /api/tickets/[id]/tags > unknown ticket -> 404 (no tag created); validation runs before the ticket lookup 1`] = `
+{
+  "unknown": {
+    "body": {
+      "error": "Not found.",
+    },
+    "status": 404,
+  },
+  "unknownBlank": {
+    "body": {
+      "error": "Tag name is required.",
+    },
+    "status": 400,
+  },
+}
+`;
+
+exports[`tags routes (characterization) > POST /api/tickets/[id]/tags > validation: blank / whitespace / missing / 51-char name -> 400; 50 chars is accepted 1`] = `
+{
+  "blank": {
+    "body": {
+      "error": "Tag name is required.",
+    },
+    "status": 400,
+  },
+  "tooLong": {
+    "body": {
+      "error": "Tag name must be 50 characters or fewer.",
+    },
+    "status": 400,
+  },
+}
+`;

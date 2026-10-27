@@ -6,8 +6,13 @@ vi.mock("@/lib/db", () => ({
 }));
 
 import type { McpPrincipal } from "@/lib/mcp/auth";
-import { McpToolError } from "@/lib/mcp/errors";
 import {
+  MCP_ERROR_DETAIL_KEYS,
+  type McpErrorDetails,
+  McpToolError,
+} from "@/lib/mcp/errors";
+import {
+  MCP_ERROR_CODES,
   MCP_RESULT_HARD_CAP_CHARS,
   MCP_RESULT_TARGET_CHARS,
 } from "@/lib/mcp/limits";
@@ -45,6 +50,8 @@ beforeEach(() => {
   insertValues.mockResolvedValue(undefined);
   vi.spyOn(console, "log").mockImplementation(() => undefined);
   vi.spyOn(console, "error").mockImplementation(() => undefined);
+  vi.spyOn(console, "warn").mockImplementation(() => undefined);
+  vi.mocked(console.warn).mockClear();
 });
 
 describe("safeHandler", () => {
@@ -53,6 +60,7 @@ describe("safeHandler", () => {
     expect(result.isError).toBeUndefined();
     expect(result.content).toEqual([{ type: "text", text: '{"a":1}' }]);
     expect(result.structuredContent).toEqual({ a: 1 });
+    expect(textOf(result)).toBe(JSON.stringify(result.structuredContent));
     expect(insertValues).toHaveBeenCalledTimes(1);
     const row = insertValues.mock.calls[0][0];
     expect(row).toMatchObject({
@@ -110,10 +118,14 @@ describe("safeHandler", () => {
       throw new Error(secret);
     });
     expect(result.isError).toBe(true);
-    expect(textOf(result)).toBe("Internal error (ref: req-abc)");
     expect(result.structuredContent).toEqual({
       error: { code: "internal", message: "Internal error (ref: req-abc)" },
     });
+    expect(textOf(result)).toBe(
+      JSON.stringify({
+        error: { code: "internal", message: "Internal error (ref: req-abc)" },
+      })
+    );
     expect(JSON.stringify(result)).not.toContain("hunter2");
     expect(JSON.stringify(result)).not.toContain("10.0.0.5");
     // The log gets the error's class and stack frames, never its message: a
@@ -140,13 +152,13 @@ describe("safeHandler", () => {
     );
     expect(fn).not.toHaveBeenCalled();
     expect(result.isError).toBe(true);
-    expect(textOf(result)).toBe("This tool is not available to this token.");
     expect(result.structuredContent).toEqual({
       error: {
         code: "invalid_input",
         message: "This tool is not available to this token.",
       },
     });
+    expect(textOf(result)).toBe(JSON.stringify(result.structuredContent));
     expect(insertValues.mock.calls[0][0]).toMatchObject({
       status: "failed",
       errorCode: "invalid_input",
@@ -169,7 +181,11 @@ describe("safeHandler", () => {
       async () => big
     );
     expect(result.isError).toBe(true);
-    expect(textOf(result)).toBe("Internal error (ref: req-abc)");
+    expect(textOf(result)).toBe(
+      JSON.stringify({
+        error: { code: "internal", message: "Internal error (ref: req-abc)" },
+      })
+    );
     expect(JSON.stringify(result)).not.toContain("xxxxxxxx");
   });
 
@@ -194,17 +210,19 @@ describe("safeHandler", () => {
     vi.mocked(console.log).mockClear();
     vi.mocked(console.error).mockClear();
     const result = await safeHandler(ctx(), async () => {
-      throw new McpToolError("not_found", "No such ticket.", { hint: 1 });
+      throw new McpToolError("not_found", "No such ticket.", {
+        ticketNumber: 7,
+      });
     });
     expect(result.isError).toBe(true);
-    expect(textOf(result)).toBe("No such ticket.");
     expect(result.structuredContent).toEqual({
       error: {
         code: "not_found",
         message: "No such ticket.",
-        details: { hint: 1 },
+        details: { ticketNumber: 7 },
       },
     });
+    expect(textOf(result)).toBe(JSON.stringify(result.structuredContent));
     expect(insertValues.mock.calls[0][0]).toMatchObject({
       status: "failed",
       errorCode: "not_found",
@@ -262,6 +280,186 @@ describe("safeHandler", () => {
     const result = await safeHandler(ctx(), async () => ({ a: 1 }));
     expect(result.isError).toBeUndefined();
     expect(result.structuredContent).toEqual({ a: 1 });
+  });
+});
+
+describe("error text is the serialized structuredContent", () => {
+  const expectSerialized = (result: {
+    content?: unknown;
+    structuredContent?: unknown;
+  }) => {
+    const text = textOf(result);
+    expect(text).toBe(JSON.stringify(result.structuredContent));
+    expect(JSON.parse(text)).toEqual(result.structuredContent);
+  };
+
+  it("holds for every error code raised as an McpToolError", async () => {
+    for (const code of MCP_ERROR_CODES) {
+      const result = await safeHandler(ctx(), async () => {
+        throw new McpToolError(code, `Message for ${code}.`, {
+          field: "status",
+          allowed: ["open", "closed"],
+        });
+      });
+      expect(result.isError, code).toBe(true);
+      expectSerialized(result);
+      expect(result.structuredContent).toEqual({
+        error: {
+          code,
+          message: `Message for ${code}.`,
+          details: { field: "status", allowed: ["open", "closed"] },
+        },
+      });
+    }
+  });
+
+  it("holds for the internal and unpermitted paths, and for success", async () => {
+    expectSerialized(
+      await safeHandler(ctx(), async () => {
+        throw new Error("boom");
+      })
+    );
+    expectSerialized(
+      await safeHandler(
+        ctx({ principal: { ...principal, scopes: ["customers:read"] } }),
+        async () => ({ a: 1 })
+      )
+    );
+    expectSerialized(await safeHandler(ctx(), async () => ({ a: [1, "x"] })));
+  });
+
+  it("gives an internal error only a reference id: no details, no cause", async () => {
+    const result = await safeHandler(ctx(), async () => {
+      throw Object.assign(new Error("db password=hunter2"), {
+        details: { field: "x" },
+        cause: new Error("inner"),
+      });
+    });
+    expect(JSON.parse(textOf(result))).toEqual({
+      error: { code: "internal", message: "Internal error (ref: req-abc)" },
+    });
+  });
+});
+
+describe("error details are sanitized", () => {
+  const raise = (details: unknown) =>
+    safeHandler(ctx(), async () => {
+      throw new McpToolError("conflict", "Nope.", details as McpErrorDetails);
+    });
+  const detailsOf = (result: { structuredContent?: unknown }) =>
+    (
+      result.structuredContent as {
+        error: { details?: Record<string, unknown> };
+      }
+    ).error.details;
+
+  it("keeps every allowlisted key with a safe value", async () => {
+    const all = {
+      mergedIntoTicketNumber: 12,
+      retryAfterSeconds: 30,
+      commentId: "ck1abc",
+      currentStatus: "closed",
+      currentUpdatedAt: "2026-01-01T00:00:00.000Z",
+      ticketNumber: 5,
+      field: "status",
+      allowed: ["open", 3],
+    };
+    expect(Object.keys(all).sort()).toEqual([...MCP_ERROR_DETAIL_KEYS].sort());
+    const result = await raise(all);
+    expect(detailsOf(result)).toEqual(all);
+    expect(console.warn).not.toHaveBeenCalled();
+  });
+
+  it("keeps booleans and null but drops non-finite numbers", async () => {
+    const result = await raise({
+      ticketNumber: null,
+      field: Number.NaN,
+      currentStatus: true,
+    });
+    expect(detailsOf(result)).toEqual({
+      ticketNumber: null,
+      currentStatus: true,
+    });
+  });
+
+  it("drops a key that is not on the allowlist and logs only its name", async () => {
+    const result = await raise({ ticketNumber: 1, note: "SECRET-VALUE" });
+    expect(detailsOf(result)).toEqual({ ticketNumber: 1 });
+    expect(JSON.stringify(result)).not.toContain("SECRET-VALUE");
+    expect(console.warn).toHaveBeenCalledTimes(1);
+    const logged = vi.mocked(console.warn).mock.calls[0].join(" ");
+    expect(logged).toContain("key=note");
+    expect(logged).toContain("ref=req-abc");
+    expect(logged).not.toContain("SECRET-VALUE");
+  });
+
+  it("drops an email address, wherever it sits in the string or array", async () => {
+    const result = await raise({
+      field: "jane@customer.test",
+      currentStatus: "see jane@customer.test please",
+      allowed: ["open", "jane@customer.test"],
+    });
+    expect(result.structuredContent).toEqual({
+      error: { code: "conflict", message: "Nope." },
+    });
+    expect(JSON.stringify(result)).not.toContain("jane@");
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain(
+      "jane@"
+    );
+  });
+
+  it("drops values matching a forbidden output pattern", async () => {
+    for (const bad of [
+      "dkm_abcdef",
+      "/api/files/x",
+      "token=abc",
+      "customerToken",
+      "storageKey",
+      '{"type":"doc"}',
+    ]) {
+      const result = await raise({ field: bad, ticketNumber: 2 });
+      expect(detailsOf(result), bad).toEqual({ ticketNumber: 2 });
+      expect(textOf(result), bad).not.toContain('"field"');
+    }
+  });
+
+  it("drops a string longer than 200 characters but keeps one of 200", async () => {
+    expect(detailsOf(await raise({ field: "a".repeat(200) }))).toEqual({
+      field: "a".repeat(200),
+    });
+    const result = await raise({ field: "a".repeat(201), ticketNumber: 3 });
+    expect(detailsOf(result)).toEqual({ ticketNumber: 3 });
+  });
+
+  it("drops arrays over 50 items or holding anything but strings and numbers", async () => {
+    const fifty = Array.from({ length: 50 }, (_, i) => `s${i}`);
+    expect(detailsOf(await raise({ allowed: fifty }))).toEqual({
+      allowed: fifty,
+    });
+    for (const allowed of [
+      [...fifty, "one-more"],
+      [{ a: 1 }],
+      [null],
+      [["nested"]],
+      [true],
+    ]) {
+      const result = await raise({ allowed, ticketNumber: 4 });
+      expect(detailsOf(result)).toEqual({ ticketNumber: 4 });
+    }
+  });
+
+  it("drops nested objects", async () => {
+    const result = await raise({ field: { deep: "x" }, ticketNumber: 6 });
+    expect(detailsOf(result)).toEqual({ ticketNumber: 6 });
+    expect(JSON.stringify(result)).not.toContain("deep");
+  });
+
+  it("omits details entirely when nothing survives", async () => {
+    const result = await raise({ bogus: 1 });
+    expect(result.structuredContent).toEqual({
+      error: { code: "conflict", message: "Nope." },
+    });
+    expect(textOf(result)).toBe(JSON.stringify(result.structuredContent));
   });
 });
 

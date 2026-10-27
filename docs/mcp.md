@@ -102,7 +102,18 @@ Results are kept small. Above about 30,000 characters, list, thread and report t
 
 ### Errors
 
-A failed call returns a tool error with `structuredContent: { error: { code, message } }`. The text block carries the message only; Claude Code (observed with version 2.1.148) passes just that text to the model. The codes you will see are `invalid_input` (a bad value, an unknown slug or assignee, a bad cursor, `includeInternal` without the scope, "exactly one of" broken), `not_found` and `internal` (an unexpected failure; the message carries a reference id to give to your admin, never the cause). Each user is also limited to 120 calls per minute; beyond that the endpoint answers HTTP `429`.
+A failed call returns a tool error (`isError: true`) whose `structuredContent` is `{ "error": { "code", "message", "details"? } }`. The **text block is exactly that same JSON** (`JSON.stringify(structuredContent)`), for errors as for successes, because Claude Code (observed with version 2.1.148) passes only the text block to the model. For example:
+
+```json
+{"error":{"code":"not_found","message":"No such ticket."}}
+```
+
+- **Codes you will see now:** `invalid_input` (a bad value, an unknown slug or assignee, a bad cursor, `includeInternal` without the scope, "exactly one of" broken), `not_found` and `internal`.
+- **`details`** is optional and limited to a fixed allowlist of small, non-sensitive keys: `mergedIntoTicketNumber`, `retryAfterSeconds`, `commentId`, `currentStatus`, `currentUpdatedAt`, `ticketNumber`, `field` and `allowed` (a list of slugs). Values must be numbers, booleans, `null`, or strings of at most 200 characters (lists of at most 50 strings or numbers). Anything else is dropped before the result is sent: unknown keys, nested objects, email addresses, and text containing a token, storage path or other forbidden pattern. Only the dropped key's name is logged, never its value. `details` is left out when nothing survives.
+- **`internal`** (an unexpected failure) is always `{"error":{"code":"internal","message":"Internal error (ref: <id>)"}}`: a reference id to give to your admin, never the cause and never any details.
+- **Schema-validation failures** (an argument of the wrong type or range, an unknown argument, a missing required one) are rejected by the MCP SDK before Docket's handler runs. They are still tool errors (`isError: true`, not a JSON-RPC error), but the text is the SDK's own plain text, for example `Input validation error: Invalid arguments for tool list_tickets: pageSize: Too small: expected number to be >=1`. They carry no `structuredContent`, no Docket error `code`, and leave no trace row. The text names the argument and the rule, never the value you sent.
+
+Each user is also limited to 120 calls per minute; beyond that the endpoint answers HTTP `429`.
 
 ---
 

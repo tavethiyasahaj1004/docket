@@ -5,7 +5,12 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import type { McpPrincipal } from "@/lib/mcp/auth";
 import { canUseTool } from "@/lib/mcp/authorize";
-import { McpToolError } from "@/lib/mcp/errors";
+import { FORBIDDEN_OUTPUT_PATTERNS } from "@/lib/mcp/dto";
+import {
+  MCP_ERROR_DETAIL_KEYS,
+  type McpErrorDetails,
+  McpToolError,
+} from "@/lib/mcp/errors";
 import {
   MCP_RESULT_HARD_CAP_CHARS,
   MCP_RESULT_TARGET_CHARS,
@@ -65,16 +70,81 @@ export function hmacToolArgs(args: unknown): string {
     .digest("hex");
 }
 
+const DETAIL_STRING_MAX_CHARS = 200;
+const DETAIL_ARRAY_MAX_ITEMS = 50;
+const EMAIL_PATTERN = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+
+export function isSafeDetailString(value: string): boolean {
+  if (value.length > DETAIL_STRING_MAX_CHARS || EMAIL_PATTERN.test(value)) {
+    return false;
+  }
+  return !FORBIDDEN_OUTPUT_PATTERNS.some((p) =>
+    typeof p === "string" ? value.includes(p) : p.test(value)
+  );
+}
+
+function isSafeDetailScalar(value: unknown): value is string | number {
+  if (typeof value === "string") {
+    return isSafeDetailString(value);
+  }
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isSafeDetailValue(value: unknown): boolean {
+  if (value === null || typeof value === "boolean") {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return (
+      value.length <= DETAIL_ARRAY_MAX_ITEMS && value.every(isSafeDetailScalar)
+    );
+  }
+  return isSafeDetailScalar(value);
+}
+
+/** Keeps only allowlisted keys with small, non-sensitive values. Everything
+ * else is dropped; only the dropped key's name is logged, never its value.
+ * Returns undefined when nothing is left. */
+export function sanitizeErrorDetails(
+  details: McpErrorDetails | undefined,
+  requestId: string
+): Record<string, unknown> | undefined {
+  if (!details || typeof details !== "object") {
+    return;
+  }
+  const allowed: readonly string[] = MCP_ERROR_DETAIL_KEYS;
+  const kept: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(details)) {
+    if (value === undefined) {
+      continue;
+    }
+    if (allowed.includes(key) && isSafeDetailValue(value)) {
+      kept[key] = value;
+    } else {
+      console.warn(
+        `[mcp] error_detail_dropped key=${key.slice(0, 60)} ref=${requestId}`
+      );
+    }
+  }
+  return Object.keys(kept).length > 0 ? kept : undefined;
+}
+
+/** The one place an error result is built. The text block is exactly
+ * `JSON.stringify(structuredContent)`: clients such as Claude Code pass only
+ * the text to the model, so the code and details must be in it. */
 function errorResult(
   code: McpErrorCode,
   message: string,
-  details?: Record<string, unknown>
+  requestId: string,
+  details?: McpErrorDetails
 ): CallToolResult {
+  const safe = sanitizeErrorDetails(details, requestId);
+  const structuredContent = {
+    error: { code, message, ...(safe ? { details: safe } : {}) },
+  };
   return {
-    content: [{ type: "text", text: message }],
-    structuredContent: {
-      error: { code, message, ...(details ? { details } : {}) },
-    },
+    content: [{ type: "text", text: JSON.stringify(structuredContent) }],
+    structuredContent,
     isError: true,
   };
 }
@@ -162,7 +232,8 @@ export async function safeHandler<T extends Record<string, unknown>>(
     await recordCall(ctx, { status: "failed", errorCode: "invalid_input" }, ms);
     return errorResult(
       "invalid_input",
-      "This tool is not available to this token."
+      "This tool is not available to this token.",
+      requestId
     );
   }
 
@@ -203,7 +274,7 @@ export async function safeHandler<T extends Record<string, unknown>>(
         ms,
         target
       );
-      return errorResult(error.code, error.message, error.details);
+      return errorResult(error.code, error.message, requestId, error.details);
     }
     // The detail goes to the server log only, never into the result.
     console.error(line("internal", ms), describeErrorForLog(error));
@@ -213,6 +284,10 @@ export async function safeHandler<T extends Record<string, unknown>>(
       ms,
       target
     );
-    return errorResult("internal", `Internal error (ref: ${requestId})`);
+    return errorResult(
+      "internal",
+      `Internal error (ref: ${requestId})`,
+      requestId
+    );
   }
 }

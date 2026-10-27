@@ -1,6 +1,8 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { ticketReplyDrafts } from "@/db/schema/reply-drafts";
+import { tickets } from "@/db/schema/tickets";
 import { db } from "@/lib/db";
+import { isRichTextEmpty } from "@/lib/rich-text";
 
 export interface ReplyDraft {
   content: string;
@@ -59,4 +61,57 @@ export async function deleteReplyDraft(ticketId: string, userId: string) {
         eq(ticketReplyDrafts.userId, userId)
       )
     );
+}
+
+export type SaveReplyDraftResult =
+  | { status: "cleared" }
+  | { status: "not_found" }
+  | { status: "saved"; updatedAt: Date };
+
+/** Upserts the caller's own reply draft. An empty draft deletes the row
+ * instead (before any ticket-existence check), so clearing the composer also
+ * clears the list's "Draft" marker. */
+export async function saveReplyDraft({
+  ticketId,
+  userId,
+  content,
+  isInternal,
+  now = new Date(),
+}: {
+  ticketId: string;
+  userId: string;
+  content: string;
+  isInternal: boolean;
+  now?: Date;
+}): Promise<SaveReplyDraftResult> {
+  if (isRichTextEmpty(content)) {
+    await deleteReplyDraft(ticketId, userId);
+    return { status: "cleared" };
+  }
+
+  const [ticket] = await db
+    .select({ id: tickets.id })
+    .from(tickets)
+    .where(eq(tickets.id, ticketId))
+    .limit(1);
+  if (!ticket) {
+    return { status: "not_found" };
+  }
+
+  await db
+    .insert(ticketReplyDrafts)
+    .values({
+      ticketId,
+      userId,
+      content,
+      isInternal,
+      createdAt: now,
+      updatedAt: now,
+    })
+    .onConflictDoUpdate({
+      target: [ticketReplyDrafts.ticketId, ticketReplyDrafts.userId],
+      set: { content, isInternal, updatedAt: now },
+    });
+
+  return { status: "saved", updatedAt: now };
 }

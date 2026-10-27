@@ -1,12 +1,10 @@
-import { createId } from "@paralleldrive/cuid2";
-import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { ticketActivity, tickets, ticketTags } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { getOrCreateTagId, getTicketTags, normalizeTagName } from "@/lib/tags";
+import { normalizeTagName } from "@/lib/tags";
 import { resolveMergedTicketId } from "@/lib/tickets/merge";
+import { addTagToTicket } from "@/lib/tickets/services/tags";
+import type { ServiceActor } from "@/lib/tickets/services/types";
 
 const MAX_TAG_LENGTH = 50;
 
@@ -52,42 +50,18 @@ export async function POST(
     );
   }
 
-  const [ticket] = await db
-    .select({ id: tickets.id })
-    .from(tickets)
-    .where(eq(tickets.id, ticketId))
-    .limit(1);
-  if (!ticket) {
+  const result = await addTagToTicket({
+    ticketId,
+    actor: {
+      id: session.user.id,
+      name: session.user.name ?? session.user.email,
+      role: session.user.role as ServiceActor["role"],
+    },
+    name,
+  });
+  if (result.status === "not_found") {
     return NextResponse.json({ error: "Not found." }, { status: 404 });
   }
 
-  const tagId = await getOrCreateTagId(name);
-
-  const [existingLink] = await db
-    .select({ id: ticketTags.id })
-    .from(ticketTags)
-    .where(and(eq(ticketTags.ticketId, ticketId), eq(ticketTags.tagId, tagId)))
-    .limit(1);
-
-  if (!existingLink) {
-    await db.insert(ticketTags).values({
-      id: createId(),
-      ticketId,
-      tagId,
-    });
-
-    await db.insert(ticketActivity).values({
-      id: createId(),
-      ticketId,
-      actorId: session.user.id,
-      actorName: session.user.name ?? session.user.email,
-      actorRole: session.user.role,
-      action: "tag_added",
-      metadata: { tag: name },
-      createdAt: new Date(),
-    });
-  }
-
-  const tags = await getTicketTags(ticketId);
-  return NextResponse.json(tags);
+  return NextResponse.json(result.tags);
 }

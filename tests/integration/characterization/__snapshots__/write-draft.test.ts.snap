@@ -1,0 +1,346 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > DELETE > discards only the caller's own draft 1`] = `
+{
+  "activity": [],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "draft": null,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [
+    {
+      "id": "tt-102-billing",
+      "name": "billing",
+      "tagId": "tag-billing",
+      "ticketId": "t-102",
+    },
+  ],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": true,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-13T09:00:00.000Z,
+      "customerId": "cust-zed",
+      "customerToken": "token-102",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Refund 100% please"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-102",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "normal",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Refund 100% please",
+      "ticketNumber": 102,
+      "updatedAt": 2026-03-14T09:00:00.000Z,
+      "waitingSince": 2026-03-13T09:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > DELETE > is idempotent: no draft -> still 200 {draft:null}; unknown ticket too 1`] = `
+{
+  "body": {
+    "draft": null,
+  },
+  "status": 200,
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > DELETE > merged shell -> 409; no session -> 401 1`] = `
+{
+  "anon": {
+    "body": {
+      "error": "Unauthorized.",
+    },
+    "status": 401,
+  },
+  "merged": {
+    "body": {
+      "error": "This ticket was merged into another ticket, so it can't be changed. Refresh the page to open the ticket it was merged into.",
+    },
+    "status": 409,
+  },
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > PUT > creates the caller's draft (other agents' drafts on the ticket untouched) 1`] = `
+{
+  "activity": [],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"my new draft"}]}]}",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "userId": "user-alice",
+    },
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "draft": {
+        "updatedAt": "2026-03-15T12:00:00.000Z",
+      },
+    },
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": true,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T09:00:00.000Z,
+      "waitingSince": 2026-03-15T08:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > PUT > empty content deletes the caller's draft and answers {draft:null} 1`] = `
+{
+  "activity": [],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "draft": null,
+    },
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [
+    {
+      "id": "tt-102-billing",
+      "name": "billing",
+      "tagId": "tag-billing",
+      "ticketId": "t-102",
+    },
+  ],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": true,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-13T09:00:00.000Z,
+      "customerId": "cust-zed",
+      "customerToken": "token-102",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Refund 100% please"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-102",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "normal",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Refund 100% please",
+      "ticketNumber": 102,
+      "updatedAt": 2026-03-14T09:00:00.000Z,
+      "waitingSince": 2026-03-13T09:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > PUT > empty content for an unknown ticket is still 200 {draft:null} (existence is checked only for non-empty drafts) 1`] = `
+{
+  "empty": {
+    "body": {
+      "draft": null,
+    },
+    "status": 200,
+  },
+  "nonEmpty": {
+    "body": {
+      "error": "Ticket not found.",
+    },
+    "status": 404,
+  },
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > PUT > invalid body -> 400 and nothing written 1`] = `
+{
+  "emptyObject": {
+    "body": {
+      "error": "Invalid draft.",
+    },
+    "status": 400,
+  },
+  "missingContent": {
+    "body": {
+      "error": "Invalid draft.",
+    },
+    "status": 400,
+  },
+  "missingIsInternal": {
+    "body": {
+      "error": "Invalid draft.",
+    },
+    "status": 400,
+  },
+  "notJson": {
+    "body": {
+      "error": "Invalid request.",
+    },
+    "status": 400,
+  },
+  "numberContent": {
+    "body": {
+      "error": "Invalid draft.",
+    },
+    "status": 400,
+  },
+  "stringIsInternal": {
+    "body": {
+      "error": "Invalid draft.",
+    },
+    "status": 400,
+  },
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > PUT > merged shell -> 409 (not forwarded), even before the body is validated 1`] = `
+{
+  "body": {
+    "error": "This ticket was merged into another ticket, so it can't be changed. Refresh the page to open the ticket it was merged into.",
+  },
+  "status": 409,
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > PUT > no session / plain user -> 401 1`] = `
+{
+  "body": {
+    "error": "Unauthorized.",
+  },
+  "status": 401,
+}
+`;
+
+exports[`PUT/DELETE /api/tickets/[id]/draft (characterization) > PUT > updates an existing draft in place: content + isInternal replaced, createdAt kept 1`] = `
+{
+  "activity": [],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"edited draft"}]}]}",
+      "createdAt": 2026-03-14T10:00:00.000Z,
+      "isInternal": true,
+      "ticketId": "t-102",
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "userId": "user-alice",
+    },
+  ],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "draft": {
+        "updatedAt": "2026-03-15T12:00:00.000Z",
+      },
+    },
+    "status": 200,
+  },
+  "ticketDiff": {},
+  "ticketTags": [
+    {
+      "id": "tt-102-billing",
+      "name": "billing",
+      "tagId": "tag-billing",
+      "ticketId": "t-102",
+    },
+  ],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": true,
+      "category": "billing",
+      "closedAt": null,
+      "createdAt": 2026-03-13T09:00:00.000Z,
+      "customerId": "cust-zed",
+      "customerToken": "token-102",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Refund 100% please"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-102",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "normal",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Refund 100% please",
+      "ticketNumber": 102,
+      "updatedAt": 2026-03-14T09:00:00.000Z,
+      "waitingSince": 2026-03-13T09:00:00.000Z,
+    },
+  ],
+}
+`;

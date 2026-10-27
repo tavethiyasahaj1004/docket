@@ -9,6 +9,11 @@ export const MCP_RESULT_TARGET_CHARS = 30_000;
 export const MCP_TAG_LIMIT = 200;
 export const MCP_INSTRUCTIONS_MAX_CHARS = 2000;
 export const MCP_TOOL_CALL_RETENTION_DAYS = 30;
+/** How long a write call holds its claim before another caller may take it
+ * over (MCP_SECURITY.md 7.2). */
+export const MCP_WRITE_LEASE_MS = 60_000;
+/** A pending write call older than this is settled by the daily sweeper. */
+export const MCP_PENDING_SWEEP_AFTER_MS = 60 * 60 * 1000;
 
 export const MCP_RATE_LIMITS = {
   /** Every authenticated call, per user. */

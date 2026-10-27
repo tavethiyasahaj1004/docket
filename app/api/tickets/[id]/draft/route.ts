@@ -2,12 +2,11 @@ import { eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
-import { ticketReplyDrafts, tickets } from "@/db/schema";
+import { tickets } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { isRichTextEmpty } from "@/lib/rich-text";
 import { MERGED_TICKET_CHANGE_MESSAGE } from "@/lib/tickets/merge";
-import { deleteReplyDraft } from "@/lib/tickets/reply-drafts";
+import { deleteReplyDraft, saveReplyDraft } from "@/lib/tickets/reply-drafts";
 
 // Generous ceiling for a Tiptap JSON reply — only here to stop the autosave
 // endpoint from being used to park arbitrarily large blobs in the DB.
@@ -77,41 +76,21 @@ export async function PUT(
     return NextResponse.json({ error: "Invalid draft." }, { status: 400 });
   }
 
-  if (isRichTextEmpty(body.content)) {
-    await deleteReplyDraft(ticketId, session.user.id);
+  const result = await saveReplyDraft({
+    ticketId,
+    userId: session.user.id,
+    content: body.content,
+    isInternal: body.isInternal,
+  });
+  if (result.status === "cleared") {
     return NextResponse.json({ draft: null });
   }
-
-  const [ticket] = await db
-    .select({ id: tickets.id })
-    .from(tickets)
-    .where(eq(tickets.id, ticketId))
-    .limit(1);
-  if (!ticket) {
+  if (result.status === "not_found") {
     return NextResponse.json({ error: "Ticket not found." }, { status: 404 });
   }
-
-  const now = new Date();
-  await db
-    .insert(ticketReplyDrafts)
-    .values({
-      ticketId,
-      userId: session.user.id,
-      content: body.content,
-      isInternal: body.isInternal,
-      createdAt: now,
-      updatedAt: now,
-    })
-    .onConflictDoUpdate({
-      target: [ticketReplyDrafts.ticketId, ticketReplyDrafts.userId],
-      set: {
-        content: body.content,
-        isInternal: body.isInternal,
-        updatedAt: now,
-      },
-    });
-
-  return NextResponse.json({ draft: { updatedAt: now.toISOString() } });
+  return NextResponse.json({
+    draft: { updatedAt: result.updatedAt.toISOString() },
+  });
 }
 
 // DELETE — discard the caller's own draft for this ticket.

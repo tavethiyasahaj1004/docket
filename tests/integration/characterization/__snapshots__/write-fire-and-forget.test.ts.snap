@@ -1,0 +1,679 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`email enqueue is fire-and-forget (characterization) > agent close: the email job enqueue NEVER resolves -> still 200 within 2s, webhook job enqueued 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_closed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "closed",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "email.send",
+      "payload": {
+        "outboxId": "<id:4>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.closed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T06:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "closed",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.closed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [
+    {
+      "attemptCount": 0,
+      "htmlLength": 4786,
+      "id": "<id:4>",
+      "status": "queued",
+      "subject": "[#101] Your ticket has been closed — Cannot log in",
+      "text": "Hi Ann Adams,
+
+Your support ticket #101 has been closed.
+
+Subject: Cannot log in
+
+If you still need help, you can reopen the ticket here: http://localhost:3000/ticket/t-101?token=token-101
+
+— Docket",
+      "to": "ann@example.test",
+    },
+  ],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "closed",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "closedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "slaActiveSeconds": {
+        "from": 0,
+        "to": 14400,
+      },
+      "status": {
+        "from": "open",
+        "to": "closed",
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": 2026-03-15T08:00:00.000Z,
+        "to": null,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": 2026-03-15T12:00:00.000Z,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 14400,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`email enqueue is fire-and-forget (characterization) > agent close: the email job enqueue REJECTS -> still 200, console.error('[ticket.closed email]', err) 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_closed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "closed",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "email.send",
+      "payload": {
+        "outboxId": "<id:4>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.closed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T06:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "closed",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.closed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [
+    {
+      "attemptCount": 0,
+      "htmlLength": 4786,
+      "id": "<id:4>",
+      "status": "queued",
+      "subject": "[#101] Your ticket has been closed — Cannot log in",
+      "text": "Hi Ann Adams,
+
+Your support ticket #101 has been closed.
+
+Subject: Cannot log in
+
+If you still need help, you can reopen the ticket here: http://localhost:3000/ticket/t-101?token=token-101
+
+— Docket",
+      "to": "ann@example.test",
+    },
+  ],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "closed",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "closedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "slaActiveSeconds": {
+        "from": 0,
+        "to": 14400,
+      },
+      "status": {
+        "from": "open",
+        "to": "closed",
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": 2026-03-15T08:00:00.000Z,
+        "to": null,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": 2026-03-15T12:00:00.000Z,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 14400,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`email enqueue is fire-and-forget (characterization) > agent reply: the email job enqueue NEVER resolves -> still 201 within 2s, webhook job enqueued, outbox row left queued 1`] = `
+{
+  "activity": [
+    {
+      "action": "comment_added",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:2>",
+      "metadata": null,
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "realtime.publishTicketCommentCreated",
+      "ticketId": "t-101",
+    },
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:3>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "email.send",
+      "payload": {
+        "outboxId": "<id:5>",
+      },
+    },
+  ],
+  "comments": [
+    {
+      "authorId": "user-alice",
+      "authorName": "Alice Agent",
+      "authorRole": "agent",
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Thanks, on it."}]}]}",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+    },
+  ],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.replied",
+      "id": "<id:3>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "comment": {
+            "authorName": "Alice Agent",
+            "authorRole": "agent",
+            "content": "Thanks, on it.",
+            "createdAt": "2026-03-15T12:00:00.000Z",
+          },
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T12:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "open",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.replied",
+        "id": "evt_<id:4>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [
+    {
+      "attemptCount": 0,
+      "htmlLength": 4941,
+      "id": "<id:5>",
+      "status": "queued",
+      "subject": "[#101] New reply on your ticket — Cannot log in",
+      "text": "Hi Ann Adams,
+
+Alice Agent from the Docket support team replied to your ticket #101.
+
+Subject: Cannot log in
+
+---
+Thanks, on it.
+---
+
+View your ticket and reply: http://localhost:3000/ticket/t-101?token=token-101
+
+— Docket",
+      "to": "ann@example.test",
+    },
+  ],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "id": "<id:1>",
+    },
+    "status": 201,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "firstRespondedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "slaActiveSeconds": {
+        "from": 0,
+        "to": 14400,
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": 2026-03-15T08:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": 2026-03-15T12:00:00.000Z,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 14400,
+      "source": "portal",
+      "status": "open",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": 2026-03-15T12:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`email enqueue is fire-and-forget (characterization) > agent reply: the email job enqueue REJECTS -> still 201, console.error('[ticket.replied email]', err) 1`] = `
+{
+  "activity": [
+    {
+      "action": "comment_added",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:2>",
+      "metadata": null,
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "realtime.publishTicketCommentCreated",
+      "ticketId": "t-101",
+    },
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:3>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "email.send",
+      "payload": {
+        "outboxId": "<id:5>",
+      },
+    },
+  ],
+  "comments": [
+    {
+      "authorId": "user-alice",
+      "authorName": "Alice Agent",
+      "authorRole": "agent",
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Thanks, on it."}]}]}",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+    },
+  ],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.replied",
+      "id": "<id:3>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "comment": {
+            "authorName": "Alice Agent",
+            "authorRole": "agent",
+            "content": "Thanks, on it.",
+            "createdAt": "2026-03-15T12:00:00.000Z",
+          },
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T12:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "open",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.replied",
+        "id": "evt_<id:4>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [
+    {
+      "attemptCount": 0,
+      "htmlLength": 4941,
+      "id": "<id:5>",
+      "status": "queued",
+      "subject": "[#101] New reply on your ticket — Cannot log in",
+      "text": "Hi Ann Adams,
+
+Alice Agent from the Docket support team replied to your ticket #101.
+
+Subject: Cannot log in
+
+---
+Thanks, on it.
+---
+
+View your ticket and reply: http://localhost:3000/ticket/t-101?token=token-101
+
+— Docket",
+      "to": "ann@example.test",
+    },
+  ],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "id": "<id:1>",
+    },
+    "status": 201,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "firstRespondedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "slaActiveSeconds": {
+        "from": 0,
+        "to": 14400,
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": 2026-03-15T08:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": 2026-03-15T12:00:00.000Z,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 14400,
+      "source": "portal",
+      "status": "open",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": 2026-03-15T12:00:00.000Z,
+    },
+  ],
+}
+`;

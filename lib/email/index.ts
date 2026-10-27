@@ -16,11 +16,22 @@ export interface SendEmailOptions {
   to: string;
 }
 
-export async function enqueueEmail({ category, ...payload }: SendEmailOptions) {
+export interface EnqueuedEmail {
+  outboxId: string;
+}
+
+/** Queues an email. Resolves `{ outboxId }` once queued, or `null` when ticket
+ * notifications are switched off (nothing was written). If the queue send
+ * fails AFTER the outbox row exists, the same error is rethrown with the row's
+ * id attached — read it back with `getQueuedOutboxId`. */
+export async function enqueueEmail({
+  category,
+  ...payload
+}: SendEmailOptions): Promise<EnqueuedEmail | null> {
   if (category === "ticket") {
     const settings = await getPlatformSettings();
     if (!settings.ticketEmailNotificationsEnabled) {
-      return;
+      return null;
     }
   }
 
@@ -39,7 +50,46 @@ export async function enqueueEmail({ category, ...payload }: SendEmailOptions) {
     })
     .returning({ id: emailOutbox.id });
 
-  await enqueueJob(JOB_NAMES.EMAIL_SEND, { outboxId: row.id });
+  try {
+    await enqueueJob(JOB_NAMES.EMAIL_SEND, { outboxId: row.id });
+  } catch (err) {
+    throw attachOutboxId(err, row.id);
+  }
+  return { outboxId: row.id };
+}
+
+function tagWithOutboxId<T extends object>(target: T, outboxId: string): T {
+  // Non-enumerable, so logging the error looks exactly as it did before.
+  Object.defineProperty(target, "outboxId", {
+    configurable: true,
+    enumerable: false,
+    value: outboxId,
+  });
+  return target;
+}
+
+/** Tags a queue-send failure with the outbox row that was already written. The
+ * original error object is rethrown (same identity) whenever it can carry the
+ * property; a non-object throw is wrapped in an Error with `cause`. */
+function attachOutboxId(err: unknown, outboxId: string): unknown {
+  if (err !== null && typeof err === "object") {
+    try {
+      return tagWithOutboxId(err, outboxId);
+    } catch {
+      // Frozen/sealed object: wrap it so the id is not lost.
+    }
+  }
+  return tagWithOutboxId(new Error(String(err), { cause: err }), outboxId);
+}
+
+/** The outbox row id attached to a failed `enqueueEmail`, or null when the
+ * failure happened before any row was written. */
+export function getQueuedOutboxId(err: unknown): string | null {
+  if (err === null || typeof err !== "object") {
+    return null;
+  }
+  const id = (err as { outboxId?: unknown }).outboxId;
+  return typeof id === "string" ? id : null;
 }
 
 function logEmailLinks({ to, subject, html, text }: SendEmailOptions) {

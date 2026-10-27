@@ -1,0 +1,1370 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > close > a session beats a token on close (opposite of /comments): the actor is the agent 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_closed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "closed",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "email.send",
+      "payload": {
+        "outboxId": "<id:4>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.closed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T06:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "closed",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.closed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [
+    {
+      "attemptCount": 0,
+      "htmlLength": 4786,
+      "id": "<id:4>",
+      "status": "queued",
+      "subject": "[#101] Your ticket has been closed — Cannot log in",
+      "text": "Hi Ann Adams,
+
+Your support ticket #101 has been closed.
+
+Subject: Cannot log in
+
+If you still need help, you can reopen the ticket here: http://localhost:3000/ticket/t-101?token=token-101
+
+— Docket",
+      "to": "ann@example.test",
+    },
+  ],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "closed",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "closedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "slaActiveSeconds": {
+        "from": 0,
+        "to": 14400,
+      },
+      "status": {
+        "from": "open",
+        "to": "closed",
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": 2026-03-15T08:00:00.000Z,
+        "to": null,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": 2026-03-15T12:00:00.000Z,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 14400,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > close > agent closes an open awaiting ticket: status, closedAt, flags, SLA, activity, webhook, email 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_closed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "closed",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "email.send",
+      "payload": {
+        "outboxId": "<id:4>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.closed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T06:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "closed",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.closed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [
+    {
+      "attemptCount": 0,
+      "htmlLength": 4786,
+      "id": "<id:4>",
+      "status": "queued",
+      "subject": "[#101] Your ticket has been closed — Cannot log in",
+      "text": "Hi Ann Adams,
+
+Your support ticket #101 has been closed.
+
+Subject: Cannot log in
+
+If you still need help, you can reopen the ticket here: http://localhost:3000/ticket/t-101?token=token-101
+
+— Docket",
+      "to": "ann@example.test",
+    },
+  ],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "closed",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "closedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "slaActiveSeconds": {
+        "from": 0,
+        "to": 14400,
+      },
+      "status": {
+        "from": "open",
+        "to": "closed",
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": 2026-03-15T08:00:00.000Z,
+        "to": null,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": 2026-03-15T12:00:00.000Z,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 14400,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > close > agent closes an open ticket that was not awaiting (no SLA span to flush) 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_closed",
+      "actorId": "user-bob",
+      "actorName": "Bob Admin",
+      "actorRole": "admin",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "closed",
+      },
+      "ticketId": "t-104",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "email.send",
+      "payload": {
+        "outboxId": "<id:4>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-104",
+      "entityType": "ticket",
+      "event": "ticket.closed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "billing",
+            "createdAt": "2026-03-08T10:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-104",
+            "priority": "low",
+            "status": "closed",
+            "subject": "Order 1005 delayed",
+            "ticketNumber": 104,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.closed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [
+    {
+      "attemptCount": 0,
+      "htmlLength": 4772,
+      "id": "<id:4>",
+      "status": "queued",
+      "subject": "[#104] Your ticket has been closed — Order 1005 delayed",
+      "text": "Hi Una Under_score,
+
+Your support ticket #104 has been closed.
+
+Subject: Order 1005 delayed
+
+If you still need help, you can reopen the ticket here: http://localhost:3000/ticket/t-104?token=token-104
+
+— Docket",
+      "to": "una_under@example.test",
+    },
+  ],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "closed",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-104": {
+      "closedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "status": {
+        "from": "open",
+        "to": "closed",
+      },
+      "updatedAt": {
+        "from": 2026-03-08T11:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "billing",
+      "closedAt": 2026-03-15T12:00:00.000Z,
+      "createdAt": 2026-03-08T10:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-104",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Order 1005 delayed"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-104",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Order 1005 delayed",
+      "ticketNumber": 104,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > close > customer closes through the portal token: actor is the customer, same webhook + email 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_closed",
+      "actorId": null,
+      "actorName": "Ann Adams",
+      "actorRole": "customer",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "closed",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+    {
+      "call": "enqueueJob",
+      "job": "email.send",
+      "payload": {
+        "outboxId": "<id:4>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.closed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T06:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "closed",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.closed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [
+    {
+      "attemptCount": 0,
+      "htmlLength": 4786,
+      "id": "<id:4>",
+      "status": "queued",
+      "subject": "[#101] Your ticket has been closed — Cannot log in",
+      "text": "Hi Ann Adams,
+
+Your support ticket #101 has been closed.
+
+Subject: Cannot log in
+
+If you still need help, you can reopen the ticket here: http://localhost:3000/ticket/t-101?token=token-101
+
+— Docket",
+      "to": "ann@example.test",
+    },
+  ],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "closed",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "closedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "slaActiveSeconds": {
+        "from": 0,
+        "to": 14400,
+      },
+      "status": {
+        "from": "open",
+        "to": "closed",
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": 2026-03-15T08:00:00.000Z,
+        "to": null,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": 2026-03-15T12:00:00.000Z,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 14400,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > close > customer-token errors: wrong token 404, unknown id 404, closed 400, merged shell 409 (not forwarded) 1`] = `
+{
+  "closed": {
+    "body": {
+      "error": "Ticket is already closed.",
+    },
+    "status": 400,
+  },
+  "merged": {
+    "body": {
+      "error": "This ticket was merged into another ticket, so it can't be changed. Refresh the page to open the ticket it was merged into.",
+    },
+    "status": 409,
+  },
+  "unknown": {
+    "body": {
+      "error": "Ticket not found.",
+    },
+    "status": 404,
+  },
+  "wrong": {
+    "body": {
+      "error": "Ticket not found.",
+    },
+    "status": 404,
+  },
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > close > errors: already closed 400, merged 409, unknown 404, no auth 401 1`] = `
+{
+  "already": {
+    "activity": [],
+    "attachments": [],
+    "calls": [],
+    "comments": [],
+    "deliveries": [],
+    "drafts": [],
+    "emails": [],
+    "newTags": [],
+    "notifications": [],
+    "response": {
+      "body": {
+        "error": "Ticket is already closed.",
+      },
+      "status": 400,
+    },
+    "ticketDiff": {},
+    "ticketTags": [],
+    "tickets": [
+      {
+        "apiKeyId": null,
+        "assignedAgentId": null,
+        "awaitingReply": false,
+        "category": "issue",
+        "closedAt": 2026-01-05T12:00:00.000Z,
+        "createdAt": 2026-01-05T09:00:00.000Z,
+        "customerId": "cust-pat",
+        "customerToken": "token-108",
+        "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Old issue resolved"}]}]}",
+        "firstRespondedAt": null,
+        "id": "t-108",
+        "mergedAt": null,
+        "mergedIntoTicketId": null,
+        "pendingReplies": 0,
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "source": "portal",
+        "status": "closed",
+        "subject": "Old issue resolved",
+        "ticketNumber": 108,
+        "updatedAt": 2026-01-05T12:00:00.000Z,
+        "waitingSince": null,
+      },
+    ],
+  },
+  "anon": {
+    "body": {
+      "error": "Unauthorized.",
+    },
+    "status": 401,
+  },
+  "anonUnknown": {
+    "body": {
+      "error": "Unauthorized.",
+    },
+    "status": 401,
+  },
+  "merged": {
+    "body": {
+      "error": "This ticket was merged into another ticket, so it can't be changed. Refresh the page to open the ticket it was merged into.",
+    },
+    "status": 409,
+  },
+  "unknown": {
+    "body": {
+      "error": "Ticket not found.",
+    },
+    "status": 404,
+  },
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > close > no closed status configured -> 400 and nothing written 1`] = `
+{
+  "activity": [],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "error": "No closed status is configured.",
+    },
+    "status": 400,
+  },
+  "ticketDiff": {},
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": true,
+      "category": "bug",
+      "closedAt": null,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T09:00:00.000Z,
+      "waitingSince": 2026-03-15T08:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > close > notifications OFF: still closes and fires the webhook, but zero outbox rows 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_closed",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "open",
+        "to": "closed",
+      },
+      "ticketId": "t-101",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-101",
+      "entityType": "ticket",
+      "event": "ticket.closed",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "bug",
+            "createdAt": "2026-03-15T06:00:00.000Z",
+            "customerEmail": "ann@example.test",
+            "customerName": "Ann Adams",
+            "id": "t-101",
+            "priority": "high",
+            "status": "closed",
+            "subject": "Cannot log in",
+            "ticketNumber": 101,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.closed",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [
+    {
+      "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"bob draft on 101"}]}]}",
+      "createdAt": 2026-03-15T08:00:00.000Z,
+      "isInternal": false,
+      "ticketId": "t-101",
+      "updatedAt": 2026-03-15T08:00:00.000Z,
+      "userId": "user-bob",
+    },
+  ],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "closed",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-101": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "closedAt": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "slaActiveSeconds": {
+        "from": 0,
+        "to": 14400,
+      },
+      "status": {
+        "from": "open",
+        "to": "closed",
+      },
+      "updatedAt": {
+        "from": 2026-03-15T09:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": 2026-03-15T08:00:00.000Z,
+        "to": null,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "bug",
+      "closedAt": 2026-03-15T12:00:00.000Z,
+      "createdAt": 2026-03-15T06:00:00.000Z,
+      "customerId": "cust-ann",
+      "customerToken": "token-101",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-101",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "high",
+      "slaActiveSeconds": 14400,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Cannot log in",
+      "ticketNumber": 101,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > reopen > agent reopens a closed ticket that still had awaitingReply=true: it is cleared 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_reopened",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "closed",
+        "to": "open",
+      },
+      "ticketId": "t-107",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-107",
+      "entityType": "ticket",
+      "event": "ticket.reopened",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "general_query",
+            "createdAt": "2026-03-03T09:00:00.000Z",
+            "customerEmail": "una_under@example.test",
+            "customerName": "Una Under_score",
+            "id": "t-107",
+            "priority": "normal",
+            "status": "open",
+            "subject": "General question",
+            "ticketNumber": 107,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.reopened",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "open",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-107": {
+      "awaitingReply": {
+        "from": true,
+        "to": false,
+      },
+      "closedAt": {
+        "from": 2026-03-04T11:00:00.000Z,
+        "to": null,
+      },
+      "status": {
+        "from": "closed",
+        "to": "open",
+      },
+      "updatedAt": {
+        "from": 2026-03-04T11:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": "user-alice",
+      "awaitingReply": false,
+      "category": "general_query",
+      "closedAt": null,
+      "createdAt": 2026-03-03T09:00:00.000Z,
+      "customerId": "cust-una",
+      "customerToken": "token-107",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of General question"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-107",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "normal",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "General question",
+      "ticketNumber": 107,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": 2026-03-15T12:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > reopen > agent reopens a closed ticket: default status, flags cleared, SLA restarted, webhook, NO email 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_reopened",
+      "actorId": "user-alice",
+      "actorName": "Alice Agent",
+      "actorRole": "agent",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "closed",
+        "to": "open",
+      },
+      "ticketId": "t-108",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-108",
+      "entityType": "ticket",
+      "event": "ticket.reopened",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "issue",
+            "createdAt": "2026-01-05T09:00:00.000Z",
+            "customerEmail": "pat@example.test",
+            "customerName": "Pat Percent",
+            "id": "t-108",
+            "priority": "low",
+            "status": "open",
+            "subject": "Old issue resolved",
+            "ticketNumber": 108,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.reopened",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "open",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-108": {
+      "closedAt": {
+        "from": 2026-01-05T12:00:00.000Z,
+        "to": null,
+      },
+      "status": {
+        "from": "closed",
+        "to": "open",
+      },
+      "updatedAt": {
+        "from": 2026-01-05T12:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "issue",
+      "closedAt": null,
+      "createdAt": 2026-01-05T09:00:00.000Z,
+      "customerId": "cust-pat",
+      "customerToken": "token-108",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Old issue resolved"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-108",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Old issue resolved",
+      "ticketNumber": 108,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": 2026-03-15T12:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > reopen > customer reopens through the portal token: awaiting + pendingReplies=1, no agent notification 1`] = `
+{
+  "activity": [
+    {
+      "action": "ticket_reopened",
+      "actorId": null,
+      "actorName": "Pat Percent",
+      "actorRole": "customer",
+      "createdAt": 2026-03-15T12:00:00.000Z,
+      "id": "<id:1>",
+      "metadata": {
+        "from": "closed",
+        "to": "open",
+      },
+      "ticketId": "t-108",
+    },
+  ],
+  "attachments": [],
+  "calls": [
+    {
+      "call": "enqueueJob",
+      "job": "webhook.send",
+      "payload": {
+        "deliveryId": "<id:2>",
+      },
+    },
+  ],
+  "comments": [],
+  "deliveries": [
+    {
+      "attemptCount": 0,
+      "entityId": "t-108",
+      "entityType": "ticket",
+      "event": "ticket.reopened",
+      "id": "<id:2>",
+      "payload": {
+        "createdAt": "2026-03-15T12:00:00.000Z",
+        "data": {
+          "ticket": {
+            "category": "issue",
+            "createdAt": "2026-01-05T09:00:00.000Z",
+            "customerEmail": "pat@example.test",
+            "customerName": "Pat Percent",
+            "id": "t-108",
+            "priority": "low",
+            "status": "open",
+            "subject": "Old issue resolved",
+            "ticketNumber": 108,
+            "updatedAt": "2026-03-15T12:00:00.000Z",
+          },
+        },
+        "event": "ticket.reopened",
+        "id": "evt_<id:3>",
+      },
+      "status": "queued",
+      "webhookId": "wh-1",
+    },
+  ],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "status": "open",
+    },
+    "status": 200,
+  },
+  "ticketDiff": {
+    "t-108": {
+      "awaitingReply": {
+        "from": false,
+        "to": true,
+      },
+      "closedAt": {
+        "from": 2026-01-05T12:00:00.000Z,
+        "to": null,
+      },
+      "pendingReplies": {
+        "from": 0,
+        "to": 1,
+      },
+      "status": {
+        "from": "closed",
+        "to": "open",
+      },
+      "updatedAt": {
+        "from": 2026-01-05T12:00:00.000Z,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+      "waitingSince": {
+        "from": null,
+        "to": 2026-03-15T12:00:00.000Z,
+      },
+    },
+  },
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": true,
+      "category": "issue",
+      "closedAt": null,
+      "createdAt": 2026-01-05T09:00:00.000Z,
+      "customerId": "cust-pat",
+      "customerToken": "token-108",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Old issue resolved"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-108",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 1,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "open",
+      "subject": "Old issue resolved",
+      "ticketNumber": 108,
+      "updatedAt": 2026-03-15T12:00:00.000Z,
+      "waitingSince": 2026-03-15T12:00:00.000Z,
+    },
+  ],
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > reopen > errors: not closed 400, merged 409, unknown 404, no auth 401 1`] = `
+{
+  "anon": {
+    "body": {
+      "error": "Unauthorized.",
+    },
+    "status": 401,
+  },
+  "customerOpen": {
+    "body": {
+      "error": "Ticket is not closed.",
+    },
+    "status": 400,
+  },
+  "merged": {
+    "body": {
+      "error": "This ticket was merged into another ticket, so it can't be changed. Refresh the page to open the ticket it was merged into.",
+    },
+    "status": 409,
+  },
+  "open": {
+    "body": {
+      "error": "Ticket is not closed.",
+    },
+    "status": 400,
+  },
+  "unknown": {
+    "body": {
+      "error": "Ticket not found.",
+    },
+    "status": 404,
+  },
+  "wrongToken": {
+    "body": {
+      "error": "Ticket not found.",
+    },
+    "status": 404,
+  },
+}
+`;
+
+exports[`PATCH /api/tickets/[id]/close + /reopen (characterization) > reopen > no default status configured -> 400 and nothing written 1`] = `
+{
+  "activity": [],
+  "attachments": [],
+  "calls": [],
+  "comments": [],
+  "deliveries": [],
+  "drafts": [],
+  "emails": [],
+  "newTags": [],
+  "notifications": [],
+  "response": {
+    "body": {
+      "error": "No default status is configured.",
+    },
+    "status": 400,
+  },
+  "ticketDiff": {},
+  "ticketTags": [],
+  "tickets": [
+    {
+      "apiKeyId": null,
+      "assignedAgentId": null,
+      "awaitingReply": false,
+      "category": "issue",
+      "closedAt": 2026-01-05T12:00:00.000Z,
+      "createdAt": 2026-01-05T09:00:00.000Z,
+      "customerId": "cust-pat",
+      "customerToken": "token-108",
+      "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Old issue resolved"}]}]}",
+      "firstRespondedAt": null,
+      "id": "t-108",
+      "mergedAt": null,
+      "mergedIntoTicketId": null,
+      "pendingReplies": 0,
+      "priority": "low",
+      "slaActiveSeconds": 0,
+      "source": "portal",
+      "status": "closed",
+      "subject": "Old issue resolved",
+      "ticketNumber": 108,
+      "updatedAt": 2026-01-05T12:00:00.000Z,
+      "waitingSince": null,
+    },
+  ],
+}
+`;

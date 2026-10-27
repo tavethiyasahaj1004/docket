@@ -1643,6 +1643,50 @@ describe("every read tool", () => {
     }
   });
 
+  it("sends the serialized structuredContent as the text, for successes and errors", async () => {
+    // Claude Code passes only the text block to the model, so the text must be
+    // exactly JSON.stringify(structuredContent) whether the call worked or not.
+    const client = await agentClient(
+      ["tickets:read", "customers:read", "reports:read"],
+      BOB
+    );
+    const succeeding: [string, Record<string, unknown>][] = [
+      ["whoami", {}],
+      ["get_ticket_config", {}],
+      ["list_tickets", { pageSize: 5 }],
+      ["get_ticket", { ticket: 101 }],
+      ["get_ticket_thread", { ticket: 101 }],
+      ["get_customer", { customerId: CUSTOMERS.ann.id }],
+      ["list_agents", {}],
+      ["search_canned_responses", {}],
+      ["get_ticket_stats", {}],
+      ["get_report", { kind: "by_tag" }],
+    ];
+    // Only the tools that can fail inside their handler (not at the SDK's
+    // schema check, which answers with plain SDK text) are listed here.
+    const failing: [string, Record<string, unknown>, string][] = [
+      ["list_tickets", { status: ["nope"] }, "invalid_input"],
+      ["get_ticket", { ticket: 999_999 }, "not_found"],
+      ["get_ticket_thread", { ticket: 101, cursor: "x" }, "invalid_input"],
+      ["get_ticket_thread", { ticket: 999_999 }, "not_found"],
+      ["get_customer", {}, "invalid_input"],
+    ];
+    for (const [name, args] of succeeding) {
+      const r = await callTool(client, name, args);
+      expect(r.isError, `${name}: ${r.text.slice(0, 200)}`).toBe(false);
+      expect(r.text, name).toBe(JSON.stringify(r.data));
+    }
+    for (const [name, args, code] of failing) {
+      const r = await callTool(client, name, args);
+      expect(r.protocolError, name).toBeNull();
+      expect(r.errorCode, `${name}: ${r.text.slice(0, 200)}`).toBe(code);
+      expect(r.text, name).toBe(JSON.stringify(r.data));
+      expect(JSON.parse(r.text), name).toEqual({
+        error: { code, message: expect.any(String) },
+      });
+    }
+  });
+
   it("the ten-tool list matches the registry", async () => {
     const client = await agentClient(
       ["tickets:read", "customers:read", "reports:read"],

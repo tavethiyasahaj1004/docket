@@ -407,7 +407,7 @@ export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
             "401": { $ref: "#/components/responses/Unauthorized" },
             "404": {
               description:
-                "The attachment doesn't exist, doesn't belong to that ticket, or the underlying file is missing from storage.",
+                "The attachment doesn't exist, doesn't belong to that ticket, or the underlying file is missing from storage. Only the ticket's own attachments and those on public replies are served; any other attachment id gets this same response.",
               content: {
                 "application/json": {
                   schema: { $ref: "#/components/schemas/Error" },

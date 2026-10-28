@@ -14,6 +14,21 @@ export const API_ALLOWED_MIME_TYPES = new Set([
   "text/plain",
 ]);
 
+/** Whether the public API may serve an attachment: the ticket's own
+ * (description) files and those on public replies, the same set `GET
+ * /tickets/:id` and `GET /tickets/:id/comments` list. Keyed on the attachment's
+ * comment, so it holds wherever merge or split moves the file. A comment id
+ * whose comment wasn't found counts as hidden. */
+export function isApiVisibleAttachment(attachment: {
+  commentId: string | null;
+  commentIsInternal: boolean | null;
+}): boolean {
+  if (attachment.commentId === null) {
+    return true;
+  }
+  return attachment.commentIsInternal === false;
+}
+
 // Attachments arrive over JSON as base64 (the integrator's server already
 // holds the bytes and posts JSON, not multipart) — see docs/api.md.
 export interface Base64AttachmentInput {

@@ -9,6 +9,13 @@ Anything needing manual work on upgrade is called out under **Upgrade notes**.
 
 ## [Unreleased]
 
+### Security
+
+- **API attachment downloads match what the API lists.**
+  `GET /api/v1/tickets/:id/attachments/:attachmentId` now serves only a ticket's own attachments
+  and those on public replies, the files the `url` fields on `GET /tickets/:id` and
+  `GET /tickets/:id/comments` point to. Any other attachment id gets the same `404` as an unknown
+  one. Integrations that follow those `url` fields are unaffected.
 ## [0.8.0] - 2026-10-22
 
 ### Added

@@ -303,6 +303,9 @@ curl https://support.example.com/api/v1/tickets/cku1a2b3c4d5e6f/attachments/ckw3
 attachment's stored MIME type and `Content-Disposition: attachment` (so a
 browser hitting this URL directly downloads rather than navigates). `404`
 if the attachment doesn't exist or the underlying file is missing from storage.
+Only the attachments the API lists elsewhere are served: the ticket's own files and
+those on public replies (the files the `url` fields point to). Any other attachment
+id gets the same `404` as an unknown one.
 
 ## `GET /api/v1/tickets/:id/comments`
 

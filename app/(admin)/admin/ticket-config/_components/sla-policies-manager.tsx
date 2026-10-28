@@ -177,19 +177,19 @@ export function SlaPoliciesManager({
   const scopeIsAny = form.priority === ANY && form.category === ANY;
 
   return (
-    <section className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-5">
+    <section className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-foreground">
+          <h2 className="text-base font-semibold text-base-content">
             SLA Policies
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             Response and resolution targets, optionally scoped by priority
             and/or category. The most specific match wins.
           </p>
         </div>
         <Button
-          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md gap-1.5"
+          className="bg-primary hover:bg-primary/90 text-primary-content rounded-md gap-1.5"
           onClick={openAdd}
           size="sm"
         >
@@ -198,9 +198,9 @@ export function SlaPoliciesManager({
         </Button>
       </div>
 
-      <div className="divide-y divide-border/60">
+      <div className="divide-y divide-base-300/60">
         {initialPolicies.length === 0 && (
-          <p className="py-4 text-sm text-muted-foreground">
+          <p className="py-4 text-sm text-base-content-muted">
             No SLA policies configured yet.
           </p>
         )}
@@ -208,20 +208,20 @@ export function SlaPoliciesManager({
           <div className="flex items-center gap-3 py-3" key={p.id}>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-sm font-medium text-foreground">
+                <span className="text-sm font-medium text-base-content">
                   {p.name}
                 </span>
                 {p.isDefault && (
-                  <span className="text-xs bg-primary/10 text-foreground border border-primary/20 rounded px-1.5 py-0.5 font-medium">
+                  <span className="text-xs bg-primary/10 text-base-content border border-primary/20 rounded px-1.5 py-0.5 font-medium">
                     Default
                   </span>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-base-content-muted mt-0.5">
                 {scopeLabel(p, priorityMap, categoryMap)}
               </p>
             </div>
-            <div className="flex flex-col items-end gap-0.5 text-xs text-muted-foreground shrink-0">
+            <div className="flex flex-col items-end gap-0.5 text-xs text-base-content-muted shrink-0">
               <span>
                 First response: {formatDuration(p.firstResponseMinutes * 60)}
               </span>
@@ -234,7 +234,7 @@ export function SlaPoliciesManager({
             </div>
             <div className="flex gap-2 ml-2 shrink-0">
               <Button
-                className="h-8 border-border text-foreground hover:bg-accent rounded-md"
+                className="h-8 border-base-300 text-base-content hover:bg-base-300 rounded-md"
                 onClick={() => openEdit(p)}
                 size="sm"
                 variant="outline"
@@ -269,10 +269,10 @@ export function SlaPoliciesManager({
       >
         <DialogContent className="rounded-xl max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               {editTarget ? "Edit SLA Policy" : "Add SLA Policy"}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogDescription className="text-base-content-muted">
               {editTarget
                 ? "Update this policy's scope or targets."
                 : 'Create a new SLA policy. Leave priority/category as "Any" for a broader match.'}
@@ -281,7 +281,7 @@ export function SlaPoliciesManager({
 
           <div className="space-y-4 py-1">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-base-content-muted">
                 Name
               </Label>
               <Input
@@ -296,7 +296,7 @@ export function SlaPoliciesManager({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-base-content-muted">
                   Priority
                 </Label>
                 <Select
@@ -324,7 +324,7 @@ export function SlaPoliciesManager({
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-base-content-muted">
                   Category
                 </Label>
                 <Select
@@ -355,7 +355,7 @@ export function SlaPoliciesManager({
 
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-base-content-muted">
                   First response (min)
                 </Label>
                 <Input
@@ -372,7 +372,7 @@ export function SlaPoliciesManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-base-content-muted">
                   Next response (min)
                 </Label>
                 <Input
@@ -389,7 +389,7 @@ export function SlaPoliciesManager({
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-base-content-muted">
                   Resolution (min)
                 </Label>
                 <Input
@@ -417,7 +417,7 @@ export function SlaPoliciesManager({
                 }
               />
               <Label
-                className="text-sm text-foreground cursor-pointer"
+                className="text-sm text-base-content cursor-pointer"
                 htmlFor="sla-isDefault"
               >
                 Set as the global default (only available for Any/Any scope)
@@ -429,7 +429,7 @@ export function SlaPoliciesManager({
 
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={saving}
               onClick={() => {
                 setAddOpen(false);
@@ -440,7 +440,7 @@ export function SlaPoliciesManager({
               Cancel
             </Button>
             <Button
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-content rounded-md"
               disabled={saving || !form.name.trim()}
               onClick={handleSave}
             >
@@ -464,10 +464,10 @@ export function SlaPoliciesManager({
             <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full bg-red-100">
               <TrashIcon className="size-5 text-red-600" />
             </div>
-            <DialogTitle className="text-foreground text-center">
+            <DialogTitle className="text-base-content text-center">
               Delete &ldquo;{deleteTarget?.name}&rdquo;?
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-center">
+            <DialogDescription className="text-base-content-muted text-center">
               This SLA policy will be permanently removed. Tickets matching its
               scope will fall back to a less specific policy, if any.
             </DialogDescription>
@@ -475,7 +475,7 @@ export function SlaPoliciesManager({
           {error && <p className="text-xs text-red-600 text-center">{error}</p>}
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={deleting}
               onClick={() => {
                 setDeleteTarget(null);

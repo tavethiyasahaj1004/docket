@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { count, desc, eq } from "drizzle-orm";
+import { and, count, desc, eq, isNull } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { customers, tickets } from "@/db/schema";
@@ -7,12 +7,17 @@ import { requireApiKey } from "@/lib/api-auth";
 import { db } from "@/lib/db";
 import { checkRateLimit } from "@/lib/rate-limit";
 import { htmlToRichTextJson, textToRichTextJson } from "@/lib/rich-text";
+import { getAttachmentLimits } from "@/lib/settings";
+import { storage } from "@/lib/storage";
 import { linkTagsToTicket } from "@/lib/tags";
 import {
-  API_MAX_ATTACHMENTS_PER_TICKET,
   decodeBase64Attachments,
   uploadDecodedAttachments,
 } from "@/lib/tickets/api-attachments";
+import {
+  checkTicketStorage,
+  ticketStorageError,
+} from "@/lib/tickets/attachment-limits";
 import {
   createTicketFromSubmission,
   validateTicketSubmission,
@@ -23,11 +28,9 @@ const MAX_PER_PAGE = 100;
 const MAX_API_TAGS = 10;
 const MAX_TAG_LENGTH = 50;
 
-// GET /api/v1/tickets?email=customer@example.com&page=1&per_page=50 — public
-// API, authenticated with an API key. Lists that customer's tickets, most
-// recent first. Any active key can list any customer's tickets — same
-// single-tenant reasoning as GET /api/v1/tickets/:id (no per-key scoping on
-// this deployment).
+// GET /api/v1/tickets?email=…&page=1&per_page=50 — public API, API-key
+// authenticated. Lists that customer's tickets, newest first. Any active key can
+// list any customer: single-tenant, same reasoning as GET /api/v1/tickets/:id.
 export async function GET(request: NextRequest) {
   try {
     await requireApiKey(request);
@@ -78,7 +81,12 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  const where = eq(tickets.customerId, customer.id);
+  // Merged tickets are hidden, matching the portal — their ids still resolve
+  // via GET /api/v1/tickets/:id, which forwards to the surviving ticket.
+  const where = and(
+    eq(tickets.customerId, customer.id),
+    isNull(tickets.mergedIntoTicketId)
+  );
 
   const [rows, [{ total }]] = await Promise.all([
     db
@@ -151,26 +159,45 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body." }, { status: 400 });
   }
 
-  // "text" (default) or "html" — either way, converted to the same Tiptap
-  // JSON document the app's own editor produces, before validation ever
-  // sees it. HTML is parsed strictly through our schema (htmlToRichTextJson),
-  // so unrecognized tags/attributes are dropped, never stored as-is.
+  // "text" (default) or "html", both converted to the app's own Tiptap JSON
+  // before validation sees them. HTML is parsed strictly through our schema, so
+  // unrecognized tags and attributes are dropped rather than stored.
   const rawDescription = String(body.description ?? "");
   const description =
     body.descriptionFormat === "html"
       ? htmlToRichTextJson(rawDescription)
       : textToRichTextJson(rawDescription);
 
-  // A brand-new ticket has no attachments yet, so the full per-ticket cap is
-  // available. Decode/validate the files here, but only after the ticket
-  // fields themselves validate — files should never be uploaded for a
-  // submission that's going to be rejected anyway.
+  // Per-message count + per-file size + the ticket's combined size (a new
+  // ticket has no existing attachments).
+  // Decoded only after the ticket fields validate — files should never be
+  // uploaded for a submission that is going to be rejected anyway.
+  const limits = await getAttachmentLimits();
   const decoded = decodeBase64Attachments(
     body.attachments,
-    API_MAX_ATTACHMENTS_PER_TICKET
+    limits.maxPerMessage,
+    limits.maxFileSizeBytes
   );
   if (!decoded.ok) {
     return NextResponse.json({ error: decoded.error }, { status: 400 });
+  }
+  const incomingBytes = decoded.attachments.reduce((n, a) => n + a.fileSize, 0);
+  const storageCheck = checkTicketStorage({
+    usedBytes: 0,
+    incomingBytes,
+    limitBytes: limits.maxPerTicketSizeBytes,
+  });
+  if (!storageCheck.ok) {
+    return NextResponse.json(
+      {
+        error: ticketStorageError(
+          storageCheck,
+          incomingBytes,
+          limits.maxPerTicketSizeBytes
+        ),
+      },
+      { status: 400 }
+    );
   }
 
   const validated = await validateTicketSubmission({
@@ -220,17 +247,20 @@ export async function POST(request: NextRequest) {
   });
 
   if (!result.ok) {
+    // Only this request's own uploads; createTicketFromSubmission may already
+    // have removed them (delete is idempotent and errors are swallowed).
+    for (const a of uploadedAttachments) {
+      await storage.delete(a.storageKey).catch(() => undefined);
+    }
     return NextResponse.json(
       { error: result.error },
       { status: result.httpStatus }
     );
   }
 
-  // Optional tags — an integrating backend can classify a ticket at creation
-  // (e.g. "dtm", "website contact form"). Names are normalized/deduped and
-  // find-or-created in the shared pool, exactly like agent-added tags, so they
-  // render in the ticket's TAGS panel. Best effort: a tagging failure is logged
-  // but never fails the already-created ticket. Omitting tags changes nothing.
+  // Optional tags let an integrating backend classify a ticket at creation.
+  // Normalized, deduped and find-or-created in the shared pool exactly like
+  // agent-added tags. Best effort — a failure is logged, never fatal.
   const appliedTags = Array.isArray(body.tags)
     ? body.tags
         .map((t) => String(t))

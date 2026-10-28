@@ -3,12 +3,9 @@ import { NextResponse } from "next/server";
 import { requireAdminFromRequest } from "@/lib/authz";
 import { env } from "@/lib/env";
 
-// GET /api/admin/api-keys/postman — downloads a ready-to-import Postman
-// collection for the public API (app/api/v1/*), pre-filled with this
-// instance's own base_url. No secrets in the file — the api_key variable
-// is a placeholder the admin fills in with a real key from /admin/api-keys.
-// Hand-authored (not generated from lib/openapi-spec.ts) — keep it in sync
-// with that spec and docs/api.md when the API changes.
+// GET /api/admin/api-keys/postman — a ready-to-import Postman collection for the
+// public API, pre-filled with this instance's base_url; api_key is a placeholder,
+// no secrets. Hand-authored, so keep it in sync with the spec and docs/api.md.
 export async function GET(request: NextRequest) {
   try {
     requireAdminFromRequest(request);

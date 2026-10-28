@@ -15,7 +15,7 @@ the page to see new data.
 | Page | Event | Trigger |
 |------|-------|---------|
 | `/tickets` (agent list) | `ticket.created` | A customer submits a new ticket |
-| `/tickets/{id}` (agent detail) | `comment.created` | Anyone posts a new comment on that ticket — customer reply, agent reply, or internal note |
+| `/tickets/{ticketNumber}` (agent detail) | `comment.created` | Anyone posts a new comment on that ticket — customer reply, agent reply, or internal note |
 | `/ticket/{id}` (customer detail) | `comment.created` | Anyone posts a new **public** comment on that ticket (internal notes are still delivered — see Security below — but the page only re-fetches comments the customer API already excludes internal notes from) |
 
 All are soft `router.refresh()` calls (a Next.js RSC refetch, not a hard
@@ -36,15 +36,25 @@ page update itself needs a pub/sub product: Pusher **Channels**.
 1. In the [Pusher dashboard](https://dashboard.pusher.com), create a new
    **Channels** app (separate from any Beams instance you may already
    have — same account, different product).
-2. Set four env vars:
-   - `PUSHER_APP_ID` — server only
-   - `NEXT_PUBLIC_PUSHER_KEY` — read by the browser, **baked in at build
-     time** (pass as a Docker build arg — see README)
-   - `PUSHER_SECRET` — server only
-   - `NEXT_PUBLIC_PUSHER_CLUSTER` — e.g. `us2`, `eu` — also baked in at
-     build time
+2. Set App ID, Key, Secret, and Cluster (e.g. `us2`, `eu`) from
+   **Admin → Integrations** (or the setup wizard's Integrations step) —
+   takes effect immediately, no restart or rebuild. The four matching env
+   vars (`PUSHER_APP_ID`, `NEXT_PUBLIC_PUSHER_KEY`, `PUSHER_SECRET`,
+   `NEXT_PUBLIC_PUSHER_CLUSTER`) are still supported as a fallback for
+   anyone who prefers env-based config; a DB-saved value always wins over
+   its env var (see `lib/integration-settings.ts`).
 
-That's it — no schema change, no migration.
+The two `NEXT_PUBLIC_*` values used to require baking into the browser
+bundle at Docker build time. They no longer do: the browser fetches them at
+runtime from `GET /api/config/client` instead of reading
+`process.env.NEXT_PUBLIC_*` directly (see `lib/pusher-browser.ts`) — so the
+plain published image works fine, and `docker-compose.build.yml` is no
+longer needed just for Pusher. Setting these two vars via `.env` still goes
+through the old build-arg path if you build from source, though — see
+`.env.docker.example`.
+
+That's it — no schema change beyond `integration_settings`, no migration
+needed for existing installs.
 
 ## How it works
 
@@ -55,7 +65,7 @@ That's it — no schema change, no migration.
 | Agent client | `lib/pusher-browser.ts`'s `getPusherClient()` — session-authenticated, cached singleton per tab |
 | Customer client | `lib/pusher-browser.ts`'s `getPusherClientForCustomer(token)` — token-authenticated, a fresh (uncached) client per mount, since a customer can navigate between sibling tickets each with a different token |
 | Agent list subscriber | `components/agent/tickets-list-realtime.tsx`, mounted in `app/(agent)/tickets/page.tsx` |
-| Agent detail subscriber | `components/agent/ticket-detail-realtime.tsx`, mounted in `app/(agent)/tickets/[ticketId]/page.tsx` |
+| Agent detail subscriber | `components/agent/ticket-detail-realtime.tsx`, mounted in `app/(agent)/tickets/[ticketNumber]/page.tsx` |
 | Customer detail subscriber | `app/(customer)/ticket/[ticketId]/ticket-realtime.tsx`, mounted in the customer ticket page |
 | Publish call sites | `POST /api/tickets` (ticket creation) and `POST /api/tickets/[id]/comments` (any comment) |
 

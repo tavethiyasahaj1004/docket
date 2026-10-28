@@ -9,7 +9,11 @@ import {
   type SessionRow,
   SessionsCard,
 } from "@/components/profile/sessions-card";
-import { account, session as sessionTable } from "@/db/schema";
+import {
+  account,
+  session as sessionTable,
+  user as userTable,
+} from "@/db/schema";
 import { requireSession } from "@/lib/authz";
 import { db } from "@/lib/db";
 import { getPlatformSettings } from "@/lib/settings";
@@ -23,7 +27,17 @@ export const metadata = { title: "Your Profile" };
 export default async function ProfilePage() {
   const current = await requireSession();
 
-  const [sessions, accounts, settings] = await Promise.all([
+  const [freshUser, sessions, accounts, settings] = await Promise.all([
+    // current.user.name/email come from Better Auth's 60s cookie cache
+    // (lib/auth.ts), so they can still show the pre-edit value right after
+    // updateNameAction/changeEmailAction write the DB directly. Re-read the
+    // row fresh so this page (where those edits happen) never echoes stale
+    // cached data back at the user who just saved it.
+    db
+      .select({ name: userTable.name, email: userTable.email })
+      .from(userTable)
+      .where(eq(userTable.id, current.user.id))
+      .then((rows) => rows[0]),
     db
       .select({
         id: sessionTable.id,
@@ -43,6 +57,10 @@ export default async function ProfilePage() {
     getPlatformSettings(),
   ]);
 
+  if (!freshUser) {
+    return null;
+  }
+
   const sessionRows: SessionRow[] = sessions.map((s) => ({
     id: s.id,
     createdAt: s.createdAt.toISOString(),
@@ -57,10 +75,7 @@ export default async function ProfilePage() {
   // Page title + description come from the TopBar (components/agent/topbar.tsx).
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <AccountIdentityForms
-        email={current.user.email}
-        name={current.user.name}
-      />
+      <AccountIdentityForms email={freshUser.email} name={freshUser.name} />
 
       {settings.passwordLoginEnabled && (
         <PasswordCard hasPassword={hasPassword} />
@@ -70,7 +85,7 @@ export default async function ProfilePage() {
 
       <ExportDataCard />
 
-      <DeleteAccountForm email={current.user.email} />
+      <DeleteAccountForm email={freshUser.email} />
     </div>
   );
 }

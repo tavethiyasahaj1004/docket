@@ -1,9 +1,9 @@
 import { createId } from "@paralleldrive/cuid2";
-import { asc, ilike } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { cannedResponses } from "@/db/schema";
 import { requireAgentFromRequest } from "@/lib/authz";
+import { searchCannedResponses } from "@/lib/canned-responses";
 import { db } from "@/lib/db";
 import { isRichTextEmpty } from "@/lib/rich-text";
 
@@ -16,11 +16,7 @@ export async function GET(request: NextRequest) {
   }
 
   const q = request.nextUrl.searchParams.get("q")?.trim();
-  const rows = await db
-    .select()
-    .from(cannedResponses)
-    .where(q ? ilike(cannedResponses.title, `%${q}%`) : undefined)
-    .orderBy(asc(cannedResponses.title));
+  const rows = await searchCannedResponses(q);
 
   return NextResponse.json(rows);
 }

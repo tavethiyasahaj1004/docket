@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, asc, count, eq, or, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
@@ -25,23 +25,31 @@ import {
   richTextToPlainText,
   textToRichTextJson,
 } from "@/lib/rich-text";
+import { getAttachmentLimits } from "@/lib/settings";
 import { computeSlaTransition } from "@/lib/sla";
 import { storage } from "@/lib/storage";
 import { isClosedStatusSlug } from "@/lib/ticket-config";
 import {
-  API_MAX_ATTACHMENTS_PER_TICKET,
   decodeBase64Attachments,
   uploadDecodedAttachments,
 } from "@/lib/tickets/api-attachments";
+import {
+  checkTicketStorage,
+  ticketStorageError,
+} from "@/lib/tickets/attachment-limits";
+import { getTicketAttachmentBytes } from "@/lib/tickets/attachment-usage";
+import {
+  insertReplyUnlessMerged,
+  resolveMergedTicketId,
+} from "@/lib/tickets/merge";
 import {
   dispatchWebhookEvent,
   ticketPayloadData,
 } from "@/lib/webhooks/dispatch";
 
-// GET /api/v1/tickets/:id/comments — public API, authenticated with an API
-// key. Read-only conversation thread: public replies only, internal notes
-// are never returned (same rule the customer portal itself enforces). Each
-// comment carries its own attachments (files uploaded with that reply).
+// GET /api/v1/tickets/:id/comments — public API, API-key authenticated.
+// Read-only thread of public replies; internal notes are never returned, the
+// same rule the customer portal enforces. Each comment carries its attachments.
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -52,7 +60,9 @@ export async function GET(
     return e as Response;
   }
 
-  const { id } = await params;
+  const { id: requestedId } = await params;
+  // A merged ticket forwards to the ticket it was merged into (lib/tickets/merge.ts).
+  const id = await resolveMergedTicketId(requestedId);
 
   const [ticket] = await db
     .select({ id: tickets.id })
@@ -129,17 +139,10 @@ export async function GET(
   });
 }
 
-// POST /api/v1/tickets/:id/comments — public API, authenticated with an API
-// key. Posts a CUSTOMER reply on behalf of the ticket owner. The API key is
-// trusted, but the reply is still bound to a specific customer: `email` must
-// match the ticket's own customerEmail, so an integrating backend can only
-// reply as the account that actually owns the ticket (that backend enforces
-// which logged-in user maps to which email).
-//
-// Mirrors the customer branch of the portal's own reply route
-// (app/api/tickets/[id]/comments POST): same awaiting-reply bookkeeping, agent
-// notifications, and closed-ticket guard — but authenticated by API key +
-// email instead of the per-ticket customerToken.
+// POST /api/v1/tickets/:id/comments — posts a CUSTOMER reply. The key is
+// trusted but the reply stays bound to one customer: `email` must match the
+// ticket's customerEmail. Mirrors the customer branch of the portal's reply
+// route, but keyed on API key + email rather than the per-ticket customerToken.
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -151,7 +154,9 @@ export async function POST(
     return e as Response;
   }
 
-  const { id: ticketId } = await params;
+  const { id: requestedTicketId } = await params;
+  // A merged ticket forwards to the ticket it was merged into (lib/tickets/merge.ts).
+  const ticketId = await resolveMergedTicketId(requestedTicketId);
 
   const { allowed } = await checkRateLimit({
     action: "api_ticket_reply",
@@ -236,16 +241,36 @@ export async function POST(
     );
   }
 
-  // How many more files this ticket may still hold.
-  const [{ value: existingCount }] = await db
-    .select({ value: count() })
-    .from(ticketAttachments)
-    .where(eq(ticketAttachments.ticketId, ticketId));
-  const remaining = API_MAX_ATTACHMENTS_PER_TICKET - existingCount;
+  const limits = await getAttachmentLimits();
 
-  const decoded = decodeBase64Attachments(body.attachments, remaining);
+  // Per-message count + per-file size here; the ticket's combined size is
+  // checked next and again atomically in insertReplyUnlessMerged.
+  const decoded = decodeBase64Attachments(
+    body.attachments,
+    limits.maxPerMessage,
+    limits.maxFileSizeBytes
+  );
   if (!decoded.ok) {
     return NextResponse.json({ error: decoded.error }, { status: 400 });
+  }
+
+  const incomingBytes = decoded.attachments.reduce((n, a) => n + a.fileSize, 0);
+  const storageCheck = checkTicketStorage({
+    usedBytes: await getTicketAttachmentBytes(db, ticketId),
+    incomingBytes,
+    limitBytes: limits.maxPerTicketSizeBytes,
+  });
+  if (!storageCheck.ok) {
+    return NextResponse.json(
+      {
+        error: ticketStorageError(
+          storageCheck,
+          incomingBytes,
+          limits.maxPerTicketSizeBytes
+        ),
+      },
+      { status: 400 }
+    );
   }
 
   const commentId = createId();
@@ -263,33 +288,58 @@ export async function POST(
   }
 
   try {
-    await db.insert(ticketComments).values({
-      id: commentId,
+    const inserted = await insertReplyUnlessMerged(
       ticketId,
-      authorId: null,
-      authorName: ticket.customerName,
-      authorRole: "customer",
-      content,
-      isInternal: false,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    if (uploaded.length > 0) {
-      await db.insert(ticketAttachments).values(
-        uploaded.map((a) => ({
-          id: a.id,
-          ticketId,
-          commentId,
-          filename: a.filename,
-          storageKey: a.storageKey,
-          fileSize: a.fileSize,
-          mimeType: a.mimeType,
-          uploadedById: null,
-          uploadedByName: ticket.customerName,
-          uploadedByRole: "customer",
-          createdAt: now,
-        }))
+      {
+        id: commentId,
+        ticketId,
+        authorId: null,
+        authorName: ticket.customerName,
+        authorRole: "customer",
+        content,
+        isInternal: false,
+        createdAt: now,
+        updatedAt: now,
+      },
+      uploaded.map((a) => ({
+        id: a.id,
+        ticketId,
+        commentId,
+        filename: a.filename,
+        storageKey: a.storageKey,
+        fileSize: a.fileSize,
+        mimeType: a.mimeType,
+        uploadedById: null,
+        uploadedByName: ticket.customerName,
+        uploadedByRole: "customer",
+        createdAt: now,
+      })),
+      limits.maxPerTicketSizeBytes
+    );
+    if (inserted.status !== "ok") {
+      for (const a of uploaded) {
+        await storage.delete(a.storageKey).catch(() => undefined);
+      }
+      if (inserted.status === "storage") {
+        return NextResponse.json(
+          {
+            error: ticketStorageError(
+              inserted.check,
+              uploaded.reduce((n, a) => n + a.fileSize, 0),
+              limits.maxPerTicketSizeBytes
+            ),
+          },
+          { status: 400 }
+        );
+      }
+      // Retrying the same request is safe: the id now forwards to the
+      // ticket it was merged into.
+      return NextResponse.json(
+        {
+          error:
+            "This ticket was just merged into another ticket. Retry the request — it will be applied to the merged ticket.",
+        },
+        { status: 409 }
       );
     }
 
@@ -311,7 +361,7 @@ export async function POST(
         pendingReplies: sql`${tickets.pendingReplies} + 1`,
         ...slaUpdate,
       })
-      .where(eq(tickets.id, ticketId));
+      .where(and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId)));
 
     await db.insert(ticketActivity).values({
       id: createId(),
@@ -389,7 +439,8 @@ export async function POST(
     await publishPushToUsers(recipientIds, {
       title: notifTitle,
       body: contentText.slice(0, 120),
-      deepLink: `${env.NEXT_PUBLIC_APP_URL}/tickets/${ticketId}`,
+      deepLink: `${env.NEXT_PUBLIC_APP_URL}/tickets/${ticket.ticketNumber}`,
+      tag: `ticket-${ticket.ticketNumber}`,
     }).catch((err) => console.error("[push.customer_replied]", err));
 
     return NextResponse.json({ id: commentId }, { status: 201 });

@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Question or setup help
-    url: https://github.com/stack256/docket/discussions
+    url: https://github.com/stack256org/docket/discussions
     about: Not sure it's a bug? Ask here — install problems, config questions, "how do I…".
   - name: 🔒 Report a security vulnerability
-    url: https://github.com/stack256/docket/security/advisories/new
+    url: https://github.com/stack256org/docket/security/advisories/new
     about: Report privately. Please do not open a public issue for a vulnerability.
   - name: 📚 Documentation
-    url: https://github.com/stack256/docket#readme
+    url: https://github.com/stack256org/docket#readme
     about: Setup, environment variables, API reference, and deployment guides.

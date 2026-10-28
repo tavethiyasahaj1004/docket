@@ -9,17 +9,10 @@ export async function getCurrentSession() {
   return auth.api.getSession({ headers: await headers() });
 }
 
-// Same as getCurrentSession(), but bypasses Better Auth's `session.cookieCache`
-// and re-reads the session from the database.
-//
-// The cache is a signed cookie that stands in for a DB row for up to 60s. It
-// keeps standing in even when the row it describes is gone — the classic case
-// being an install pointed at a fresh database while the browser still holds
-// cookies from the old one. A cached-only session makes the sign-in guards
-// ("already signed in? → /post-auth") disagree with /post-auth's real user
-// lookup, and the two bounce the browser between /login and /post-auth forever.
-// Anywhere a stale session would send the user somewhere that sends them
-// straight back must use this, not the cached read.
+// getCurrentSession(), but bypassing Better Auth's cookieCache to re-read from
+// the DB. That cache stands in for a row for 60s — including after the row is
+// gone, e.g. a fresh database behind old cookies — which makes the sign-in
+// guards and /post-auth disagree and bounce the browser between them forever.
 export async function getVerifiedSession() {
   return auth.api.getSession({
     headers: await headers(),

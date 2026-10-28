@@ -15,14 +15,14 @@ const initialState: ActionState = {};
 function ActionMessage({ state }: { state: ActionState }) {
   if (state.error) {
     return (
-      <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+      <p className="rounded-md bg-error/10 px-3 py-2 text-sm text-error">
         {state.error}
       </p>
     );
   }
   if (state.success) {
     return (
-      <p className="rounded-md bg-success-subtle px-3 py-2 text-sm text-success-foreground">
+      <p className="rounded-md bg-success-subtle px-3 py-2 text-sm text-success-content">
         {state.success}
       </p>
     );
@@ -72,18 +72,18 @@ export function AccountIdentityForms({
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <div className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-4">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-foreground">
+          <h2 className="text-base font-semibold text-base-content">
             Display Name
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             Shown in navigation, audit logs, and admin views.
           </p>
         </div>
         <form action={nameAction} className="space-y-3">
           <label className="block" htmlFor="name">
-            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-medium text-base-content-muted">
               Name
             </span>
             <Input
@@ -104,18 +104,18 @@ export function AccountIdentityForms({
         </form>
       </div>
 
-      <div className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-4">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-4">
         <div>
-          <h2 className="text-base font-semibold text-foreground">
+          <h2 className="text-base font-semibold text-base-content">
             Email Address
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             Password and magic-link sign-in both use this address.
           </p>
         </div>
         <form action={emailAction} className="space-y-3">
           <label className="block" htmlFor="email">
-            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+            <span className="mb-1.5 block text-xs font-medium text-base-content-muted">
               Email
             </span>
             <Input
@@ -149,17 +149,17 @@ export function DeleteAccountForm({ email }: { email: string }) {
   const confirmed = confirmEmail.trim().toLowerCase() === email.toLowerCase();
 
   return (
-    <div className="bg-card rounded-xl border border-red-200 shadow-soft p-6 space-y-4">
+    <div className="bg-base-100 rounded-xl border border-red-200 shadow-soft p-6 space-y-4">
       <div>
         <h2 className="text-base font-semibold text-red-600">Delete Account</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-base-content-muted mt-0.5">
           Permanently delete your user, sessions, and linked sign-in methods.
           Audit records remain for operator history. This can&apos;t be undone.
         </p>
       </div>
       <form action={action} className="space-y-3">
         <label className="block" htmlFor="confirmEmail">
-          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+          <span className="mb-1.5 block text-xs font-medium text-base-content-muted">
             Type your email to confirm
           </span>
           <Input

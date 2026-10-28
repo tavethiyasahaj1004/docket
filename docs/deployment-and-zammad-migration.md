@@ -52,12 +52,16 @@ Edit `.env` and set at minimum:
 | `NEXT_PUBLIC_APP_URL` | Yes | The public URL this instance will be reached at, e.g. `https://support.yourco.com`. No trailing slash. |
 | `DATABASE_URL` | Only for Option B | Already pre-filled to match the bundled Postgres for Option A — leave as-is. |
 
-Optional but recommended:
+Optional but recommended — and skippable here entirely: SMTP, Google OAuth,
+and Pusher can all be set later from the app itself (the setup wizard's
+Integrations step, or **Admin → Integrations**) instead of editing `.env`.
+Env vars below remain supported as a fallback for anything not configured
+that way:
 
 | Variable | Purpose |
 |---|---|
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `EMAIL_FROM` | Without these, outgoing email (ticket notifications, magic links) is only logged, never actually sent. |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Enables "Continue with Google" login for agents. |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Enables "Continue with Google" login for agents. Set via Integrations instead? An app restart (`docker compose restart app`) is needed before it takes effect — every other integration here applies live. |
 
 Storage defaults to local disk (`./uploads`, mounted as a persistent Docker
 volume already in `docker-compose.yml` — no action needed). If you'd rather
@@ -85,6 +89,38 @@ docker compose logs -f app worker
 The app is now listening on `:3000` inside the container (`expose`, not
 `ports` — put a reverse proxy in front, see step 6).
 
+### 4.1 Platforms that aren't Docker Compose (Dokploy, Coolify, `docker run`)
+
+If your platform deploys the published image once from a registry URL, leave
+the **command blank**. With no command the image's entrypoint
+(`scripts/docker-entrypoint.sh`) applies pending migrations (and seeds
+defaults), then runs the web server **and exactly one worker** in that one
+container. Every new version you select therefore migrates itself.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DOCKET_ROLE` | `all` | `all` = migrate + web + worker. Or `app`, `worker`, `migrate` to run a single role. |
+| `DOCKET_RUN_MIGRATIONS` | `true` for `all`/`migrate`, else `false` | Set `false` if your managed database user may not run DDL. |
+
+- **Mount a persistent volume at `/app/uploads`** (or set `STORAGE_DRIVER=s3|r2`).
+  The image does not create one; without it attachments vanish on the next
+  redeploy. The container logs `[entrypoint] WARNING: /app/uploads is not a
+  mounted volume` at boot when it is missing.
+- Run **one** container in role `all`. Don't scale it: two workers can
+  double-process jobs.
+- Setting an explicit command (e.g. `pnpm start`) **overrides the entrypoint**:
+  no migrations, no worker. That is what the compose files do on purpose, one
+  service per role.
+- If either the web server or the worker dies, the container exits so the
+  platform restarts it, rather than looking healthy with a dead worker.
+
+| Symptom | Cause |
+|---|---|
+| Server Components render error right after a release, `column … does not exist` in logs | Migrations not applied: a command is set (e.g. `pnpm start`), or `DOCKET_RUN_MIGRATIONS=false`. Clear the command. |
+| No email / magic-link never arrives | No worker is running: same cause. |
+| Container logs `unknown DOCKET_ROLE` and exits 64 | Typo. Valid: `all`, `app`, `worker`, `migrate`. |
+| Restart loop right after `pg-boss started` | In role `all` either process dying takes the container down by design. Read the logs above the restart. |
+
 ---
 
 ## 5. Create the first admin account
@@ -107,12 +143,18 @@ The `app` container only `expose`s port 3000 (not published to the host).
 Put Nginx or Caddy in front for TLS termination and proxy to `:3000`, then
 point `NEXT_PUBLIC_APP_URL` in `.env` at the final public HTTPS URL.
 
-If you change `NEXT_PUBLIC_APP_URL` or any `NEXT_PUBLIC_PUSHER_*` var after
-the first build, you must rebuild (not just restart) for it to take effect:
+If you change `NEXT_PUBLIC_APP_URL` after the first build, you must rebuild
+(not just restart) for it to take effect:
 
 ```bash
 docker compose build && docker compose up -d
 ```
+
+Pusher's `NEXT_PUBLIC_PUSHER_*` values don't have this problem anymore if
+set from Admin → Integrations — the browser fetches them at runtime, no
+rebuild ever needed (see `docs/realtime-updates.md`). The rebuild
+requirement only still applies if you set them via `.env` and build with
+`docker-compose.build.yml`.
 
 ---
 
@@ -124,8 +166,11 @@ scripts are **read-only against Zammad** — they only issue `GET` requests
 Zammad is ever modified or deleted; the scripts only copy data out into
 Docket's own database and file storage.
 
-Both scripts are **idempotent** — safe to re-run. Already-migrated tickets
-/ users are skipped, never duplicated.
+Both scripts are **idempotent** — safe to re-run, and nothing is ever
+duplicated. Be clear on what a plain re-run does, though: it imports tickets
+that weren't there last time and leaves already-imported ones untouched. To
+also pull across what changed in Zammad since (replies, closes,
+priority/assignee/tag edits), re-run in **sync mode** — see 7.4.
 
 ### 7.1 Dry run first
 
@@ -195,6 +240,8 @@ Useful optional flags (pass as `-e` before `app`, same as above):
 | `MIGRATION_ZAMMAD_SEARCH` | Restrict export to a Zammad search query, e.g. `tags:DTM`. Omit to migrate ALL tickets. |
 | `MIGRATION_LIMIT` | Stop after seeing N tickets (oldest-first) — useful for a first test batch, e.g. `100`. |
 | `MIGRATION_DEFAULT_CATEGORY` | Category slug assigned to imported tickets (default `issue`). |
+| `MIGRATION_SYNC` | `1` (or the `--sync` flag) — also update already-imported tickets instead of skipping them. See 7.4. |
+| `MIGRATION_SYNC_FORCE` | `1` (or `--sync-force`) — sync mode, but re-read every ticket rather than trusting Zammad's `updated_at` to say which ones changed. |
 
 **Attachments — important caveat:** unlike the app's normal upload path
 (which restricts uploads to JPG/PNG/PDF/ZIP/TXT, 10 MB max, 5 files per
@@ -210,7 +257,79 @@ migrated ticket make it resume without duplicating anything. If some
 tickets fail, only those are retried on the next run (see the summary
 printed at the end for a failed count and pointer to the checkpoint file).
 
-### 7.4 Order matters, but there's a safety net
+### 7.4 Keeping Docket up to date afterwards (sync mode)
+
+The command in 7.3 is **import-only**: it adds tickets that aren't in Docket
+yet and leaves every ticket it already imported exactly as it was. So a second
+run days later brings across the *new* tickets, but nothing that happened to
+the older ones in the meantime — a ticket closed in Zammad still shows as open
+here, replies added to an existing thread never appear, and priority, subject,
+assignee and tag edits are all missed.
+
+To pull those across, run the migration in **sync mode**:
+
+```bash
+docker compose exec \
+  -e ZAMMAD_BASE_URL="https://your-zammad.example.com" \
+  -e ZAMMAD_API_TOKEN="your-admin-api-token" \
+  app pnpm migrate:zammad:sync
+```
+
+(That is just `migrate:zammad --sync`; `-e MIGRATION_SYNC=1` does the same if
+you'd rather pass an env var. `MIGRATION_DRY_RUN=1` works here too, and prints
+exactly which tickets would change and how — do that first.)
+
+What a sync brings across on an already-imported ticket:
+
+| Synced | Notes |
+|---|---|
+| New replies and internal notes | Appended in place. Replies already imported are never duplicated or rewritten. |
+| Attachments | For new replies, plus any file added to a thread that was already imported. |
+| Status (open/closed) and closed date | From Zammad's ticket state, via the same mapping the first import uses. |
+| Priority, subject | |
+| Assignee | Taken from Zammad's ticket owner whenever that person has a Docket account (so run `migrate:zammad:users` first if new agents joined). |
+| Tags | Add-only — see below. |
+| Awaiting-reply flag and unread count | Recomputed from the whole thread. |
+
+What it deliberately does **not** do:
+
+- **Nothing is ever deleted.** A reply removed in Zammad stays in Docket, and
+  so does a tag removed in Zammad — agents can also tag a ticket from inside
+  Docket and there's no way to tell the two apart. Tickets deleted in Zammad
+  are left alone as well.
+- **An assignee set inside Docket survives.** Docket only clears an assignee
+  when Zammad has no owner *and* the current assignee is still the exact
+  person Zammad's owner field last named.
+- **Ticket numbers stay Docket's own**, as with the first import.
+
+One thing to know before syncing tickets your agents are already working on
+in Docket: **a sync mirrors Zammad, so Zammad wins on every field it owns.**
+Status in particular maps onto open/closed only — the same two the first
+import uses — so a migrated ticket someone moved to another status in Docket
+is pulled back to whatever Zammad says. The awaiting-reply flag is likewise
+recomputed from the Zammad thread, which doesn't know about replies your
+agents wrote in Docket. Sync while Zammad is still the system of record, and
+stop once the team has moved over.
+
+Speed: the ticket listing already tells the script Zammad's `updated_at` for
+every ticket, so a ticket untouched since the last sync is skipped without
+fetching anything else, and a repeat sync over a large instance is cheap. Two
+caveats:
+
+- The **first** sync after upgrading to this version has no recorded
+  `updated_at` for tickets imported before it, so it re-reads all of them once.
+  Slower than later runs — and it's the run that backfills everything missed
+  so far.
+- Tag changes in Zammad don't reliably bump the ticket's own `updated_at`. If
+  you specifically need tag edits picked up, add `-e MIGRATION_SYNC_FORCE=1`
+  (or `--sync-force`), which re-reads every ticket instead of trusting
+  `updated_at`.
+
+Sync mode is safe to run repeatedly, on a schedule if you like. Like the
+import, it writes straight to the database — it never emails anyone, fires a
+webhook, or raises an in-app notification for the history it copies.
+
+### 7.5 Order matters, but there's a safety net
 
 Run `migrate:zammad:users` **before** `migrate:zammad` — replies and the
 ticket assignee then link directly to the right agent account as they're

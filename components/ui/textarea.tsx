@@ -1,18 +1,22 @@
-import * as React from "react"
+import type * as React from "react";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (
     <textarea
-      data-slot="textarea"
       className={cn(
-        "flex field-sizing-content min-h-16 w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-base shadow-xs transition-[color,border-color,box-shadow] outline-none placeholder:text-muted-foreground hover:border-stone focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive md:text-sm dark:aria-invalid:border-destructive/50",
+        // `textarea` owns the surface, border, padding, outline and disabled
+        // state. Tailwind keeps the auto-growing layout (a 4rem floor, not
+        // daisyUI's fixed 5rem), the placeholder colour it applies only to
+        // nested textareas, and the sub-`md` 16px type iOS Safari needs.
+        "textarea flex field-sizing-content min-h-16 w-full resize-none text-base placeholder:text-base-content-muted aria-invalid:border-error md:text-sm dark:aria-invalid:border-error/50",
         className
       )}
+      data-slot="textarea"
       {...props}
     />
-  )
+  );
 }
 
-export { Textarea }
+export { Textarea };

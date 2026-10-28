@@ -1,46 +1,58 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
-import { Slot } from "radix-ui"
+import type * as React from "react";
 
-import { cn } from "@/lib/utils"
+import { Slot } from "@/lib/slot";
+import { cn } from "@/lib/utils";
 
-const badgeVariants = cva(
-  "group/badge inline-flex w-fit shrink-0 items-center justify-center gap-1.5 overflow-hidden rounded-none border-0 bg-transparent px-0 py-0 text-xs font-semibold tracking-ui whitespace-nowrap uppercase transition-colors focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 has-data-[icon=inline-end]:pr-0 has-data-[icon=inline-start]:pl-0 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3!",
-  {
-    variants: {
-      variant: {
-        default: "text-foreground [a]:hover:text-foreground/70",
-        secondary: "text-muted-foreground [a]:hover:text-foreground",
-        destructive:
-          "text-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:text-destructive/70",
-        outline: "text-foreground [a]:hover:text-foreground/70",
-        ghost: "text-muted-foreground hover:text-foreground",
-        link: "text-foreground underline-offset-4 hover:underline",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
+// daisyUI's `badge` supplies the whole chip, so the variants below are its own
+// modifiers. `badge-soft` is the workhorse, mixing `--badge-color` into
+// `base-100` to stay legible in light *and* dark; `badge-ghost` sits on
+// `base-200`, equal to `base-100` here, so it reads chrome-less by design.
+const badgeVariantClasses = {
+  default: "badge-soft",
+  secondary: "badge-soft text-base-content-muted",
+  destructive: "badge-error badge-soft",
+  outline: "badge-outline",
+  ghost: "badge-ghost text-base-content-muted",
+  link: "badge-ghost underline-offset-4 [a]:hover:underline",
+} as const;
+
+type BadgeVariant = keyof typeof badgeVariantClasses;
+
+function badgeVariants({
+  variant = "default",
+  className,
+}: {
+  variant?: BadgeVariant;
+  className?: string;
+} = {}) {
+  return cn(
+    // Only brand typography and icon sizing are left to Tailwind — `badge` has
+    // no opinion about either.
+    "badge group/badge tracking-ui whitespace-nowrap uppercase [&>svg]:pointer-events-none [&>svg]:size-3",
+    badgeVariantClasses[variant],
+    className
+  );
+}
 
 function Badge({
   className,
   variant = "default",
   asChild = false,
   ...props
-}: React.ComponentProps<"span"> &
-  VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot.Root : "span"
+}: React.ComponentProps<"span"> & {
+  variant?: BadgeVariant;
+  asChild?: boolean;
+}) {
+  const Comp = asChild ? Slot : "span";
 
   return (
     <Comp
+      className={badgeVariants({ variant, className })}
       data-slot="badge"
       data-variant={variant}
-      className={cn(badgeVariants({ variant }), className)}
       {...props}
     />
-  )
+  );
 }
 
-export { Badge, badgeVariants }
+export { Badge, badgeVariants };

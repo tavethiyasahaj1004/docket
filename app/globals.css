@@ -1,6 +1,7 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@plugin "daisyui" {
+  themes: false;
+}
 
 @custom-variant dark (&:is(.dark *));
 
@@ -22,9 +23,20 @@
   border-radius: 9999px;
 }
 
+/* Scalar's close button (`.app-exit-button`) ships white-on-bg-black/10 — too
+   low-contrast over our light backdrop. `!important` beats Scalar's unlayered
+   Tailwind classes; kept up here (not in @layer) since a plain-CSS rule placed
+   after Tailwind's generated `@layer utilities` gets silently dropped. */
+.app-exit-button {
+  background: rgba(0, 0, 0, 0.55) !important;
+}
+.app-exit-button:hover {
+  background: rgba(0, 0, 0, 0.8) !important;
+}
+
 html {
   height: 100%;
-  background: var(--background);
+  background: var(--base-200);
 }
 
 body {
@@ -59,21 +71,24 @@ body {
   /* Soft elevation for bordered cards/tables (dark-mode aware) */
   --shadow-soft: var(--shadow-card);
 
-  /* Semantic status */
+  /* Semantic status (daisyUI-native naming: -content, not -foreground) */
   --color-success: var(--success);
-  --color-success-foreground: var(--success-foreground);
+  --color-success-content: var(--success-content);
   --color-success-subtle: var(--success-subtle);
   --color-success-light: var(--success-light);
   --color-warning: var(--warning);
+  --color-warning-content: var(--warning-content);
+  --color-error: var(--error);
+  --color-error-content: var(--error-content);
 
-  /* Shadcn core */
+  /* Semantic theme tokens */
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent-content: var(--sidebar-accent-content);
   --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary-content: var(--sidebar-primary-content);
   --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-content: var(--sidebar-content);
   --color-sidebar: var(--sidebar);
   --color-chart-other: var(--chart-other);
   --color-chart-8: var(--chart-8);
@@ -84,24 +99,19 @@ body {
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary-content: var(--secondary-content);
   --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-content: var(--primary-content);
   --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --color-foreground: var(--foreground);
-  --color-background: var(--background);
+
+  /* daisyUI-native surface tiers — neutral across every preset, with brand color
+     in primary/secondary/accent instead. base-100 = elevated surface,
+     base-200 = page/body, base-300 = border + hover-fill. */
+  --color-base-300: var(--base-300);
+  --color-base-200: var(--base-200);
+  --color-base-100: var(--base-100);
+  --color-base-content-muted: var(--base-content-muted);
+  --color-base-content: var(--base-content);
 
   /* ── Proportional radius (matches Teamority) ── */
   --radius-sm: calc(var(--radius) * 0.6);
@@ -111,6 +121,46 @@ body {
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* ── daisyUI theme — aliases daisyUI's var names onto the brand tokens above
+   rather than a separate palette. Dark mode stays driven by the `.dark` class,
+   not `data-theme`, since the aliased vars already flip inside `.dark`. ── */
+@plugin "daisyui/theme" {
+  name: "docket";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-base-100: var(--base-100);
+  --color-base-200: var(--base-200);
+  --color-base-300: var(--base-300);
+  --color-base-content: var(--base-content);
+  --color-primary: var(--primary);
+  --color-primary-content: var(--primary-content);
+  --color-secondary: var(--secondary);
+  --color-secondary-content: var(--secondary-content);
+  --color-accent: var(--secondary);
+  --color-accent-content: var(--secondary-content);
+  --color-neutral: var(--sidebar);
+  --color-neutral-content: var(--sidebar-content);
+  --color-info: var(--primary);
+  --color-info-content: var(--primary-content);
+  --color-success: var(--success);
+  --color-success-content: var(--success-content);
+  --color-warning: var(--warning);
+  --color-warning-content: var(--warning-content);
+  --color-error: var(--error);
+  --color-error-content: var(--error-content);
+
+  --radius-selector: var(--radius-sm);
+  --radius-field: var(--radius-md);
+  --radius-box: var(--radius-xl);
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
 }
 
 :root {
@@ -133,30 +183,27 @@ body {
 
   /* ── Status colours ───────────────────────── */
   --success: oklch(0.45 0.13 145);
-  --success-foreground: oklch(0.25 0.09 145);
+  --success-content: oklch(0.25 0.09 145);
   --success-subtle: oklch(0.97 0.04 145);
   --success-light: oklch(0.78 0.13 145);
   --warning: oklch(0.58 0.15 65);
+  --warning-content: #384959; /* bark */
+  --error: oklch(0.577 0.245 27.325);
+  --error-content: #ffffff;
 
-  /* ── Shadcn core — mapped to brand palette ── */
-  --background: #ffffff;
-  --foreground: #384959; /* bark  */
-  --card: #ffffff;
-  --card-foreground: #384959; /* bark  */
-  --popover: #ffffff;
-  --popover-foreground: #384959; /* bark  */
+  /* ── daisyUI-native surface tiers, neutral rather than preset-tinted:
+     base-100 = elevated surface, base-200 = page/body, base-300 = border
+     and hover-fill. ── */
+  --base-100: #ffffff;
+  --base-200: #ffffff;
+  --base-300: #e1e7ef;
+  --base-content: #384959; /* bark  */
+  --base-content-muted: #6a89a7; /* stone */
+
   --primary: #384959; /* bark  */
-  --primary-foreground: #ffffff;
+  --primary-content: #ffffff;
   --secondary: #bdddfc; /* cream */
-  --secondary-foreground: #384959; /* bark  */
-  --muted: #bdddfc; /* cream */
-  --muted-foreground: #6a89a7; /* stone */
-  --accent: #bdddfc; /* cream */
-  --accent-foreground: #384959; /* bark  */
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: #88bdf2; /* sand  */
-  --input: #88bdf2; /* sand  */
-  --ring: #384959; /* bark  */
+  --secondary-content: #384959; /* bark  */
   /* ── Charts — validated categorical palette (light), see docs/dataviz notes ── */
   --chart-1: #2a78d6; /* blue */
   --chart-2: #eb6834; /* orange */
@@ -171,11 +218,11 @@ body {
 
   /* ── Sidebar — bark (deep navy) ────────── */
   --sidebar: #384959; /* bark  */
-  --sidebar-foreground: #bdddfc; /* cream */
+  --sidebar-content: #bdddfc; /* cream */
   --sidebar-primary: #bdddfc; /* cream */
-  --sidebar-primary-foreground: #384959; /* bark  */
+  --sidebar-primary-content: #384959; /* bark  */
   --sidebar-accent: rgba(189, 221, 252, 0.12);
-  --sidebar-accent-foreground: #bdddfc; /* cream */
+  --sidebar-accent-content: #bdddfc; /* cream */
   --sidebar-border: rgba(136, 189, 242, 0.2);
   --sidebar-ring: #88bdf2; /* sand  */
 }
@@ -188,36 +235,30 @@ body {
   --surface: #161a20; /* content area behind cards */
   --shadow-card:
     0 4px 14px -4px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.4);
-  --background: #161a20;
-  --card: #1e2229; /* elevated cards, popovers */
-  --popover: #1e2229;
   --sidebar: #0d0f12; /* app frame / sidebar */
 
-  /* ── Text ──────────────────────────────────── */
-  --foreground: #f0f2f5;
-  --card-foreground: #f0f2f5;
-  --popover-foreground: #f0f2f5;
-  --muted-foreground: #8b919e;
+  /* ── daisyUI-native surface tiers ── */
+  --base-100: #1e2229; /* elevated cards, popovers, menus */
+  --base-200: #161a20; /* page/body surface */
+  --base-300: #262c36; /* border + hover-fill tier */
+  --base-content: #f0f2f5;
+  --base-content-muted: #8b919e;
 
   /* ── Brand accent — kept in dark (not grayscale) ── */
   --primary: #88bdf2; /* sand */
-  --primary-foreground: #0d0f12;
+  --primary-content: #0d0f12;
   --secondary: #232830;
-  --secondary-foreground: #f0f2f5;
-  --muted: #1e2229;
-  --accent: #222c3a; /* subtle brand-tinted surface (was `bg-cream`) */
-  --accent-foreground: #e8f1fb;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: #272b33;
-  --input: #2a2f38;
-  --ring: #88bdf2;
+  --secondary-content: #f0f2f5;
+  --error: oklch(0.704 0.191 22.216);
+  --error-content: #0d0f12;
 
   /* ── Status ────────────────────────────────── */
   --success: oklch(0.65 0.13 145);
-  --success-foreground: oklch(0.9 0.06 145);
+  --success-content: oklch(0.9 0.06 145);
   --success-subtle: oklch(0.22 0.06 145);
   --success-light: oklch(0.78 0.13 145);
   --warning: oklch(0.72 0.15 65);
+  --warning-content: #f0f2f5;
 
   /* ── Charts — validated categorical palette (dark) ──────────── */
   --chart-1: #3987e5; /* blue */
@@ -231,21 +272,27 @@ body {
   --chart-other: #898781; /* overflow bucket, 9th+ series */
 
   /* ── Sidebar ───────────────────────────────── */
-  --sidebar-foreground: #8b919e;
+  --sidebar-content: #8b919e;
   --sidebar-primary: #88bdf2;
-  --sidebar-primary-foreground: #0d0f12;
+  --sidebar-primary-content: #0d0f12;
   --sidebar-accent: rgba(255, 255, 255, 0.07);
-  --sidebar-accent-foreground: #f0f2f5;
+  --sidebar-accent-content: #f0f2f5;
   --sidebar-border: rgba(255, 255, 255, 0.07);
   --sidebar-ring: #88bdf2;
+
+  /* ── UA-rendered chrome: daisyUI pins `color-scheme: light` on `:where(:root)`,
+     leaving browser-painted controls (colour swatch, file inputs, autofill)
+     light-on-dark once `.dark` is set. Declared here because `.dark` (0,1,0)
+     outranks that zero-specificity selector regardless of source order. */
+  color-scheme: dark;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-base-300 outline-primary/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-base-200 text-base-content;
   }
   html {
     @apply font-sans;
@@ -274,7 +321,7 @@ body {
   .tiptap-content {
     font-size: 0.875rem;
     line-height: 1.6;
-    color: var(--foreground);
+    color: var(--base-content);
     word-break: break-word;
   }
   .tiptap-content p {
@@ -286,7 +333,7 @@ body {
     margin: 0.75rem 0 0.375rem;
     font-weight: 600;
     line-height: 1.3;
-    color: var(--foreground);
+    color: var(--base-content);
   }
   .tiptap-content h1 {
     font-size: 1.35rem;
@@ -331,14 +378,14 @@ body {
     padding: 0.1rem 0.3rem;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.85em;
-    background-color: var(--muted);
+    background-color: var(--base-300);
     border-radius: 0.25rem;
   }
   .tiptap-content pre {
     padding: 0.75rem 1rem;
     margin: 0 0 0.5rem;
     overflow-x: auto;
-    color: var(--foreground);
+    color: var(--base-content);
     background-color: var(--secondary);
     border-radius: 0.5rem;
   }
@@ -351,14 +398,14 @@ body {
   .tiptap-content blockquote {
     padding-left: 0.75rem;
     margin: 0 0 0.5rem;
-    color: var(--muted-foreground);
-    border-left: 3px solid var(--border);
+    color: var(--base-content-muted);
+    border-left: 3px solid var(--base-300);
   }
   /* Placeholder shown on the empty editor (from @tiptap/extension-placeholder). */
   .tiptap-content p.is-editor-empty:first-child::before {
     float: left;
     height: 0;
-    color: var(--muted-foreground);
+    color: var(--base-content-muted);
     pointer-events: none;
     content: attr(data-placeholder);
   }

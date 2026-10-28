@@ -37,9 +37,10 @@ pnpm-debug.log*
 # embedded postgres (dev)
 /.pgdata
 /.docket-postgres
+/.docket-postgres-test
 
 # local file storage driver (ticket attachments) — see lib/storage.ts.
-# Docker mounts this as the support_tool_uploads volume instead.
+# Docker mounts this as the docket_uploads volume instead.
 /uploads
 
 # typescript
@@ -52,3 +53,9 @@ next-env.d.ts
 *.dump
 docket-db-*
 
+
+# Brainer — derived index. rejected.json is your input, keep it.
+.brainer/index.db
+.brainer/index.db-*
+.brainer/models/
+.brainer/hooks/

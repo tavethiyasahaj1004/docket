@@ -66,24 +66,39 @@ COPY --from=build --chown=node:node /app/.next ./.next
 # ownership from the image and the app can write to it as non-root.
 RUN mkdir -p /app/uploads && chown -R node:node /app/uploads
 
+# scripts/docker-entrypoint.sh is bash (`wait -n` supervises web + worker), and
+# node:22-alpine ships only busybox sh. The repo tracks scripts as mode 644, so
+# set the exec bit here rather than relying on the checkout.
+RUN apk add --no-cache bash \
+  && chmod +x /app/scripts/docker-entrypoint.sh
+
 USER node
 
 EXPOSE 3000
 
 # Compose/orchestrators can rely on this instead of declaring their own probe.
 # /api/health is unauthenticated on purpose and checks DB reachability.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+# start-period covers the slowest legitimate boot: in the default "all" role the
+# web server starts only AFTER migrations have been applied.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/api/health || exit 1
 
-# Overridden per-service in docker-compose (app / worker / migrate).
-CMD ["pnpm", "start"]
+# Every explicit command (the `command:` of each docker-compose service, or
+# `docker run <image> sh`) is exec'd verbatim by the entrypoint. "docket" is a
+# sentinel meaning "no command given — read DOCKET_ROLE, default all": migrate,
+# then web server AND worker in this one container. That is for platforms that
+# deploy a registry image once and have no `command:` to set (Dokploy, Coolify,
+# CapRover, a bare `docker run`). It must be a real value, not an empty CMD, or
+# the base image's inherited `CMD ["node"]` would take its place.
+ENTRYPOINT ["/app/scripts/docker-entrypoint.sh"]
+CMD ["docket"]
 
 # OCI metadata. This is what renders on the GitHub Packages page, and what links
 # the package back to this repository.
 LABEL org.opencontainers.image.title="Docket" \
       org.opencontainers.image.description="Open-source, self-hosted customer support ticketing system." \
-      org.opencontainers.image.url="https://github.com/stack256/docket" \
-      org.opencontainers.image.source="https://github.com/stack256/docket" \
-      org.opencontainers.image.documentation="https://github.com/stack256/docket#readme" \
+      org.opencontainers.image.url="https://github.com/stack256org/docket" \
+      org.opencontainers.image.source="https://github.com/stack256org/docket" \
+      org.opencontainers.image.documentation="https://github.com/stack256org/docket#readme" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.vendor="Stack256"

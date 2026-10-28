@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, isNull, sql } from "drizzle-orm";
 import { customers } from "@/db/schema/customers";
 import { ticketStatuses } from "@/db/schema/ticket-config";
 import { tickets } from "@/db/schema/tickets";
@@ -6,13 +6,9 @@ import { db } from "@/lib/db";
 
 export type Customer = typeof customers.$inferSelect;
 
-/**
- * Looks up a customer by (normalized) email, creating one if this is their
- * first-ever ticket. Uses INSERT ... ON CONFLICT DO NOTHING rather than a
- * plain select-then-insert so two concurrent submissions from the same new
- * email (portal + public API can both be hit at once) can't race into a
- * unique-constraint crash.
- */
+/** Looks up a customer by normalized email, creating one on their first ticket.
+ * Uses INSERT ... ON CONFLICT DO NOTHING rather than select-then-insert, so two
+ * concurrent submissions from one new email can't race into a constraint crash. */
 export async function findOrCreateCustomer(
   name: string,
   email: string
@@ -80,7 +76,8 @@ async function getCustomerFrequency(
     .where(
       and(
         eq(tickets.customerId, customerId),
-        gte(tickets.createdAt, rangeStart)
+        gte(tickets.createdAt, rangeStart),
+        isNull(tickets.mergedIntoTicketId)
       )
     )
     .groupBy(monthExpr);
@@ -123,7 +120,12 @@ export async function getCustomerProfile(
       })
       .from(tickets)
       .leftJoin(ticketStatuses, eq(tickets.status, ticketStatuses.slug))
-      .where(eq(tickets.customerId, customerId))
+      .where(
+        and(
+          eq(tickets.customerId, customerId),
+          isNull(tickets.mergedIntoTicketId)
+        )
+      )
       .orderBy(desc(tickets.createdAt)),
     getCustomerFrequency(customerId),
   ]);
@@ -162,4 +164,19 @@ export async function updateCustomerNote(
     .where(eq(customers.id, customerId))
     .returning();
   return updated ?? null;
+}
+
+/** Read-only counterpart of findOrCreateCustomer: the customer with this
+ * email (normalized the same way), or null. Never creates one. */
+export async function findCustomerByEmail(
+  email: string
+): Promise<Customer | null> {
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const [existing] = await db
+    .select()
+    .from(customers)
+    .where(eq(customers.email, normalizedEmail))
+    .limit(1);
+  return existing ?? null;
 }

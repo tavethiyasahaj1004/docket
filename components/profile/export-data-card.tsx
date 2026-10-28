@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 // Postman download buttons on /admin/api-keys/docs.
 export function ExportDataCard() {
   return (
-    <div className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-4">
+    <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-foreground">
+        <h2 className="text-base font-semibold text-base-content">
           Export Your Data
         </h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <p className="text-xs text-base-content-muted mt-0.5">
           Download a copy of your profile, active sessions, linked sign-in
           methods, and account activity as a JSON file.
         </p>

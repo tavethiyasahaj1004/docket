@@ -47,18 +47,18 @@ export function BreakdownReportTable({
   }));
 
   return (
-    <section className="bg-card rounded-xl border border-border shadow-soft">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+    <section className="bg-base-100 rounded-xl border border-base-300 shadow-soft">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-base-300">
         <div>
-          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          <h2 className="text-base font-semibold text-base-content">{title}</h2>
           {description && (
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-base-content-muted mt-0.5">
               {description}
             </p>
           )}
         </div>
         <a
-          className="text-xs font-medium text-foreground hover:underline shrink-0"
+          className="text-xs font-medium text-base-content hover:underline shrink-0"
           download
           href={csvHref}
         >
@@ -68,7 +68,7 @@ export function BreakdownReportTable({
 
       {rows.length === 0 ? (
         <div className="py-12 text-center">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-base-content-muted">
             No tickets in this range.
           </p>
         </div>
@@ -85,7 +85,7 @@ export function BreakdownReportTable({
                 layout="vertical"
                 margin={{ top: 0, right: 24, bottom: 0, left: 0 }}
               >
-                <CartesianGrid horizontal={false} stroke="var(--border)" />
+                <CartesianGrid horizontal={false} stroke="var(--base-300)" />
                 <XAxis allowDecimals={false} type="number" />
                 <YAxis
                   dataKey="label"
@@ -101,7 +101,7 @@ export function BreakdownReportTable({
                         const count = Number(value);
                         const share = item.payload?.share as number | undefined;
                         return (
-                          <span className="font-mono font-medium text-foreground tabular-nums">
+                          <span className="font-mono font-medium text-base-content tabular-nums">
                             {count.toLocaleString()} ticket
                             {count === 1 ? "" : "s"}
                             {share === undefined
@@ -112,7 +112,7 @@ export function BreakdownReportTable({
                       }}
                     />
                   }
-                  cursor={{ fill: "var(--accent)" }}
+                  cursor={{ fill: "var(--base-300)" }}
                 />
                 <Bar dataKey="count" radius={[0, 4, 4, 0]}>
                   {chartData.map((d) => (
@@ -126,34 +126,34 @@ export function BreakdownReportTable({
           <div className="overflow-x-auto mt-4">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <tr className="border-b border-base-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     Tickets
                   </th>
                   {showShare && (
-                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted uppercase tracking-wide">
                       Share
                     </th>
                   )}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-base-300">
                 {rows.map((r) => (
                   <tr
-                    className="hover:bg-accent/30 transition-colors"
+                    className="hover:bg-base-300/30 transition-colors"
                     key={r.label}
                   >
-                    <td className="px-6 py-3 text-foreground font-medium">
+                    <td className="px-6 py-3 text-base-content font-medium">
                       {r.label}
                     </td>
-                    <td className="px-6 py-3 text-muted-foreground">
+                    <td className="px-6 py-3 text-base-content-muted">
                       {r.count}
                     </td>
                     {showShare && (
-                      <td className="px-6 py-3 text-muted-foreground">
+                      <td className="px-6 py-3 text-base-content-muted">
                         {r.share === undefined
                           ? "—"
                           : `${(r.share * 100).toFixed(1)}%`}

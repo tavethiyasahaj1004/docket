@@ -113,12 +113,12 @@ export function CannedResponsesManager({ initialResponses }: Props) {
     <div className="space-y-5">
       {/* Header — count on the left, add button on the right */}
       <div className="flex items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-base-content-muted">
           {initialResponses.length}{" "}
           {initialResponses.length === 1 ? "response" : "responses"}
         </p>
         <Button
-          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md gap-1.5"
+          className="bg-primary hover:bg-primary/90 text-primary-content rounded-md gap-1.5"
           onClick={openAdd}
           size="sm"
         >
@@ -128,12 +128,12 @@ export function CannedResponsesManager({ initialResponses }: Props) {
       </div>
 
       {initialResponses.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card py-16 text-center">
-          <ChatTextIcon className="size-8 text-muted-foreground mb-3" />
-          <p className="text-sm font-medium text-foreground">
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-base-300 bg-base-100 py-16 text-center">
+          <ChatTextIcon className="size-8 text-base-content-muted mb-3" />
+          <p className="text-sm font-medium text-base-content">
             No canned responses yet
           </p>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-xs text-base-content-muted mt-1">
             Add one to reuse it from the reply editor's toolbar.
           </p>
         </div>
@@ -141,22 +141,22 @@ export function CannedResponsesManager({ initialResponses }: Props) {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {initialResponses.map((r) => (
             <div
-              className="group flex flex-col rounded-xl border border-border bg-card p-4 shadow-soft transition-colors hover:border-stone"
+              className="group flex flex-col rounded-xl border border-base-300 bg-base-100 p-4 shadow-soft transition-colors hover:border-stone"
               key={r.id}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent text-muted-foreground">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-base-300 text-base-content-muted">
                     <ChatTextIcon className="size-3.5" />
                   </div>
-                  <h3 className="truncate text-sm font-semibold text-foreground">
+                  <h3 className="truncate text-sm font-semibold text-base-content">
                     {r.title}
                   </h3>
                 </div>
                 <div className="flex shrink-0 gap-1">
                   <button
                     aria-label={`Edit ${r.title}`}
-                    className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+                    className="flex size-7 items-center justify-center rounded-md text-base-content-muted transition-colors hover:bg-base-300 hover:text-base-content"
                     onClick={() => openEdit(r)}
                     type="button"
                   >
@@ -175,7 +175,7 @@ export function CannedResponsesManager({ initialResponses }: Props) {
                   </button>
                 </div>
               </div>
-              <p className="mt-2 line-clamp-3 text-xs text-muted-foreground">
+              <p className="mt-2 line-clamp-3 text-xs text-base-content-muted">
                 {richTextToPlainText(r.content) || "—"}
               </p>
             </div>
@@ -195,10 +195,10 @@ export function CannedResponsesManager({ initialResponses }: Props) {
       >
         <DialogContent className="rounded-xl max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               {editTarget ? "Edit Response" : "Add Response"}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogDescription className="text-base-content-muted">
               {editTarget
                 ? "Update the title or content."
                 : "Create a reusable reply template."}
@@ -207,7 +207,7 @@ export function CannedResponsesManager({ initialResponses }: Props) {
 
           <div className="space-y-4 py-1">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-base-content-muted">
                 Title
               </Label>
               <Input
@@ -221,7 +221,7 @@ export function CannedResponsesManager({ initialResponses }: Props) {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-base-content-muted">
                 Content
               </Label>
               <RichTextEditor
@@ -236,7 +236,7 @@ export function CannedResponsesManager({ initialResponses }: Props) {
 
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={saving}
               onClick={() => {
                 setAddOpen(false);
@@ -247,7 +247,7 @@ export function CannedResponsesManager({ initialResponses }: Props) {
               Cancel
             </Button>
             <Button
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-content rounded-md"
               disabled={
                 saving || !form.title.trim() || isRichTextEmpty(form.content)
               }
@@ -277,10 +277,10 @@ export function CannedResponsesManager({ initialResponses }: Props) {
             <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full bg-red-100">
               <TrashIcon className="size-5 text-red-600" />
             </div>
-            <DialogTitle className="text-foreground text-center">
+            <DialogTitle className="text-base-content text-center">
               Delete &ldquo;{deleteTarget?.title}&rdquo;?
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-center">
+            <DialogDescription className="text-base-content-muted text-center">
               This canned response will be permanently removed for the whole
               team.
             </DialogDescription>
@@ -288,7 +288,7 @@ export function CannedResponsesManager({ initialResponses }: Props) {
           {error && <p className="text-xs text-red-600 text-center">{error}</p>}
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={deleting}
               onClick={() => {
                 setDeleteTarget(null);

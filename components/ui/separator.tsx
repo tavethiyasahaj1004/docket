@@ -1,28 +1,36 @@
-"use client"
+import type * as React from "react";
 
-import * as React from "react"
-import { Separator as SeparatorPrimitive } from "radix-ui"
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
-
+// daisyUI's `divider` paints the rules itself and centres children between them,
+// making "─── or ───" one element rather than three. Its axis naming is the
+// reverse of ARIA's: `divider-horizontal` draws a *vertical* rule.
 function Separator({
   className,
   orientation = "horizontal",
   decorative = true,
+  children,
   ...props
-}: React.ComponentProps<typeof SeparatorPrimitive.Root>) {
+}: React.ComponentProps<"div"> & {
+  decorative?: boolean;
+  orientation?: "horizontal" | "vertical";
+}) {
   return (
-    <SeparatorPrimitive.Root
-      data-slot="separator"
-      decorative={decorative}
-      orientation={orientation}
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: aria-orientation only renders when role="separator" (decorative=false), never alongside role="none"
+    <div
+      aria-orientation={decorative ? undefined : orientation}
       className={cn(
-        "shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch",
+        "divider",
+        orientation === "vertical" ? "divider-horizontal" : "divider-vertical",
         className
       )}
+      data-slot="separator"
+      role={decorative ? "none" : "separator"}
       {...props}
-    />
-  )
+    >
+      {children}
+    </div>
+  );
 }
 
-export { Separator }
+export { Separator };

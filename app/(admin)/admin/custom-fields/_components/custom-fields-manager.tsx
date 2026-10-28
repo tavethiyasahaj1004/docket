@@ -167,19 +167,19 @@ export function CustomFieldsManager({ initialFields }: Props) {
     (form.type !== "select" || form.options.length >= 2);
 
   return (
-    <section className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-5">
+    <section className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-foreground">
+          <h2 className="text-base font-semibold text-base-content">
             Custom Fields
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             Extra structured fields agents can fill in on a ticket, or that can
             be set when a ticket is created via the public API.
           </p>
         </div>
         <Button
-          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md gap-1.5"
+          className="bg-primary hover:bg-primary/90 text-primary-content rounded-md gap-1.5"
           onClick={openAdd}
           size="sm"
         >
@@ -188,27 +188,27 @@ export function CustomFieldsManager({ initialFields }: Props) {
         </Button>
       </div>
 
-      <div className="divide-y divide-border/60">
+      <div className="divide-y divide-base-300/60">
         {initialFields.length === 0 && (
-          <p className="py-6 text-center text-xs text-muted-foreground">
+          <p className="py-6 text-center text-xs text-base-content-muted">
             No custom fields yet.
           </p>
         )}
         {initialFields.map((f) => (
           <div className="flex items-center gap-3 py-3" key={f.id}>
-            <span className="text-sm font-medium text-foreground flex-1">
+            <span className="text-sm font-medium text-base-content flex-1">
               {f.label}
               {f.required && <span className="text-red-600">*</span>}
             </span>
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-base-content-muted">
               {TYPE_LABEL[f.type] ?? f.type}
             </span>
-            <span className="text-xs text-muted-foreground font-mono">
+            <span className="text-xs text-base-content-muted font-mono">
               {f.key}
             </span>
             <div className="flex gap-2 ml-2">
               <Button
-                className="h-8 border-border text-foreground hover:bg-accent rounded-md"
+                className="h-8 border-base-300 text-base-content hover:bg-base-300 rounded-md"
                 onClick={() => openEdit(f)}
                 size="sm"
                 variant="outline"
@@ -243,10 +243,10 @@ export function CustomFieldsManager({ initialFields }: Props) {
       >
         <DialogContent className="rounded-xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               {editTarget ? "Edit Custom Field" : "Add Custom Field"}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogDescription className="text-base-content-muted">
               {editTarget
                 ? "Update the field's label, options, or requirement."
                 : "Create a new custom field for tickets."}
@@ -255,7 +255,7 @@ export function CustomFieldsManager({ initialFields }: Props) {
 
           <div className="space-y-4 py-1">
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-base-content-muted">
                 Label
               </Label>
               <Input
@@ -269,7 +269,7 @@ export function CustomFieldsManager({ initialFields }: Props) {
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-base-content-muted">
                 Type
               </Label>
               <SearchableSelect
@@ -283,7 +283,7 @@ export function CustomFieldsManager({ initialFields }: Props) {
                 value={form.type}
               />
               {editTarget && (
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-base-content-muted">
                   Type can't be changed after creation.
                 </p>
               )}
@@ -291,19 +291,19 @@ export function CustomFieldsManager({ initialFields }: Props) {
 
             {form.type === "select" && (
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-base-content-muted">
                   Options
                 </Label>
                 <div className="flex flex-wrap gap-1.5">
                   {form.options.map((o) => (
                     <span
-                      className="inline-flex items-center gap-1 rounded border border-border bg-accent px-2 py-1 text-xs font-medium text-foreground"
+                      className="inline-flex items-center gap-1 rounded border border-base-300 bg-base-300 px-2 py-1 text-xs font-medium text-base-content"
                       key={o}
                     >
                       {o}
                       <button
                         aria-label={`Remove option ${o}`}
-                        className="text-muted-foreground hover:text-foreground cursor-pointer"
+                        className="text-base-content-muted hover:text-base-content cursor-pointer"
                         onClick={() => removeOption(o)}
                         type="button"
                       >
@@ -336,7 +336,7 @@ export function CustomFieldsManager({ initialFields }: Props) {
                   </Button>
                 </div>
                 {form.options.length < 2 && (
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-base-content-muted">
                     Add at least 2 options.
                   </p>
                 )}
@@ -352,7 +352,7 @@ export function CustomFieldsManager({ initialFields }: Props) {
                 }
               />
               <Label
-                className="text-xs font-medium text-muted-foreground"
+                className="text-xs font-medium text-base-content-muted"
                 htmlFor="custom-field-required"
               >
                 Required
@@ -364,7 +364,7 @@ export function CustomFieldsManager({ initialFields }: Props) {
 
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={saving}
               onClick={() => {
                 setAddOpen(false);
@@ -375,7 +375,7 @@ export function CustomFieldsManager({ initialFields }: Props) {
               Cancel
             </Button>
             <Button
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-content rounded-md"
               disabled={saving || !canSave}
               onClick={handleSave}
             >
@@ -399,10 +399,10 @@ export function CustomFieldsManager({ initialFields }: Props) {
             <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full bg-red-100">
               <TrashIcon className="size-5 text-red-600" />
             </div>
-            <DialogTitle className="text-foreground text-center">
+            <DialogTitle className="text-base-content text-center">
               Delete &ldquo;{deleteTarget?.label}&rdquo;?
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-center">
+            <DialogDescription className="text-base-content-muted text-center">
               This field and any values agents have entered for it on tickets
               will be permanently removed.
             </DialogDescription>
@@ -410,7 +410,7 @@ export function CustomFieldsManager({ initialFields }: Props) {
           {error && <p className="text-xs text-red-600 text-center">{error}</p>}
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={deleting}
               onClick={() => {
                 setDeleteTarget(null);

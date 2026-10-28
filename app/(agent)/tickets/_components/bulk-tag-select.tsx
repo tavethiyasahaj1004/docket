@@ -64,7 +64,7 @@ export function BulkTagSelect({ disabled = false, onSelect }: Props) {
     >
       <PopoverTrigger asChild>
         <button
-          className="flex h-9 items-center gap-1.5 rounded-md border border-border bg-transparent px-3 text-sm text-muted-foreground transition-colors hover:border-stone hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 items-center gap-1.5 rounded-md border border-base-300 bg-transparent px-3 text-sm text-base-content-muted transition-colors hover:border-stone hover:text-base-content disabled:cursor-not-allowed disabled:opacity-50"
           disabled={disabled}
           type="button"
         >
@@ -73,10 +73,10 @@ export function BulkTagSelect({ disabled = false, onSelect }: Props) {
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-56 p-0">
-        <div className="border-b border-border px-2.5">
+        <div className="border-b border-base-300 px-2.5">
           <input
             autoFocus
-            className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-base-content-muted"
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter" && canCreate) {
@@ -91,17 +91,17 @@ export function BulkTagSelect({ disabled = false, onSelect }: Props) {
         <div className="max-h-52 overflow-y-auto p-1">
           {canCreate && (
             <button
-              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent/60"
+              className="flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm text-base-content transition-colors hover:bg-base-300/60"
               onClick={() => pick(query)}
               type="button"
             >
-              <PlusIcon className="size-3.5 shrink-0 text-muted-foreground" />
+              <PlusIcon className="size-3.5 shrink-0 text-base-content-muted" />
               <span className="truncate">Create "{query.trim()}"</span>
             </button>
           )}
           {results.map((tag) => (
             <button
-              className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent/60"
+              className="flex w-full items-center rounded-md px-2 py-1.5 text-left text-sm text-base-content transition-colors hover:bg-base-300/60"
               key={tag.id}
               onClick={() => pick(tag.name)}
               type="button"
@@ -110,7 +110,7 @@ export function BulkTagSelect({ disabled = false, onSelect }: Props) {
             </button>
           ))}
           {!canCreate && results.length === 0 && (
-            <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+            <p className="px-2 py-4 text-center text-xs text-base-content-muted">
               {query ? "No matches" : "No tags yet"}
             </p>
           )}

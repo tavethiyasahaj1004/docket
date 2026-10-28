@@ -20,9 +20,9 @@ export default function AdminUsersLoading() {
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft overflow-hidden">
         {/* Table header */}
-        <div className="grid grid-cols-5 gap-4 px-4 py-3 border-b border-border bg-accent/50">
+        <div className="grid grid-cols-5 gap-4 px-4 py-3 border-b border-base-300 bg-base-300/50">
           <Skeleton className="h-3 w-10" />
           <Skeleton className="h-3 w-10" />
           <Skeleton className="h-3 w-12" />
@@ -30,7 +30,7 @@ export default function AdminUsersLoading() {
           <Skeleton className="h-3 w-6 ml-auto" />
         </div>
         {/* Rows */}
-        <div className="divide-y divide-border/50">
+        <div className="divide-y divide-base-300/50">
           {skeletonKeys(10).map((k) => (
             <div
               className="grid grid-cols-5 gap-4 items-center px-4 py-3"

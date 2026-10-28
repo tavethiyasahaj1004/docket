@@ -7,12 +7,9 @@ import {
   TicketAttachments,
 } from "@/components/common/ticket-attachments";
 
-/**
- * Thin client wrapper so agent (server-component) pages can render deletable
- * attachments without passing a function prop across the server/client
- * boundary. Never used on the customer-facing ticket page — attachment
- * deletion is agent/admin only.
- */
+/** Thin client wrapper letting agent server-component pages render deletable
+ * attachments without passing a function across the server/client boundary.
+ * Never used on the customer page — deletion is agent/admin only. */
 export function DeletableTicketAttachments({
   ticketId,
   items,

@@ -10,13 +10,14 @@ export async function magicLinkTemplate({
   email: string;
   magicLinkUrl: string;
 }) {
-  const { productName, logoUrl } = await getEmailBranding();
+  const { productName, logoUrl, accentColor } = await getEmailBranding();
   const html = await renderEmailTemplate(
     createElement(MagicLinkEmail, {
       email,
       magicLinkUrl,
       productName,
       logoUrl,
+      accentColor,
     })
   );
 

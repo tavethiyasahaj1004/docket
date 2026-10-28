@@ -1,18 +1,21 @@
 import { Button, Link, Section, Text } from "react-email";
 import { PRODUCT_NAME } from "@/config/platform";
-import { EmailLayout, emailStyles } from "@/lib/email/components/layout";
+import { createEmailStyles, EmailLayout } from "@/lib/email/components/layout";
 
 export function ResetPasswordEmail({
   email,
   resetUrl,
   productName = PRODUCT_NAME,
   logoUrl,
+  accentColor,
 }: {
   email: string;
   resetUrl: string;
   productName?: string;
   logoUrl?: string | null;
+  accentColor?: string;
 }) {
+  const emailStyles = createEmailStyles(accentColor);
   return (
     <EmailLayout
       logoUrl={logoUrl}
@@ -22,7 +25,7 @@ export function ResetPasswordEmail({
       <Text style={emailStyles.heading}>Set your password</Text>
       <Text style={emailStyles.paragraph}>
         Use the button below to set a password for{" "}
-        <strong style={{ color: "#384959" }}>{email}</strong>.
+        <strong style={emailStyles.highlight}>{email}</strong>.
       </Text>
       <Section style={{ margin: "24px 0" }}>
         <Button href={resetUrl} style={emailStyles.button}>

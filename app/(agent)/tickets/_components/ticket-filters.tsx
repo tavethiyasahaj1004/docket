@@ -34,6 +34,7 @@ import type {
   TicketStatus,
 } from "@/lib/ticket-config";
 import { cn } from "@/lib/utils";
+import { TicketDateQuickFilter } from "./ticket-date-quick-filter";
 
 const RANGE_OPTIONS = [
   { value: "all", label: "All Time" },
@@ -68,6 +69,7 @@ interface Props {
   categories: TicketCategory[];
   priorities: TicketPriority[];
   statuses: TicketStatus[];
+  tags: string[];
 }
 
 export function TicketFilters({
@@ -75,6 +77,7 @@ export function TicketFilters({
   categories,
   priorities,
   agents,
+  tags,
 }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -87,6 +90,7 @@ export function TicketFilters({
   const category = searchParams.get("category") ?? "all";
   const priority = searchParams.get("priority") ?? "all";
   const assignee = searchParams.get("assignee") ?? "all";
+  const tag = searchParams.get("tag") ?? "all";
   const range = searchParams.get("range") ?? "all";
   const from = searchParams.get("from") ?? "";
   const to = searchParams.get("to") ?? "";
@@ -142,6 +146,9 @@ export function TicketFilters({
     agents.map((a) => [a.id, a.name ?? a.email])
   );
 
+  const tagOptions =
+    tag !== "all" && !tags.includes(tag) ? [tag, ...tags] : tags;
+
   const activeFilters = [
     status !== "all" && {
       key: "status",
@@ -166,6 +173,7 @@ export function TicketFilters({
           ? "Unassigned"
           : (agentMap[assignee] ?? assignee),
     },
+    tag !== "all" && { key: "tag", label: `Tag: ${tag}` },
     range !== "all" && {
       key: "range",
       label:
@@ -193,6 +201,7 @@ export function TicketFilters({
       category: "all",
       priority: "all",
       assignee: "all",
+      tag: "all",
       range: "all",
       from: "",
       to: "",
@@ -203,10 +212,17 @@ export function TicketFilters({
 
   return (
     <div className="space-y-3">
-      <div className="flex gap-3">
+      <div className="flex items-center gap-3">
+        {/* Quick day-range filter — shares the `range` param with the Date
+            Range option below (see lib/tickets-list-query.ts). */}
+        <TicketDateQuickFilter />
+
         {/* Search */}
         <div className="relative flex-1 min-w-0">
-          <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+          {/* z-10: daisyUI's `input` is itself `position: relative` with an
+              opaque `base-100` fill, so as a later positioned sibling it would
+              otherwise paint over this icon. */}
+          <MagnifyingGlassIcon className="absolute left-3 top-1/2 z-10 -translate-y-1/2 size-4 text-base-content-muted pointer-events-none" />
           <Input
             className={cn("h-10 pl-9", q && "pr-9")}
             onChange={(e) => setQ(e.target.value)}
@@ -216,7 +232,7 @@ export function TicketFilters({
           {q && (
             <button
               aria-label="Clear search"
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-md text-base-content-muted hover:text-base-content hover:bg-base-300 transition-colors"
               onClick={() => setQ("")}
               type="button"
             >
@@ -232,15 +248,15 @@ export function TicketFilters({
               className={cn(
                 "inline-flex h-10 shrink-0 items-center gap-2 rounded-md border px-3 text-sm font-medium transition-colors",
                 activeCount > 0
-                  ? "border-primary/30 bg-primary/5 text-foreground"
-                  : "border-border text-muted-foreground hover:text-foreground hover:bg-accent"
+                  ? "border-primary/30 bg-primary/5 text-base-content"
+                  : "border-base-300 text-base-content-muted hover:text-base-content hover:bg-base-300"
               )}
               type="button"
             >
               <FunnelIcon className="size-4" />
               Filters
               {activeCount > 0 && (
-                <span className="inline-flex size-4.5 items-center justify-center rounded-full bg-primary text-primary-foreground text-2xs font-semibold">
+                <span className="inline-flex size-4.5 items-center justify-center rounded-full bg-primary text-primary-content text-2xs font-semibold">
                   {activeCount}
                 </span>
               )}
@@ -248,12 +264,12 @@ export function TicketFilters({
           </PopoverTrigger>
           <PopoverContent align="end" className="w-80 p-4 space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">
+              <span className="text-sm font-semibold text-base-content">
                 Filters
               </span>
               {activeCount > 0 && (
                 <button
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="text-xs text-base-content-muted hover:text-base-content"
                   onClick={clearAll}
                   type="button"
                 >
@@ -264,7 +280,7 @@ export function TicketFilters({
 
             <div className="space-y-3">
               <div className="space-y-1.5">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-base-content-muted">
                   Status
                 </span>
                 <Select
@@ -286,7 +302,7 @@ export function TicketFilters({
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-base-content-muted">
                   Category
                 </span>
                 <Select
@@ -308,7 +324,7 @@ export function TicketFilters({
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-base-content-muted">
                   Priority
                 </span>
                 <Select
@@ -330,7 +346,7 @@ export function TicketFilters({
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-base-content-muted">
                   Assignee
                 </span>
                 <SearchableSelect
@@ -351,7 +367,26 @@ export function TicketFilters({
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-xs font-medium text-muted-foreground">
+                <span className="text-xs font-medium text-base-content-muted">
+                  Tag
+                </span>
+                <SearchableSelect
+                  onValueChange={(v) => updateParams({ tag: v })}
+                  options={[
+                    { value: "all", label: "All Tags" },
+                    // Keep a tag from the URL selectable even if it no longer
+                    // exists in the pool, so the control never shows blank.
+                    ...tagOptions.map((t) => ({ value: t, label: t })),
+                  ]}
+                  placeholder="All Tags"
+                  searchPlaceholder="Search tags…"
+                  triggerClassName="w-full"
+                  value={tag}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-xs font-medium text-base-content-muted">
                   Date Range
                 </span>
                 <SearchableSelect
@@ -374,18 +409,18 @@ export function TicketFilters({
                     <div className="flex items-center justify-center gap-2">
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs",
-                          from ? "text-foreground" : "text-muted-foreground"
+                          "inline-flex items-center gap-1.5 rounded-md border border-base-300 px-2 py-1 text-xs",
+                          from ? "text-base-content" : "text-base-content-muted"
                         )}
                       >
                         <CalendarBlankIcon className="size-3.5 shrink-0" />
                         {from ? formatDay(from) : "Start date"}
                       </span>
-                      <ArrowRightIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                      <ArrowRightIcon className="size-3.5 shrink-0 text-base-content-muted" />
                       <span
                         className={cn(
-                          "inline-flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs",
-                          to ? "text-foreground" : "text-muted-foreground"
+                          "inline-flex items-center gap-1.5 rounded-md border border-base-300 px-2 py-1 text-xs",
+                          to ? "text-base-content" : "text-base-content-muted"
                         )}
                       >
                         <CalendarBlankIcon className="size-3.5 shrink-0" />
@@ -393,7 +428,7 @@ export function TicketFilters({
                       </span>
                     </div>
                     <Calendar
-                      className="w-full rounded-md border border-border"
+                      className="w-full rounded-md border border-base-300"
                       defaultMonth={from ? parseDay(from) : undefined}
                       disabled={{ after: new Date() }}
                       mode="range"
@@ -413,14 +448,14 @@ export function TicketFilters({
               </div>
             </div>
 
-            <div className="space-y-3 border-t border-border pt-3">
+            <div className="space-y-3 border-t border-base-300 pt-3">
               <div className="flex items-center justify-between gap-2">
                 <button
-                  className="flex items-center gap-1.5 text-sm text-foreground"
+                  className="flex items-center gap-1.5 text-sm text-base-content"
                   onClick={() => updateParams({ mine: mine ? "" : "1" })}
                   type="button"
                 >
-                  <UserIcon className="size-4 text-muted-foreground" />
+                  <UserIcon className="size-4 text-base-content-muted" />
                   Assigned to me
                 </button>
                 <Switch
@@ -430,13 +465,13 @@ export function TicketFilters({
               </div>
               <div className="flex items-center justify-between gap-2">
                 <button
-                  className="flex items-center gap-1.5 text-sm text-foreground"
+                  className="flex items-center gap-1.5 text-sm text-base-content"
                   onClick={() =>
                     updateParams({ awaiting: awaiting ? "" : "1" })
                   }
                   type="button"
                 >
-                  <ChatCircleDotsIcon className="size-4 text-muted-foreground" />
+                  <ChatCircleDotsIcon className="size-4 text-base-content-muted" />
                   Awaiting reply
                 </button>
                 <Switch
@@ -456,12 +491,12 @@ export function TicketFilters({
         <div className="flex flex-wrap gap-2">
           {activeFilters.map((f) => (
             <span
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-foreground"
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2.5 py-1 text-xs font-medium text-base-content"
               key={f.key}
             >
               {f.label}
               <button
-                className="ml-0.5 hover:text-foreground/60"
+                className="ml-0.5 hover:text-base-content/60"
                 onClick={() =>
                   // Removing the range chip must also drop its custom dates.
                   updateParams(
@@ -477,7 +512,7 @@ export function TicketFilters({
             </span>
           ))}
           <Button
-            className="h-auto py-1 px-2 text-xs text-muted-foreground hover:text-foreground"
+            className="h-auto py-1 px-2 text-xs text-base-content-muted hover:text-base-content"
             onClick={clearAll}
             size="sm"
             variant="ghost"

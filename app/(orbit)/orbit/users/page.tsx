@@ -60,7 +60,7 @@ export default async function OrbitUsersPage() {
                 <TableRow key={item.id}>
                   <TableCell>
                     <div className="font-semibold">{item.email}</div>
-                    <div className="text-muted-foreground text-xs">
+                    <div className="text-base-content-muted text-xs">
                       {item.name}
                     </div>
                   </TableCell>

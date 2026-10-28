@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, count, desc, eq } from "drizzle-orm";
-import { notifications } from "@/db/schema";
+import { and, count, desc, eq, or } from "drizzle-orm";
+import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
+import { notifications, user } from "@/db/schema";
 import { db } from "@/lib/db";
 import { publishNotificationCreated } from "@/lib/realtime";
 
@@ -46,6 +47,52 @@ export async function createNotifications(
       )
     )
   );
+}
+
+/** Recipients for an agent action that touches several tickets (link, merge,
+ * split), one list per entry of `assignedAgentIds`. Same routing as
+ * `customer_replied`: an assigned ticket → its assignee (if not deactivated);
+ * unassigned → every active agent/admin. `actorId` is always dropped — they
+ * just did it — and each person appears in at most one list (earliest wins),
+ * so nobody gets two notifications for one action. */
+export async function ticketOwnerRecipients(
+  assignedAgentIds: (string | null)[],
+  actorId: string
+): Promise<string[][]> {
+  const activeAgents = await db
+    .select({ id: user.id })
+    .from(user)
+    .where(
+      and(
+        or(eq(user.role, AGENT_ROLE), eq(user.role, ADMIN_ROLE)),
+        eq(user.banned, false)
+      )
+    );
+  return routeOwnerRecipients(
+    assignedAgentIds,
+    activeAgents.map((a) => a.id),
+    actorId
+  );
+}
+
+/** The pure routing behind ticketOwnerRecipients, given the active
+ * agent/admin ids. */
+export function routeOwnerRecipients(
+  assignedAgentIds: (string | null)[],
+  activeIds: string[],
+  actorId: string
+): string[][] {
+  const taken = new Set<string>([actorId]);
+  return assignedAgentIds.map((assignedId) => {
+    const candidates = assignedId
+      ? activeIds.filter((id) => id === assignedId)
+      : activeIds;
+    const recipients = candidates.filter((id) => !taken.has(id));
+    for (const id of recipients) {
+      taken.add(id);
+    }
+    return recipients;
+  });
 }
 
 export async function listNotifications(

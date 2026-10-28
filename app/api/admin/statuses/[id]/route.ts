@@ -1,10 +1,11 @@
-import { count, eq } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { ticketStatuses, tickets } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { requireAdminFromRequest } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { moveMergedTicketsOffSlug } from "@/lib/tickets/merge";
 
 // PATCH — admin only
 export async function PATCH(
@@ -128,11 +129,14 @@ export async function DELETE(
     );
   }
 
-  // Check ticket usage
+  // Check ticket usage. Merged tickets are hidden and not counted — they're
+  // moved off this status below, right before the delete.
   const [{ total: ticketCount }] = await db
     .select({ total: count() })
     .from(tickets)
-    .where(eq(tickets.status, existing.slug));
+    .where(
+      and(eq(tickets.status, existing.slug), isNull(tickets.mergedIntoTicketId))
+    );
 
   if (Number(ticketCount) > 0) {
     return NextResponse.json(
@@ -148,6 +152,16 @@ export async function DELETE(
   if (Number(statusCount) <= 1) {
     return NextResponse.json(
       { error: "Cannot delete the only status." },
+      { status: 400 }
+    );
+  }
+
+  if (!(await moveMergedTicketsOffSlug("status", existing.slug))) {
+    return NextResponse.json(
+      {
+        error:
+          "Cannot delete: merged tickets use this status and there's no other closed status to move them to.",
+      },
       { status: 400 }
     );
   }

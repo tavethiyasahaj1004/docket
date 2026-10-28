@@ -17,7 +17,7 @@ are no long-term support branches yet. If you are self-hosting, run a recent tag
 Report it privately, either way:
 
 - **Preferred:** GitHub's private vulnerability reporting —
-  [Security → Report a vulnerability](https://github.com/stack256/docket/security/advisories/new)
+  [Security → Report a vulnerability](https://github.com/stack256org/docket/security/advisories/new)
 - **Email:** bhadanirohit1@gmail.com
 
 Helpful to include: affected version or commit, deployment shape (bundled Postgres vs

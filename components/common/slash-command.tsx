@@ -123,10 +123,9 @@ const SlashList = ({
 }: SlashListProps & { ref?: RefObject<SlashListRef | null> }) => {
   const [selected, setSelected] = useState(0);
 
-  // props.items is a deliberate re-run trigger, not a value read inside the
-  // effect. Dropping it (as the rule suggests) would make this run only on
-  // mount, leaving `selected` pointing at a stale index when the filtered item
-  // list shrinks.
+  // props.items is a deliberate re-run trigger, not a value read in the effect.
+  // Dropping it would run this only on mount, leaving `selected` on a stale
+  // index whenever the filtered list shrinks.
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional re-run trigger, not a read dependency
   useEffect(() => setSelected(0), [props.items]);
 
@@ -163,12 +162,12 @@ const SlashList = ({
   }
 
   return (
-    <div className="w-60 overflow-hidden rounded-lg border border-border bg-popover p-1 shadow-md">
+    <div className="w-60 overflow-hidden rounded-lg border border-base-300 bg-base-100 p-1 shadow-md">
       {props.items.map((item, index) => (
         <button
           className={cn(
             "flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left transition-colors",
-            index === selected ? "bg-accent" : "hover:bg-accent/60"
+            index === selected ? "bg-base-300" : "hover:bg-base-300/60"
           )}
           key={item.title}
           onMouseDown={(e) => {
@@ -178,14 +177,14 @@ const SlashList = ({
           onMouseEnter={() => setSelected(index)}
           type="button"
         >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-md border border-base-300 bg-base-100 text-base-content">
             {item.icon}
           </span>
           <span className="min-w-0">
-            <span className="block text-sm font-medium text-foreground">
+            <span className="block text-sm font-medium text-base-content">
               {item.title}
             </span>
-            <span className="block text-xs text-muted-foreground">
+            <span className="block text-xs text-base-content-muted">
               {item.hint}
             </span>
           </span>

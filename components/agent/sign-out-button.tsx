@@ -16,7 +16,7 @@ export function SignOutButton({ collapsed = false }: { collapsed?: boolean }) {
     <button
       aria-label="Sign out"
       className={cn(
-        "flex w-full items-center rounded-md py-1.5 text-xs font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+        "flex w-full items-center rounded-md py-1.5 text-xs font-medium text-sidebar-content transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-content",
         collapsed ? "justify-center px-0" : "gap-2 px-2.5"
       )}
       type="submit"

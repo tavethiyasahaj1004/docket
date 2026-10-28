@@ -3,9 +3,9 @@ import {
   ClockIcon,
   TicketIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BrandMark } from "@/components/common/brand-mark";
 import { LocalDateTime } from "@/components/common/local-datetime";
 import { RichTextContent } from "@/components/common/rich-text-content";
@@ -28,6 +28,8 @@ import {
 import { storage } from "@/lib/storage";
 import { getTicketCategories, getTicketStatuses } from "@/lib/ticket-config";
 import { COLOR_BADGE } from "@/lib/tickets";
+import { resolveAttachmentLimits } from "@/lib/tickets/attachment-limits";
+import { resolveCustomerTicket } from "@/lib/tickets/merge";
 import { getInitials } from "@/lib/utils";
 import { ReplyForm } from "./reply-form";
 import { TicketActions } from "./ticket-actions";
@@ -47,6 +49,13 @@ export default async function TicketDetailPage({
 
   if (!token) {
     notFound();
+  }
+
+  // An old link to a merged ticket lands on the ticket it was merged into
+  // (same customer, so handing over that ticket's token is safe).
+  const access = await resolveCustomerTicket(ticketId, token);
+  if (access?.merged) {
+    redirect(`/ticket/${access.ticketId}?token=${access.token}`);
   }
 
   // Validate ticket + token together
@@ -98,7 +107,12 @@ export default async function TicketDetailPage({
       customerToken: tickets.customerToken,
     })
     .from(tickets)
-    .where(eq(tickets.customerId, ticket.customerId))
+    .where(
+      and(
+        eq(tickets.customerId, ticket.customerId),
+        isNull(tickets.mergedIntoTicketId)
+      )
+    )
     .orderBy(desc(tickets.createdAt));
 
   const openTickets = siblingTickets.filter(
@@ -155,7 +169,6 @@ export default async function TicketDetailPage({
   );
 
   const isOpen = !(statusMap[ticket.status]?.isClosedState ?? false);
-  const totalAttachments = attachments.length;
 
   return (
     <div className="min-h-screen bg-public">
@@ -437,9 +450,13 @@ export default async function TicketDetailPage({
           {/* Reply form or closed notice */}
           {isOpen ? (
             <ReplyForm
+              attachmentLimits={resolveAttachmentLimits(settings)}
               ticketId={ticket.id}
+              ticketStorageUsedBytes={attachments.reduce(
+                (n, a) => n + a.fileSize,
+                0
+              )}
               token={token}
-              totalAttachments={totalAttachments}
             />
           ) : (
             <div className="bg-white rounded-xl border border-sand shadow-soft p-6 text-center">

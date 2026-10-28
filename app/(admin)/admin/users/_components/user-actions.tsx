@@ -35,11 +35,9 @@ import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
 interface Props {
   isCurrentUser: boolean;
   passwordResetEnabled: boolean;
-  /**
-   * Backed by `user.banned`. Surfaced as "deactivated" throughout the UI —
-   * off-boarding a colleague is the common case, not a punishment. The column
-   * name is left alone because Better Auth's Admin Plugin owns it.
-   */
+  /** Backed by `user.banned` but surfaced as "deactivated" everywhere, since
+   * off-boarding a colleague is the common case, not punishment. The column name
+   * stays as-is because Better Auth's Admin Plugin owns it. */
   userDeactivated: boolean;
   userEmail: string;
   userId: string;
@@ -246,7 +244,7 @@ export function UserActions({
         <DropdownMenuTrigger asChild>
           <Button
             aria-label={`Actions for ${userName}`}
-            className="size-7 p-0 border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+            className="size-7 p-0 border-base-300 text-base-content-muted hover:bg-base-300 hover:text-base-content"
             size="sm"
             variant="outline"
           >
@@ -328,18 +326,18 @@ export function UserActions({
       <Dialog onOpenChange={setRoleOpen} open={roleOpen}>
         <DialogContent className="rounded-xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Change Role</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogTitle className="text-base-content">Change Role</DialogTitle>
+            <DialogDescription className="text-base-content-muted">
               Set the role for{" "}
-              <strong className="text-foreground">{userName}</strong>
+              <strong className="text-base-content">{userName}</strong>
             </DialogDescription>
           </DialogHeader>
           <div className="flex gap-2 py-1">
             <button
               className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                 selectedRole === AGENT_ROLE
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "border-border text-foreground hover:bg-accent"
+                  ? "bg-primary text-primary-content border-primary"
+                  : "border-base-300 text-base-content hover:bg-base-300"
               }`}
               onClick={() => setSelectedRole(AGENT_ROLE)}
               type="button"
@@ -349,8 +347,8 @@ export function UserActions({
             <button
               className={`flex-1 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                 selectedRole === ADMIN_ROLE
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "border-border text-foreground hover:bg-accent"
+                  ? "bg-primary text-primary-content border-primary"
+                  : "border-base-300 text-base-content hover:bg-base-300"
               }`}
               onClick={() => setSelectedRole(ADMIN_ROLE)}
               type="button"
@@ -361,7 +359,7 @@ export function UserActions({
           {roleError && <p className="text-xs text-red-600">{roleError}</p>}
           <DialogFooter className="gap-2">
             <Button
-              className="border-border text-foreground"
+              className="border-base-300 text-base-content"
               disabled={roleLoading}
               onClick={() => setRoleOpen(false)}
               variant="outline"
@@ -369,7 +367,7 @@ export function UserActions({
               Cancel
             </Button>
             <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-primary hover:bg-primary/90 text-primary-content"
               disabled={roleLoading}
               onClick={handleRoleChange}
             >
@@ -383,10 +381,10 @@ export function UserActions({
       <Dialog onOpenChange={setDeactivateOpen} open={deactivateOpen}>
         <DialogContent className="rounded-xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               {userDeactivated ? "Reactivate User" : "Deactivate User"}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogDescription className="text-base-content-muted">
               {userDeactivated
                 ? `Restore sign-in access for ${userName}. They become assignable again and will start receiving notifications.`
                 : `${userName} will be signed out immediately and can no longer sign in or be assigned new tickets. Their existing tickets stay assigned to them and their reply history is unchanged. Reversible at any time.`}
@@ -394,7 +392,7 @@ export function UserActions({
           </DialogHeader>
           {!userDeactivated && (
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
+              <Label className="text-xs text-base-content-muted">
                 Reason (optional)
               </Label>
               <Textarea
@@ -411,7 +409,7 @@ export function UserActions({
           )}
           <DialogFooter className="gap-2">
             <Button
-              className="border-border text-foreground"
+              className="border-base-300 text-base-content"
               disabled={deactivateLoading}
               onClick={() => setDeactivateOpen(false)}
               variant="outline"
@@ -419,7 +417,7 @@ export function UserActions({
               Cancel
             </Button>
             <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-primary hover:bg-primary/90 text-primary-content"
               disabled={deactivateLoading}
               onClick={userDeactivated ? handleReactivate : handleDeactivate}
             >
@@ -439,27 +437,27 @@ export function UserActions({
       <Dialog onOpenChange={setDeleteOpen} open={deleteOpen}>
         <DialogContent className="rounded-xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               Delete Permanently?
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Erases <strong className="text-foreground">{userName}</strong>{" "}
+            <DialogDescription className="text-base-content-muted">
+              Erases <strong className="text-base-content">{userName}</strong>{" "}
               from the platform. Their assigned tickets become unassigned, and
               their name is replaced with &ldquo;Deleted user&rdquo; on every
               reply, note, and activity entry they left behind. This cannot be
               undone.
             </DialogDescription>
           </DialogHeader>
-          <p className="rounded-md bg-accent px-3 py-2 text-xs text-muted-foreground">
+          <p className="rounded-md bg-base-300 px-3 py-2 text-xs text-base-content-muted">
             Off-boarding someone?{" "}
-            <strong className="text-foreground">Deactivate</strong> instead — it
-            revokes access but keeps their ticket history readable.
+            <strong className="text-base-content">Deactivate</strong> instead —
+            it revokes access but keeps their ticket history readable.
           </p>
           <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">
+            <Label className="text-xs text-base-content-muted">
               Type{" "}
-              <span className="font-mono text-foreground">{userEmail}</span> to
-              confirm
+              <span className="font-mono text-base-content">{userEmail}</span>{" "}
+              to confirm
             </Label>
             <Input
               autoComplete="off"
@@ -472,7 +470,7 @@ export function UserActions({
           {deleteError && <p className="text-xs text-red-600">{deleteError}</p>}
           <DialogFooter className="gap-2">
             <Button
-              className="border-border text-foreground"
+              className="border-base-300 text-base-content"
               disabled={deleteLoading}
               onClick={() => setDeleteOpen(false)}
               variant="outline"
@@ -494,18 +492,18 @@ export function UserActions({
       <Dialog onOpenChange={setResetOpen} open={resetOpen}>
         <DialogContent className="rounded-xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               Reset Password
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogDescription className="text-base-content-muted">
               Set a new password for{" "}
-              <strong className="text-foreground">{userName}</strong>. They will
-              not be notified — share the new password with them yourself.
+              <strong className="text-base-content">{userName}</strong>. They
+              will not be notified — share the new password with them yourself.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
+              <Label className="text-xs text-base-content-muted">
                 New password
               </Label>
               <Input
@@ -517,7 +515,7 @@ export function UserActions({
               />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs text-muted-foreground">
+              <Label className="text-xs text-base-content-muted">
                 Confirm password
               </Label>
               <Input
@@ -532,7 +530,7 @@ export function UserActions({
           {resetError && <p className="text-xs text-red-600">{resetError}</p>}
           <DialogFooter className="gap-2">
             <Button
-              className="border-border text-foreground"
+              className="border-base-300 text-base-content"
               disabled={resetLoading}
               onClick={() => setResetOpen(false)}
               variant="outline"
@@ -540,7 +538,7 @@ export function UserActions({
               Cancel
             </Button>
             <Button
-              className="bg-primary hover:bg-primary/90 text-primary-foreground"
+              className="bg-primary hover:bg-primary/90 text-primary-content"
               disabled={
                 resetLoading ||
                 newPassword.length < 8 ||

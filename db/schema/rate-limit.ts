@@ -1,11 +1,10 @@
 import { createId } from "@paralleldrive/cuid2";
 import { integer, pgTable, text, timestamp, uniqueIndex } from "drizzle-orm/pg-core";
 
-// Fixed-window request counters for throttling public, unauthenticated routes.
-// One row per (bucketKey, windowStart); `count` is incremented via upsert.
-// Postgres-backed (not in-memory/Redis) so limits hold across process
-// restarts and multi-process deployments (e.g. PM2 cluster mode) — this app
-// already treats Postgres as the shared store (see pg-boss for the job queue).
+// Fixed-window request counters throttling public, unauthenticated routes: one
+// row per (bucketKey, windowStart), incremented by upsert. Postgres-backed, not
+// in-memory, so limits hold across restarts and multi-process deployments —
+// Postgres is already this app's shared store (see pg-boss).
 export const rateLimitHits = pgTable(
   "rate_limit_hits",
   {

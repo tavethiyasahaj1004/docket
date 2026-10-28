@@ -1,23 +1,24 @@
 import { createElement } from "react";
 import { Button, Hr, Link, Section, Text } from "react-email";
-import { EmailLayout, emailStyles } from "@/lib/email/components/layout";
+import { createEmailStyles, EmailLayout } from "@/lib/email/components/layout";
 import { renderEmailTemplate } from "@/lib/email/renderer";
 import { renderCustomEmail } from "@/lib/email-templates";
 import { getEmailBranding } from "@/lib/settings";
-
-const brand = "#384959";
 
 function MyTicketsListEmail({
   listUrl,
   ticketCount,
   productName,
   logoUrl,
+  accentColor,
 }: {
   listUrl: string;
   ticketCount: number;
   productName: string;
   logoUrl: string | null;
+  accentColor: string;
 }) {
+  const emailStyles = createEmailStyles(accentColor);
   return (
     <EmailLayout
       logoUrl={logoUrl}
@@ -30,10 +31,7 @@ function MyTicketsListEmail({
         {ticketCount === 1 ? "" : "s"} with {productName}.
       </Text>
       <Section style={{ margin: "24px 0" }}>
-        <Button
-          href={listUrl}
-          style={{ ...emailStyles.button, backgroundColor: brand }}
-        >
+        <Button href={listUrl} style={emailStyles.button}>
           View My Tickets
         </Button>
       </Section>
@@ -53,12 +51,13 @@ export async function myTicketsListTemplate(props: {
   listUrl: string;
   ticketCount: number;
 }) {
-  const { productName, logoUrl } = await getEmailBranding();
+  const { productName, logoUrl, accentColor } = await getEmailBranding();
 
   const custom = await renderCustomEmail({
     type: "my_tickets_list",
     brandName: productName,
     logoUrl,
+    accentColor,
     vars: {
       listUrl: props.listUrl,
       ticketCount: String(props.ticketCount),
@@ -69,7 +68,12 @@ export async function myTicketsListTemplate(props: {
   }
 
   const html = await renderEmailTemplate(
-    createElement(MyTicketsListEmail, { ...props, productName, logoUrl })
+    createElement(MyTicketsListEmail, {
+      ...props,
+      productName,
+      logoUrl,
+      accentColor,
+    })
   );
 
   const text = `Your support tickets

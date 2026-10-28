@@ -4,6 +4,7 @@ import {
   ChatTextIcon,
   CodeBlockIcon,
   CodeIcon,
+  LinkIcon,
   ListBulletsIcon,
   ListNumbersIcon,
   MagnifyingGlassIcon,
@@ -18,11 +19,16 @@ import { type Editor, EditorContent, useEditor } from "@tiptap/react";
 import { SuggestionPluginKey } from "@tiptap/suggestion";
 import type { ReactNode, Ref } from "react";
 import { useEffect, useImperativeHandle, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { shouldSendOnEnter } from "@/lib/reply-composer-keys";
 import { isRichTextEmpty } from "@/lib/rich-text";
 import { cn } from "@/lib/utils";
 import {
@@ -55,10 +61,16 @@ interface Props {
   onFilesDropped?: (files: File[]) => void;
   /** Called when the editor gains focus. */
   onFocus?: () => void;
-  /** When provided, Enter sends (Shift+Enter still inserts a newline) — pass this on chat-style reply composers, not on template editors like canned responses. */
+  /** When provided, Enter sends by default (Shift+Enter still inserts a newline) — pass this on chat-style reply composers, not on template editors like canned responses. See `sendOnEnter` to make that opt-out. */
   onSubmit?: () => void;
   placeholder?: string;
   ref?: Ref<RichTextEditorHandle>;
+  /** When `onSubmit` is provided and this is false, Enter never submits — both Enter and Shift+Enter insert a newline, and the composer's own send control must be used instead. Only meaningful alongside `onSubmit`. Defaults to true. */
+  sendOnEnter?: boolean;
+  /** Shows a "Style as button" checkbox in the link popover. Only meaningful for
+   * admin email template bodies, whose HTML goes through
+   * `styleCustomEmailBody()` — the one place `class="cta-button"` is read. */
+  showButtonStyleOption?: boolean;
   /** Visual accent — "warning" tints the frame amber (agent internal notes). */
   tone?: "default" | "warning";
   value: string;
@@ -82,8 +94,8 @@ function ToolbarButton({
       className={cn(
         "flex size-7 items-center justify-center rounded transition-colors disabled:opacity-40",
         active
-          ? "bg-primary/10 text-foreground"
-          : "text-foreground hover:bg-accent"
+          ? "bg-primary/10 text-base-content"
+          : "text-base-content hover:bg-base-300"
       )}
       disabled={disabled}
       onMouseDown={(e) => {
@@ -119,11 +131,9 @@ function CannedResponsePicker({
 }: {
   editor: Editor;
   responses: CannedResponseOption[];
-  /** Lifted to the parent editor so its compact-mode toolbar stays mounted
-   * while this popover is open — otherwise, opening the popover moves DOM
-   * focus onto its content (Radix's default auto-focus), which blurs the
-   * Tiptap editor and — in compact mode with no text yet — collapses the
-   * whole toolbar the popover lives in, closing it instantly. */
+  /** Lifted to the parent editor so its compact-mode toolbar stays mounted while
+   * this popover is open: opening it blurs the Tiptap editor, which in compact
+   * mode with no text collapses the very toolbar the popover lives in. */
   onOpenChange?: (open: boolean) => void;
 }) {
   const [open, setOpenState] = useState(false);
@@ -153,7 +163,7 @@ function CannedResponsePicker({
     >
       <PopoverTrigger asChild>
         <button
-          className="flex size-7 items-center justify-center rounded text-foreground transition-colors hover:bg-accent"
+          className="flex size-7 items-center justify-center rounded text-base-content transition-colors hover:bg-base-300"
           onMouseDown={(e) => e.preventDefault()}
           title="Insert canned response"
           type="button"
@@ -162,10 +172,10 @@ function CannedResponsePicker({
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-72 p-0">
-        <div className="flex items-center gap-2 border-b border-border px-2.5">
-          <MagnifyingGlassIcon className="size-4 shrink-0 text-muted-foreground" />
+        <div className="flex items-center gap-2 border-b border-base-300 px-2.5">
+          <MagnifyingGlassIcon className="size-4 shrink-0 text-base-content-muted" />
           <input
-            className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-base-content-muted"
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search responses…"
             value={query}
@@ -173,13 +183,13 @@ function CannedResponsePicker({
         </div>
         <div className="max-h-60 overflow-y-auto p-1">
           {filtered.length === 0 ? (
-            <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+            <p className="px-2 py-4 text-center text-xs text-base-content-muted">
               No canned responses
             </p>
           ) : (
             filtered.map((r) => (
               <button
-                className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-foreground transition-colors hover:bg-accent"
+                className="block w-full rounded-md px-2 py-1.5 text-left text-sm text-base-content transition-colors hover:bg-base-300"
                 key={r.id}
                 onClick={() => {
                   insertCannedResponse(editor, r.content);
@@ -198,22 +208,172 @@ function CannedResponsePicker({
   );
 }
 
+/** Popover form for inserting or editing a link, and with `showButtonOption`
+ * (email templates only) toggling it to a filled CTA button. Button-ness lives
+ * in `class="cta-button"` on the mark so it survives save/reload, and
+ * `styleCustomEmailBody()` reads it at render time. */
+function LinkPopover({
+  editor,
+  showButtonOption,
+}: {
+  editor: Editor;
+  showButtonOption: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [href, setHref] = useState("");
+  const [asButton, setAsButton] = useState(false);
+  const [isEditingLink, setIsEditingLink] = useState(false);
+
+  function handleOpenChange(next: boolean) {
+    if (next) {
+      const editingLink = editor.isActive("link");
+      if (editingLink) {
+        // Selects the link's full range so the fields below reflect its
+        // whole text/href, not just wherever the cursor happened to be.
+        editor.chain().extendMarkRange("link").run();
+      }
+      const { from, to } = editor.state.selection;
+      const attrs = editor.getAttributes("link");
+      setText(editor.state.doc.textBetween(from, to, " "));
+      setHref(editingLink ? (attrs.href ?? "") : "");
+      setAsButton(attrs.class === "cta-button");
+      setIsEditingLink(editingLink);
+    }
+    setOpen(next);
+  }
+
+  function applyLink() {
+    const trimmedHref = href.trim();
+    if (!trimmedHref) {
+      return;
+    }
+    const label = text.trim() || trimmedHref;
+    const { from, to } = editor.state.selection;
+    const chain = editor.chain().focus();
+    if (from !== to) {
+      chain.deleteRange({ from, to });
+    }
+    chain
+      .insertContent({
+        type: "text",
+        text: label,
+        marks: [
+          {
+            type: "link",
+            attrs: { href: trimmedHref, class: asButton ? "cta-button" : null },
+          },
+        ],
+      })
+      .run();
+    setOpen(false);
+  }
+
+  function removeLink() {
+    editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    setOpen(false);
+  }
+
+  return (
+    <Popover onOpenChange={handleOpenChange} open={open}>
+      <PopoverTrigger asChild>
+        <button
+          className={cn(
+            "flex size-7 items-center justify-center rounded transition-colors",
+            editor.isActive("link")
+              ? "bg-primary/10 text-base-content"
+              : "text-base-content hover:bg-base-300"
+          )}
+          onMouseDown={(e) => e.preventDefault()}
+          title="Insert link"
+          type="button"
+        >
+          <LinkIcon className="size-4" />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 space-y-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-base-content-muted">
+            Text
+          </Label>
+          <Input
+            className="h-8 text-sm"
+            onChange={(e) => setText(e.target.value)}
+            placeholder="Link text"
+            value={text}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium text-base-content-muted">
+            URL
+          </Label>
+          <Input
+            className="h-8 font-mono text-xs"
+            onChange={(e) => setHref(e.target.value)}
+            placeholder="https://… or {{ticketUrl}}"
+            value={href}
+          />
+        </div>
+        {showButtonOption && (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={asButton}
+              id="link-as-button"
+              onCheckedChange={setAsButton}
+            />
+            <Label
+              className="text-xs text-base-content cursor-pointer"
+              htmlFor="link-as-button"
+            >
+              Style as button
+            </Label>
+          </div>
+        )}
+        <div className="flex items-center gap-2 pt-1">
+          <Button
+            className="flex-1 rounded-md"
+            disabled={!href.trim()}
+            onClick={applyLink}
+            size="sm"
+            type="button"
+          >
+            {isEditingLink ? "Update" : "Insert"}
+          </Button>
+          {isEditingLink && (
+            <Button
+              className="rounded-md"
+              onClick={removeLink}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Remove
+            </Button>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 function Toolbar({
   editor,
   tone,
   cannedResponses,
   onCannedPickerOpenChange,
+  showButtonStyleOption,
 }: {
   editor: Editor;
   tone: "default" | "warning";
   cannedResponses?: CannedResponseOption[];
   onCannedPickerOpenChange?: (open: boolean) => void;
+  showButtonStyleOption?: boolean;
 }) {
   const divider = (
     <div
       className={cn(
         "mx-1 h-4 w-px shrink-0",
-        tone === "warning" ? "bg-amber-200 dark:bg-amber-800" : "bg-muted"
+        tone === "warning" ? "bg-amber-200 dark:bg-amber-800" : "bg-base-300"
       )}
     />
   );
@@ -223,7 +383,7 @@ function Toolbar({
         "flex flex-wrap items-center gap-0.5 border-b px-2 py-1.5",
         tone === "warning"
           ? "border-amber-200 dark:border-amber-900/70"
-          : "border-border"
+          : "border-base-300"
       )}
     >
       <ToolbarButton
@@ -261,6 +421,7 @@ function Toolbar({
       >
         <CodeIcon className="size-4" />
       </ToolbarButton>
+      <LinkPopover editor={editor} showButtonOption={!!showButtonStyleOption} />
       {divider}
       <ToolbarButton
         active={editor.isActive("bulletList")}
@@ -312,12 +473,14 @@ export function RichTextEditor({
   onBlur,
   onFocus,
   onSubmit,
+  sendOnEnter = true,
   placeholder = "Write a reply…",
   disabled = false,
   tone = "default",
   compact = false,
   className,
   cannedResponses,
+  showButtonStyleOption,
   ref,
 }: Props) {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -359,9 +522,16 @@ export function RichTextEditor({
         if (event.key !== "Enter" || event.isComposing) {
           return false;
         }
-        // Plain Enter sends the message (below), so Shift+Enter stands in
-        // for a normal editor's Enter here.
-        if (event.shiftKey) {
+        const enterSubmits = shouldSendOnEnter({
+          hasSubmit: Boolean(onSubmit),
+          isComposing: event.isComposing,
+          sendOnEnter,
+          shiftKey: event.shiftKey,
+        });
+        // Plain Enter sends the message when enabled (below), so Shift+Enter
+        // — or plain Enter, when the user has turned send-on-Enter off —
+        // stands in for a normal editor's Enter here.
+        if (!enterSubmits) {
           if (!onSubmit || !currentEditor) {
             return false;
           }
@@ -383,14 +553,11 @@ export function RichTextEditor({
             () => commands.splitBlock(),
           ]);
         }
-        if (!onSubmit) {
-          return false;
-        }
         // Let the "/" command menu handle Enter (select item) while it's open.
         if (SuggestionPluginKey.getState(view.state)?.active) {
           return false;
         }
-        onSubmit();
+        onSubmit?.();
         return true;
       },
       handlePaste: (_view, event) => {
@@ -453,10 +620,10 @@ export function RichTextEditor({
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: see above
     <div
       className={cn(
-        "rounded-md border bg-card overflow-hidden transition-[color,border-color,box-shadow]",
+        "rounded-md border bg-base-100 overflow-hidden transition-[color,border-color,box-shadow]",
         tone === "warning"
           ? "border-amber-200 bg-amber-50 dark:border-amber-900/70 dark:bg-amber-950/40 focus-within:border-amber-400 focus-within:ring-2 focus-within:ring-amber-400/20"
-          : "border-input focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20",
+          : "border-base-300 focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20",
         isDragOver && onFilesDropped && "ring-2 ring-primary border-primary",
         disabled && "opacity-60",
         className
@@ -475,6 +642,7 @@ export function RichTextEditor({
           cannedResponses={cannedResponses}
           editor={editor}
           onCannedPickerOpenChange={setCannedPickerOpen}
+          showButtonStyleOption={showButtonStyleOption}
           tone={tone}
         />
       )}

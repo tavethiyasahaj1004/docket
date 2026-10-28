@@ -1,8 +1,6 @@
-// Page routes that require an agent/admin session.
-//
-// Keep in sync with the page entries of `config.matcher` in proxy.ts — Next
-// requires that matcher to be a statically analysable literal, so it can't
-// import this list.
+// Page routes requiring an agent/admin session. Keep in sync with the page
+// entries of `config.matcher` in proxy.ts, which can't import this list because
+// Next requires that matcher to be a statically analysable literal.
 export const PROTECTED_PAGE_PREFIXES = [
   "/dashboard",
   "/tickets",

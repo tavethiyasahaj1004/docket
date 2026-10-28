@@ -7,10 +7,12 @@ import {
   ChatTextIcon,
   ClockCounterClockwiseIcon,
   EnvelopeSimpleIcon,
+  GearSixIcon,
   type Icon,
   KeyIcon,
   ListChecksIcon,
   PaintBrushIcon,
+  PlugsIcon,
   ShieldCheckIcon,
   SquaresFourIcon,
   TagIcon,
@@ -47,12 +49,14 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: SquaresFourIcon },
   { href: "/tickets", label: "All Tickets", icon: TicketIcon },
   { href: "/canned-responses", label: "Canned Responses", icon: ChatTextIcon },
+  { href: "/settings", label: "Settings", icon: GearSixIcon },
 ];
 
 const adminItems = [
   { href: "/admin/users", label: "Users", icon: UsersIcon },
   { href: "/admin/reports", label: "Reports", icon: ChartBarIcon },
   { href: "/admin/appearance", label: "Appearance", icon: PaintBrushIcon },
+  { href: "/admin/integrations", label: "Integrations", icon: PlugsIcon },
   { href: "/admin/ticket-config", label: "Ticket Config", icon: TagIcon },
   {
     href: "/admin/custom-fields",
@@ -176,7 +180,7 @@ export function AgentSidebar({
               fallbackIcon={
                 <div className="size-7 rounded-md bg-sidebar-accent flex items-center justify-center shrink-0">
                   <TicketIcon
-                    className="size-4 text-sidebar-accent-foreground"
+                    className="size-4 text-sidebar-accent-content"
                     weight="fill"
                   />
                 </div>
@@ -188,7 +192,7 @@ export function AgentSidebar({
               logoUrl={logoUrl}
               name={brandName}
               textClassName={cn(
-                "font-semibold text-sidebar-accent-foreground text-sm truncate",
+                "font-semibold text-sidebar-accent-content text-sm truncate",
                 collapsed && "hidden"
               )}
             />
@@ -203,7 +207,7 @@ export function AgentSidebar({
             <button
               aria-expanded={!collapsed}
               aria-label={toggleLabel}
-              className="absolute top-14 right-0 z-20 flex size-6 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-border bg-card text-muted-foreground shadow-sm transition-colors hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              className="absolute top-14 right-0 z-20 flex size-6 -translate-y-1/2 translate-x-1/2 items-center justify-center rounded-full border border-base-300 bg-base-100 text-base-content-muted shadow-sm transition-colors hover:bg-base-300 hover:text-base-content focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-base-200"
               onClick={toggle}
               type="button"
             >
@@ -242,7 +246,7 @@ export function AgentSidebar({
                 <div className="my-2 h-px bg-sidebar-border" />
               ) : (
                 <div className="pt-4 pb-1 px-3">
-                  <span className="text-2xs font-medium text-sidebar-foreground/70 uppercase tracking-wider">
+                  <span className="text-2xs font-medium text-sidebar-content/70 uppercase tracking-wider">
                     Admin
                   </span>
                 </div>
@@ -276,7 +280,7 @@ export function AgentSidebar({
                   href="/dashboard/profile"
                 >
                   <span className="size-8 rounded-full bg-sidebar-primary flex items-center justify-center shrink-0">
-                    <span className="text-2xs font-semibold text-sidebar-primary-foreground">
+                    <span className="text-2xs font-semibold text-sidebar-primary-content">
                       {getInitials(userName)}
                     </span>
                   </span>
@@ -295,20 +299,20 @@ export function AgentSidebar({
               href="/dashboard/profile"
             >
               <div className="size-8 rounded-full bg-sidebar-primary flex items-center justify-center shrink-0">
-                <span className="text-2xs font-semibold text-sidebar-primary-foreground">
+                <span className="text-2xs font-semibold text-sidebar-primary-content">
                   {getInitials(userName)}
                 </span>
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-sidebar-accent-foreground truncate">
+                <p className="text-sm font-medium text-sidebar-accent-content truncate">
                   {userName}
                 </p>
-                <p className="text-2xs text-sidebar-foreground truncate">
+                <p className="text-2xs text-sidebar-content truncate">
                   {userEmail}
                 </p>
               </div>
               {isAdmin && (
-                <ShieldCheckIcon className="size-3.5 text-sidebar-foreground shrink-0" />
+                <ShieldCheckIcon className="size-3.5 text-sidebar-content shrink-0" />
               )}
             </Link>
           )}

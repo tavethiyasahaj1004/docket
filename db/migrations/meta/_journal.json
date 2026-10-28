@@ -8,6 +8,118 @@
       "when": 1785844474787,
       "tag": "0000_conscious_titanium_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785908847732,
+      "tag": "0001_add_integration_settings",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785913355013,
+      "tag": "0002_regular_old_lace",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1786084826951,
+      "tag": "0003_gorgeous_forge",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1786452312093,
+      "tag": "0004_yielding_sasquatch",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1786514683788,
+      "tag": "0005_add_pusher_test_result_columns",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786526892289,
+      "tag": "0006_zippy_joystick",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787129062146,
+      "tag": "0007_secret_stone_men",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787142405547,
+      "tag": "0008_rich_king_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790846407910,
+      "tag": "0009_tense_scarecrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790847792794,
+      "tag": "0010_military_joystick",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790933795503,
+      "tag": "0011_groovy_blackheart",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791006927584,
+      "tag": "0012_messy_sumo",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791175982974,
+      "tag": "0013_lucky_daimon_hellstrom",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791178051962,
+      "tag": "0014_calm_lucky_pierre",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1792386475572,
+      "tag": "0015_third_edwin_jarvis",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1792388848833,
+      "tag": "0016_nervous_lucky_pierre",
+      "breakpoints": true
     }
   ]
 }

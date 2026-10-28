@@ -138,7 +138,7 @@ function ResetPasswordFormInner({ brandName, logoUrl }: Props) {
                   </label>
                   <Input
                     autoComplete="new-password"
-                    className="text-foreground"
+                    className="text-base-content"
                     id="password"
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
@@ -156,7 +156,7 @@ function ResetPasswordFormInner({ brandName, logoUrl }: Props) {
                   </label>
                   <Input
                     autoComplete="new-password"
-                    className="text-foreground"
+                    className="text-base-content"
                     id="confirm-password"
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="••••••••"

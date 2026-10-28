@@ -88,6 +88,30 @@ function secondsBetween(from: Date, to: Date): number {
   return Math.max(0, Math.round((to.getTime() - from.getTime()) / 1000));
 }
 
+/** DB-side duration a ticket has been waiting, in seconds — the same
+ * closedAt/createdAt/waitingSince fields computeSlaSnapshot() reads, ported to
+ * SQL so the ticket list can ORDER BY the real duration (Waiting Time column)
+ * instead of the formatted "2h"/"1d 4h" display string. Resolved tickets sort
+ * by their final "Resolved in" duration, open ones by time since the current
+ * wait state began. */
+export const waitingTimeSecondsSql = sql<number>`case
+  when ${tickets.closedAt} is not null
+    then extract(epoch from (${tickets.closedAt} - ${tickets.createdAt}))
+  else extract(epoch from (now() - coalesce(${tickets.waitingSince}, ${tickets.createdAt})))
+end`;
+
+/** JS-side equivalent of waitingTimeSecondsSql, for the detail page's prev/next
+ * keyset comparison, which needs the current ticket's value computed rather
+ * than issued as SQL. */
+export function computeWaitingTimeSeconds(
+  ticket: Pick<SlaTicketState, "closedAt" | "createdAt" | "waitingSince">,
+  now: Date
+): number {
+  return ticket.closedAt
+    ? secondsBetween(ticket.createdAt, ticket.closedAt)
+    : secondsBetween(ticket.waitingSince ?? ticket.createdAt, now);
+}
+
 export function resolveWaitState(
   ticket: Pick<SlaTicketState, "closedAt" | "awaitingReply">
 ): WaitState {
@@ -97,12 +121,9 @@ export function resolveWaitState(
   return ticket.awaitingReply ? "waiting_for_agent" : "waiting_for_customer";
 }
 
-/**
- * Builds the full SLA snapshot for one ticket against one resolved policy.
- * Pure function — no DB/React — so it's reused identically by the ticket
- * list query, the detail page, and the client-side ticking badge (via
- * getLiveElapsedSeconds/getMetricStatus below).
- */
+/** Builds the full SLA snapshot for one ticket against one resolved policy. Pure
+ * — no DB or React — so the list query, the detail page and the client-side
+ * ticking badge all reuse it identically. */
 export function computeSlaSnapshot(
   ticket: SlaTicketState,
   policy: SlaPolicyTargets | null,
@@ -131,10 +152,9 @@ export function computeSlaSnapshot(
     };
   }
 
-  // First response — elapsed is frozen the moment firstRespondedAt is set;
-  // otherwise it's still climbing (unless the ticket got resolved without
-  // ever getting one, in which case it's frozen at the close time — not at
-  // `now`, or a closed-unanswered ticket's "took Xd" would grow forever).
+  // First response — elapsed freezes once firstRespondedAt is set, else keeps
+  // climbing. A ticket resolved without one freezes at close time, not `now`,
+  // or its "took Xd" would grow forever.
   const firstResponseLive =
     !ticket.firstRespondedAt && waitState !== "resolved";
   const firstResponseElapsed = secondsBetween(
@@ -176,10 +196,9 @@ export function computeSlaSnapshot(
     waitState === "waiting_for_agent" ? secondsBetween(since, now) : 0;
   const resolutionElapsed = ticket.slaActiveSeconds + liveSpanSeconds;
   const resolutionTarget = policy.resolutionMinutes * 60;
-  // Only "live" (still advancing) while actively waiting on the agent.
-  // Paused (waiting on the customer) and resolved are both non-advancing, but
-  // they are NOT the same verdict: resolved is final (met/breached), paused is
-  // a stopped countdown on a ticket that still has to be resolved.
+  // Only advancing while waiting on the agent. Paused and resolved both stop the
+  // clock but are not the same verdict: resolved is final (met/breached), paused
+  // is a stopped countdown on a ticket that still has to be resolved.
   const resolutionLive = waitState === "waiting_for_agent";
   const resolutionPaused = !resolutionLive && waitState !== "resolved";
   const resolution: SlaMetricSnapshot = {
@@ -236,12 +255,9 @@ export function getMetricStatus(
   return "on_track";
 }
 
-/**
- * A resolved ticket's single SLA verdict — breached if ANY target was missed,
- * met only if every one held. This is what a closed ticket shows in place of
- * the countdown it no longer has: the outcome, not a running clock.
- * Null while the ticket is still open, or when no policy applies.
- */
+/** A resolved ticket's single SLA verdict — breached if any target was missed,
+ * met only if all held. Shown in place of the countdown a closed ticket no
+ * longer has. Null while still open, or when no policy applies. */
 export function getSlaOutcome(snapshot: SlaSnapshot): SlaOutcome | null {
   if (snapshot.waitState !== "resolved") {
     return null;
@@ -260,23 +276,10 @@ export interface SlaTransitionPatch {
   waitingSince?: Date | null;
 }
 
-/**
- * The single place that encodes the SLA pause/resume rule. Every route that
- * mutates `tickets.awaitingReply` calls this and merges the result into its
- * existing `.update(tickets).set({...})` — no timer math duplicated anywhere.
- *
- * - mode "reply": a customer or agent reply flips (or doesn't flip)
- *   awaitingReply. No-ops if `nextAwaitingReply` matches the current value
- *   (e.g. a customer's second follow-up before the agent replies) — the
- *   response clock stays pinned to the first unanswered message.
- * - mode "closing": ticket is being closed. Flushes any in-progress active
- *   span into slaActiveSeconds, then stops the clock (waitingSince: null).
- * - mode "reopening": ticket is being reopened from "resolved". Always
- *   (re)starts the clock at `now`, regardless of direction — there's no
- *   in-progress span to flush since it was already stopped at close.
- *   slaActiveSeconds carries forward unchanged (Resolution SLA tracks total
- *   active time across the ticket's whole lifetime, including reopens).
- */
+/** The one place encoding the SLA pause/resume rule; every route mutating
+ * `awaitingReply` merges the result in. "reply" no-ops when the flag already
+ * matches (pinning the clock to the first unanswered message), "closing"
+ * flushes the active span and stops, "reopening" restarts it. */
 export function computeSlaTransition(
   current: { awaitingReply: boolean; waitingSince: Date | null },
   nextAwaitingReply: boolean,

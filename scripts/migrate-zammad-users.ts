@@ -1,56 +1,6 @@
-/**
- * One-off migration: Zammad staff accounts → Docket `user` rows.
- *
- * Companion to migrate-zammad.ts, which deliberately skips agent accounts
- * (historical replies keep the agent's name as plain text, authorId stays
- * null). This script:
- *
- *   1. Finds every Zammad user with the Agent or Admin role (customers are
- *      left alone — they stay as inline name/email on tickets).
- *   2. Creates a Docket `user` row for each one that doesn't already
- *      exist (matched by email), with a SHARED DEFAULT PASSWORD — everyone
- *      lands as a plain agent regardless of their Zammad role; promote
- *      specific people to admin afterward with `pnpm make:admin <email>`.
- *   3. Backfills `ticket_comments.author_id` / `ticket_attachments.uploaded_by_id`
- *      for rows still missing one, matching on `author_name`/`uploaded_by_name`
- *      (only Zammad's display name was ever persisted per-comment, not a
- *      Zammad user id) — so this is a best-effort name match, not a wired
- *      Zammad-id join. Two different Zammad staff sharing a display name
- *      would misattribute; fine for a small team, logged either way.
- *   4. Backfills `tickets.assigned_agent_id` on every migrated ticket that is
- *      still unassigned — the case that makes migrated tickets show up as
- *      "Unassigned" in the tickets list even though they had an owner in
- *      Zammad (migrate-zammad.ts can only set it if the agent's account
- *      already existed when the ticket was imported). Unlike (3) this is an
- *      exact match on the Zammad owner, not a display-name guess: newer
- *      migrations record the owner's email on the ticket's `zammad_migrated`
- *      activity row, and for tickets imported before that, the owner is
- *      re-read from Zammad by the ticket id stored on the same row.
- *
- * SECURITY NOTE: every created account shares MIGRATION_USER_PASSWORD
- * (default below). Tell the team to change it after first login — this
- * script does not email anyone or force a reset.
- *
- * IDEMPOTENT: safe to re-run — users are matched by email (skipped if they
- * already exist), and the backfills only ever touch rows where author_id /
- * uploaded_by_id / assigned_agent_id is still null (so a ticket reassigned by
- * hand since the import is never clobbered).
- *
- * Required env: ZAMMAD_BASE_URL, ZAMMAD_API_TOKEN, MIGRATION_USER_PASSWORD
- *               (+ the app's own DATABASE_URL etc.)
- *
- *   MIGRATION_USER_PASSWORD   Temporary shared password for every account this
- *                             script creates. Required on purpose, with no
- *                             default: a built-in fallback would mean every
- *                             deployment that forgot to set it ends up with a
- *                             set of accounts sharing a password that is
- *                             written down in a public repository. Generate one
- *                             with `openssl rand -base64 24`, and have everyone
- *                             change it after their first sign-in.
- *
- * Optional env:
- *   MIGRATION_DRY_RUN         "1" → read + log only, write nothing
- */
+// Creates a Docket agent per Zammad agent/admin, then backfills comment authors
+// (by display name) and ticket assignees (exact). Idempotent: matches by email,
+// only fills null FKs. New accounts share MIGRATION_USER_PASSWORD. Docs: §7.
 
 import { and, count, eq, inArray, isNull, sql } from "drizzle-orm";
 import { AGENT_ROLE } from "@/config/platform";
@@ -64,11 +14,9 @@ import {
 import { auth } from "@/lib/auth";
 import { db, dbClient } from "@/lib/db";
 
-// Host/dev runs load .env via `tsx --env-file-if-exists=.env` (see the
-// migrate:zammad:users script in package.json) — it must happen before this
-// file's first import, since @/lib/db reads process.env.DATABASE_URL at
-// module load time, and ESM imports are hoisted ahead of any top-level
-// statement placed here.
+// Host/dev runs load .env via `tsx --env-file-if-exists=.env` (see package.json),
+// which must happen before the first import: @/lib/db reads DATABASE_URL at
+// module load, and ESM hoists imports above any top-level statement here.
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const ZAMMAD_BASE_URL = (process.env.ZAMMAD_BASE_URL ?? "").replace(/\/+$/, "");
@@ -383,13 +331,9 @@ async function main() {
   }
 
   // ── Backfill: assignee on migrated tickets ─────────────────────────────────
-  // A migrated ticket that still has no assignee either had none in Zammad, or
-  // — the common case — was imported before its owner had an account here, so
-  // migrate-zammad.ts had nothing to point assignedAgentId at and the tickets
-  // list shows it as "Unassigned". Resolve the owner (recorded on the ticket's
-  // `zammad_migrated` activity row; re-read from Zammad for older imports) and
-  // link it. updatedAt is deliberately NOT touched: the list sorts by it, and
-  // this repair isn't ticket activity.
+  // Usually these were imported before the owner had an account, so they read
+  // "Unassigned". Resolve the owner off the `zammad_migrated` row (re-reading
+  // Zammad for older imports). updatedAt is untouched — the list sorts by it.
   const unassignedMigrated = await db
     .select({
       ticketId: ticketActivity.ticketId,
@@ -418,10 +362,9 @@ async function main() {
     );
   }
 
-  // A dry run creates nobody, so seed the lookup with the accounts a real run
-  // WOULD have created — otherwise the preview reports all of their tickets as
-  // "owner has no account" and understates what the real run links. The
-  // placeholder id never reaches the DB: the UPDATE below is skipped in dry runs.
+  // A dry run creates nobody, so seed the lookup with what a real run would
+  // create — otherwise the preview understates the links. The placeholder id
+  // never reaches the DB; the UPDATE below is skipped in dry runs.
   if (DRY_RUN) {
     for (const s of staff) {
       localUserIdByEmail.set(s.email, s.userId ?? "(dry-run)");
@@ -551,27 +494,6 @@ main()
     process.exit(1);
   });
 
-/*
- * ──────────────────────────── HOW TO RUN ────────────────────────────
- *
- * 1) DRY RUN first (reads Zammad, writes nothing — verify counts):
- *
- *    docker compose exec \
- *      -e ZAMMAD_BASE_URL="https://your-zammad.example.com" \
- *      -e ZAMMAD_API_TOKEN="your-admin-api-token" \
- *      -e MIGRATION_DRY_RUN=1 \
- *      app pnpm migrate:zammad:users
- *
- * 2) REAL run (safe to re-run — existing users are skipped, not duplicated):
- *
- *    docker compose exec \
- *      -e ZAMMAD_BASE_URL="https://your-zammad.example.com" \
- *      -e ZAMMAD_API_TOKEN="your-admin-api-token" \
- *      app pnpm migrate:zammad:users
- *
- *    Optional: different shared password →
- *      -e MIGRATION_USER_PASSWORD="something-else-8-chars-plus"
- *
- * Not using Docker (host / dev, with the app's .env present):
- *    ZAMMAD_BASE_URL=... ZAMMAD_API_TOKEN=... pnpm migrate:zammad:users
- */
+// Runnable commands (dry run first, then the real one) are in
+// docs/deployment-and-zammad-migration.md §7.1–7.2 — kept there rather than
+// duplicated here so there is one copy to keep correct.

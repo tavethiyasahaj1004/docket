@@ -11,11 +11,16 @@ Customers and agents can attach files to tickets and comments. Files are stored 
 | Rule | Value |
 |------|-------|
 | Allowed types | JPG, JPEG, PNG, PDF, ZIP, TXT |
-| Max file size | 10 MB per file |
-| Max attachments per ticket | 5 total (across the ticket itself + all comments) |
-| Max attachments per comment | 5, subject to the ticket-level limit |
+| Max file size | 10 MB per file (default) |
+| Max attachments per message | 5 (default; a submission or a single reply) |
+| Max attachment count per ticket | **No limit** |
+| Max combined attachment size per ticket | 250 MB (default; all messages and replies together) |
 
-The 5-file limit is enforced at the ticket level, not per upload action. If a ticket already has 3 attachments, the next upload can only add 2 more.
+The file size, per-message count and per-ticket storage are admin-configurable (Admin → Ticket Config → Attachment Limits); the values above are the defaults.
+
+Docket limits files **per message**, size **per file** and the **combined size per ticket**; it does not cap how many attachments a ticket holds, so long conversations keep receiving files until the ticket's storage allowance is used.
+
+**How the storage limit works:** `existing attachment bytes + new attachment bytes ≤ limit`. Existing usage is the sum of `ticket_attachments.file_size` for the ticket (every message and reply, including attachments moved in by a merge). A message that would exceed the allowance is rejected whole — files are never silently dropped; exactly reaching the limit is allowed. For a new ticket only the submission's own total counts. The check runs on every upload path (portal create, API create, customer/agent/API replies) and, for replies, again inside the reply transaction under a ticket row lock so concurrent uploads can't exceed it. A ticket already at or above the limit (for example after a merge) keeps all its files and they stay downloadable, but takes no new attachments until usage is back under the limit (text-only replies still work). Lowering the setting never deletes anything. Effective values come from `getAttachmentLimits()` (`lib/settings.ts`); defaults and validation live in `lib/tickets/attachment-limits.ts`.
 
 ---
 
@@ -35,9 +40,10 @@ text/plain
 
 ### Checks (server-side)
 
-1. File size ≤ 10 MB.
+1. File size ≤ the configured max (default 10 MB).
 2. MIME type is in the allowed list (checked from `Content-Type` — not just file extension).
-3. Total attachments on the ticket after this upload ≤ 5.
+3. Files in this message ≤ the configured per-message cap (existing attachments are not counted toward the count).
+3a. The ticket's existing attachment bytes plus this message's bytes ≤ the per-ticket storage limit.
 4. The customer token (or agent session) is valid for the ticket.
 
 If any check fails, return `400` with a descriptive `{ error: string }`.
@@ -62,14 +68,18 @@ The `uuid` segment ensures no filename collisions if the same filename is upload
 
 ### `STORAGE_DRIVER` — choosing a driver
 
-Set via env var (see `.env.example`). Validated at boot in `lib/env.ts` — an
-`s3`/`r2` driver missing its required config throws immediately on startup,
-not on first upload attempt.
+Set from **Admin → Integrations** (or the setup wizard's Integrations step)
+— takes effect on the next upload/download/delete, no restart needed. Env
+vars (see `.env.example`) remain a fallback for any field the DB doesn't
+have a value for; a driver/credential missing from both throws when storage
+is actually used (`getStorageSettings()` in `lib/integration-settings.ts`),
+not eagerly at boot like before — the driver can now come from the DB, which
+an eager boot-time env parse can't see.
 
-| `STORAGE_DRIVER` | Backend | Required env vars |
+| `STORAGE_DRIVER` | Backend | Required config |
 |---|---|---|
 | `local` (default) | Local disk | none |
-| `s3` | AWS S3, or any S3-compatible provider | `S3_BUCKET`, `S3_REGION` (+ AWS credentials — see below) |
+| `s3` | AWS S3, or any S3-compatible provider | `S3_BUCKET`, `S3_REGION` (+ credentials — see below) |
 | `r2` | Cloudflare R2 | `R2_BUCKET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` |
 
 Optional for either cloud driver: `STORAGE_PUBLIC_BASE_URL` (a CDN/custom
@@ -84,7 +94,7 @@ bucket directly.
 - **In Docker, this directory MUST be a persistent volume, or every
   redeploy wipes all uploaded files** (the container filesystem resets
   from the image each time). All three compose files already mount one, pinned to the
-  literal name `support_tool_uploads` (not left to Compose's default
+  literal name `docket_uploads` (not left to Compose's default
   `<project>_<volume>` auto-naming), because some deploy tools don't keep
   the compose project name stable across redeploys, which silently
   creates a fresh, empty volume each time and orphans the old one.
@@ -92,7 +102,7 @@ bucket directly.
   (Dokploy, Coolify, etc.) rather than running `docker compose up -d`
   against these files directly, verify on the host that the SAME volume
   name is reused across deploys: `docker volume ls`, then
-  `docker volume inspect support_tool_uploads` should show the same
+  `docker volume inspect docket_uploads` should show the same
   volume before and after a redeploy, with `Mountpoint` contents that
   persist.
 
@@ -102,11 +112,14 @@ bucket directly.
   `files-sdk/r2`), dynamically imported only when selected — the default
   `local` path never loads it, so there's no added cold-start cost for
   deployments that don't use it.
-- S3 credentials come from the standard AWS credential chain
-  (`AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` env vars, an IAM role,
-  or a shared profile) — not a Docket-specific variable.
-- R2 credentials (`R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY`) are read
-  directly by the adapter under those exact names.
+- S3 credentials: enter an access key/secret from Admin → Integrations, or
+  fall back to the standard AWS credential chain (`AWS_ACCESS_KEY_ID` /
+  `AWS_SECRET_ACCESS_KEY` env vars, an IAM role, or a shared profile) — not
+  a Docket-specific variable, so it's only used when Integrations has
+  nothing saved.
+- R2 credentials: same idea — Integrations, or `R2_ACCESS_KEY_ID` /
+  `R2_SECRET_ACCESS_KEY` env vars as a fallback (the adapter reads those
+  exact names itself when neither is passed explicitly).
 - Survives host loss and works across multiple app replicas — no volume
   to manage, unlike `local`.
 - Any other S3-compatible provider (MinIO, DigitalOcean Spaces, Backblaze
@@ -183,11 +196,13 @@ When a ticket is deleted (admin spam deletion):
 
 ## UI Notes
 
-- The file input uses shadcn `Button` styled as a file picker — not a native `<input type="file">` left unstyled.
+- The file input uses `Button` from `components/ui/button.tsx` styled as a file picker — not a native `<input type="file">` left unstyled.
 - Show a file list below the picker with: filename, file size (human-readable), a remove button.
 - Show a progress indicator during upload.
 - Show clear error messages for each failure type:
-  - "File too large. Maximum size is 10 MB."
+  - "File too large. Maximum size is N MB." (N = configured limit)
   - "File type not allowed. Accepted types: JPG, PNG, PDF, ZIP, TXT."
-  - "Maximum 5 attachments per ticket."
+  - "You can attach up to N file(s) per message." (N = configured limit)
+  - "This ticket has reached its attachment storage limit. Remove existing attachments if permitted, or contact an administrator."
+  - "The combined size of these attachments (X MB) exceeds this ticket's remaining attachment storage (Y MB of Z MB)."
 - Allowed types and size limit are shown as helper text below the file picker (always visible, not only on error).

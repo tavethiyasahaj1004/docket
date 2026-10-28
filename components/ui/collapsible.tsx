@@ -1,33 +1,88 @@
-"use client"
+"use client";
 
-import { Collapsible as CollapsiblePrimitive } from "radix-ui"
+import { createContext, useContext, useId } from "react";
+
+// Intentionally not daisyUI's `collapse`, which toggles off a peer checkbox or
+// `:focus`; this disclosure is React-state driven and drops content via `hidden`,
+// keeping it out of the a11y tree. It ships no styling to migrate anyway.
+interface CollapsibleContextValue {
+  contentId: string;
+  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+}
+
+const CollapsibleContext = createContext<CollapsibleContextValue | null>(null);
+
+function useCollapsibleContext() {
+  const context = useContext(CollapsibleContext);
+  if (!context) {
+    throw new Error(
+      "Collapsible sub-components must be rendered inside <Collapsible>"
+    );
+  }
+  return context;
+}
 
 function Collapsible({
+  open,
+  onOpenChange,
+  children,
   ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.Root>) {
-  return <CollapsiblePrimitive.Root data-slot="collapsible" {...props} />
+}: React.ComponentProps<"div"> & {
+  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+}) {
+  const contentId = useId();
+  return (
+    <CollapsibleContext.Provider value={{ open, onOpenChange, contentId }}>
+      <div
+        data-slot="collapsible"
+        data-state={open ? "open" : "closed"}
+        {...props}
+      >
+        {children}
+      </div>
+    </CollapsibleContext.Provider>
+  );
 }
 
 function CollapsibleTrigger({
+  onClick,
   ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleTrigger>) {
+}: React.ComponentProps<"button">) {
+  const { open, onOpenChange, contentId } = useCollapsibleContext();
   return (
-    <CollapsiblePrimitive.CollapsibleTrigger
+    <button
+      aria-controls={contentId}
+      aria-expanded={open}
       data-slot="collapsible-trigger"
+      data-state={open ? "open" : "closed"}
+      onClick={(event) => {
+        onClick?.(event);
+        onOpenChange?.(!open);
+      }}
+      type="button"
       {...props}
     />
-  )
+  );
 }
 
 function CollapsibleContent({
+  children,
   ...props
-}: React.ComponentProps<typeof CollapsiblePrimitive.CollapsibleContent>) {
+}: React.ComponentProps<"div">) {
+  const { open, contentId } = useCollapsibleContext();
   return (
-    <CollapsiblePrimitive.CollapsibleContent
+    <div
       data-slot="collapsible-content"
+      data-state={open ? "open" : "closed"}
+      hidden={!open}
+      id={contentId}
       {...props}
-    />
-  )
+    >
+      {children}
+    </div>
+  );
 }
 
-export { Collapsible, CollapsibleTrigger, CollapsibleContent }
+export { Collapsible, CollapsibleContent, CollapsibleTrigger };

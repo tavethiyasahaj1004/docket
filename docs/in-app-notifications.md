@@ -9,6 +9,15 @@ attention. Notifications appear in the bell menu in the top bar, with an unread 
 |-------|------|------------|
 | New ticket submitted | `ticket_created` | All active (non-deactivated) agents and admins — a brand-new ticket has no assigned agent yet |
 | Customer replied to a ticket | `customer_replied` | Assigned agent if the ticket is assigned; otherwise all active (non-deactivated) agents and admins |
+| Ticket linked to another ticket | `ticket_linked` | Owners of both tickets* |
+| Ticket merged into another | `ticket_merged` | Owners of both tickets* — opens the ticket it was merged into |
+| Reply split into a new ticket | `ticket_split` / `ticket_created` | `ticket_split` to the original ticket's owner*; `ticket_created` to every other active agent/admin; OS push to both. Both open the new ticket |
+
+\* "Owner" = the ticket's assigned agent, or all active agents and admins if it's
+unassigned (`ticketOwnerRecipients()` in `lib/notifications.ts`). The agent who did the
+action is never notified, and nobody gets more than one notification for one action.
+Each of link / merge / split notifications can be switched off by an admin under
+**Admin → Ticket Config → Ticket Actions** (see [admin-portal.md](./admin-portal.md#ticket-actions)).
 
 > This zero-config routing means a solo self-hoster always gets the reply, teams only
 > ping the owner of an assigned ticket, and unowned tickets reach everyone.
@@ -50,43 +59,71 @@ Helpers live in `lib/notifications.ts` (`createNotifications`, `listNotification
 
 - Bell icon with an unread badge.
 - Polls `GET /api/notifications` every 30s for the unread count (and refreshes on open).
-- Clicking a notification marks it read and navigates to `/tickets/{ticketId}`.
+- Clicking a notification marks it read and navigates to `/tickets/{ticketNumber}`.
 - "Mark all read" clears the badge.
 
 A lightweight poll keeps the in-app bell simple and reliable for self-hosters. For
-true OS-level delivery (even when the app is closed), enable **Pusher Beams** below.
+true OS-level delivery (even when the app is closed), enable push notifications below.
 
-## Browser / OS push (Pusher Beams) — optional
+## Browser / OS push — optional (Pusher Beams **or** Web Push)
 
-When configured, agents also get **OS-level push notifications** (desktop/mobile) on a
-customer reply — even when the app or tab is closed. If not configured, everything
-falls back to the in-app bell with zero setup.
+When configured, agents also get **OS-level push notifications** (desktop/mobile) for
+every event in the table above, even when the app or tab is closed. Recipients are the
+same as for the bell. If push isn't configured, everything falls back to the in-app bell
+with zero setup.
 
-**Enable it:**
+The admin picks **one provider** under **Admin → Integrations → Push Notifications** (also
+in the setup wizard's Integrations step). The card shows only the selected provider's
+fields, and pressing **Save** both stores them and switches the provider. It applies live,
+with no restart or rebuild. Agents' browsers move to the new provider on their next page load.
 
-1. Create a Beams instance at https://dashboard.pusher.com → Beams.
-2. Set env vars:
-   - `NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID` — the instance id (read by the browser;
-     **baked in at build time** — for Docker pass it as a build arg, see README).
-   - `PUSHER_BEAMS_SECRET_KEY` — the secret key (server only).
+| | **Pusher Beams** (`pusher`, default) | **Web Push** (`webpush`) |
+|---|---|---|
+| Third-party account | Pusher Beams instance | None. Uses the browser's built-in push service (FCM / Mozilla / Apple) directly |
+| Credentials | Instance ID + secret key | VAPID key pair (the **Generate keys** button creates one) |
+| Env fallback | `NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID`, `PUSHER_BEAMS_SECRET_KEY` | `WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY` |
+| Device registry | On Pusher's side ("Authenticated Users" mode) | `push_subscriptions` table |
+| Test connection | Publishes to a reserved user ID | Validates the key pair offline. If the keys are the saved ones, it also sends a real test push to the admin's own browsers |
+
+The provider resolves as DB `integration_settings.push_provider` → `PUSH_PROVIDER` env →
+`pusher`, so installs that predate the switch keep using Beams unchanged. A DB-saved value
+wins over env per field, as for every integration (see `lib/integration-settings.ts`).
+VAPID keys resolve **as a pair**: the DB keys are used only when both halves are saved
+there, so a DB public key never gets mixed with an env private key. The VAPID subject
+(the contact push services may use) isn't configurable: it is `NEXT_PUBLIC_APP_URL` when
+that URL is https, otherwise `mailto:admin@<host>`.
 
 **How it works:**
 
 | Piece | File |
 |-------|------|
-| Server publish + token signing | `lib/push.ts` (`publishPushToUsers`, `generateBeamsToken`, `isPushConfigured`) |
-| Token auth endpoint | `app/api/notifications/beams-auth/route.ts` — issues a Beams device token, only for the signed-in agent's own id |
-| Service worker | `public/service-worker.js` — imports the Beams SW (handles push while closed) |
-| Client registration | `components/agent/push-init.tsx` — mounted in the agent/admin layouts; requests permission and binds the device to the agent's user id |
-| Trigger | `tickets` route (new ticket) and `comments` route (customer reply) each call `publishPushToUsers(...)` right after `createNotifications(...)` |
+| Provider dispatch | `lib/push.ts` → `publishPushToUsers()` sends via Beams or `sendWebPushToUsers()` depending on `getPushProvider()`. Call sites never know which one is used |
+| Web Push send / keys | `lib/web-push.ts` contains `sendWebPushToUsers` (prunes 404/410 subscriptions), `generateVapidKeys`, `testWebPushKeys` (format + pair check), and `save`/`deleteWebPushSubscription` |
+| Beams token auth | `app/api/notifications/beams-auth/route.ts` issues a Beams device token, only for the signed-in agent's own id |
+| Web Push subscribe | `POST`/`DELETE /api/notifications/web-push/subscriptions` store or remove the signed-in agent's own subscription. Requests are rejected unless `webpush` is selected. The endpoint must be an https URL on a known browser push service (FCM, Mozilla, Apple, WNS — `isAllowedPushEndpoint()`), since the server later POSTs to it; anything else is a `400`. Re-registering an endpoint owned by another agent only moves it when the request carries that subscription's keys |
+| Admin endpoints | `/api/admin/integration-settings/web-push/generate-keys` (returns a pair and saves nothing) and `/web-push/test` |
+| Public config | `GET /api/config/client` returns `pushProvider` plus either `beamsInstanceId` or `vapidPublicKey`, whichever the selected provider needs |
+| Service worker | `public/service-worker.js` serves **both** providers. It imports the Beams SW (which only handles payloads with `data.pusher`) and adds its own `push`/`notificationclick` handlers for Web Push |
+| Client registration | `components/agent/push-init.tsx` is mounted in the agent/admin layouts. It asks for permission and registers with the selected provider |
+| Triggers | `lib/tickets/create-ticket.ts` (new ticket), `app/api/tickets/[id]/comments` and `app/api/v1/tickets/[id]/comments` (customer reply) each call `publishPushToUsers(...)` right after `createNotifications(...)`, tagged `ticket-<number>` so a newer alert for the same ticket replaces the older one |
 
-- Uses Beams **"Authenticated Users"** mode — devices are associated with the agent's
-  user id, so the same routing (assigned agent / all agents) applies to push.
-- The publish is best-effort and a **no-op when Beams isn't configured** — it never
-  blocks saving the customer's reply.
-- Web push requires a **secure context** (HTTPS in production; `localhost` is exempt).
-- Signing in as a different agent on the same browser reassigns the device automatically
-  (`setUserId` is called on each layout mount).
+**Switching providers.** A browser holds a single push subscription per service-worker
+scope. When Web Push is selected, `push-init.tsx` drops any subscription created under a
+different key (Beams, or a rotated VAPID pair) before subscribing. When Beams is selected
+again, it unsubscribes the Web Push subscription it created earlier, tracked in
+`localStorage` as `docket_webpush_endpoint`, so that Beams can subscribe.
+
+**Rotating VAPID keys.** Saving a different public key deletes every `push_subscriptions`
+row, because each subscription is bound to the key it was created with. Agents
+re-subscribe automatically on their next page load. The UI asks for confirmation before
+it generates replacement keys.
+
+- The publish is best-effort and a **no-op when the selected provider isn't configured**.
+  It never blocks saving a ticket or reply.
+- Push requires a **secure context** (HTTPS in production; `localhost` is exempt). On iOS,
+  Web Push works only after the app is added to the Home Screen (iOS 16.4+).
+- Signing in as a different agent on the same browser reassigns the device automatically.
+  Beams calls `setUserId` again, and Web Push upserts the subscription by `endpoint`.
 
 ## Creating a notification
 

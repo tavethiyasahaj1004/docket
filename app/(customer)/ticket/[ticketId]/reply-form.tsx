@@ -11,6 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { fileKey } from "@/lib/file-keys";
 import { isRichTextEmpty } from "@/lib/rich-text";
+import {
+  type AttachmentLimits,
+  checkTicketStorage,
+  ticketStorageError,
+} from "@/lib/tickets/attachment-limits";
 
 const ALLOWED_TYPES = new Set([
   "image/jpeg",
@@ -19,15 +24,21 @@ const ALLOWED_TYPES = new Set([
   "application/zip",
   "text/plain",
 ]);
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-
 interface Props {
+  // Admin-configured caps (Admin → Ticket Config).
+  attachmentLimits: AttachmentLimits;
   ticketId: string;
+  // Combined size of every attachment already on the ticket.
+  ticketStorageUsedBytes: number;
   token: string;
-  totalAttachments: number;
 }
 
-export function ReplyForm({ ticketId, token, totalAttachments }: Props) {
+export function ReplyForm({
+  attachmentLimits,
+  ticketId,
+  token,
+  ticketStorageUsedBytes,
+}: Props) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -38,22 +49,47 @@ export function ReplyForm({ ticketId, token, totalAttachments }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const maxNewFiles = Math.max(0, 5 - totalAttachments);
+  // Per-message cap only — no ticket-wide attachment limit.
+  const maxFiles = attachmentLimits.maxPerMessage;
+  // Ticket already at/over its combined-size limit: attaching is disabled
+  // (the server enforces this regardless).
+  const storageFull =
+    ticketStorageUsedBytes >= attachmentLimits.maxPerTicketSizeBytes;
 
   function addFiles(newFiles: File[]) {
     const combined = [...files, ...newFiles];
-    if (combined.length > maxNewFiles) {
-      setError(`You can only add ${maxNewFiles} more file(s) to this ticket.`);
+    if (combined.length > maxFiles) {
+      setError(`You can attach up to ${maxFiles} file(s) per reply.`);
       return;
     }
-    const oversized = combined.find((f) => f.size > MAX_FILE_SIZE);
+    const oversized = combined.find(
+      (f) => f.size > attachmentLimits.maxFileSizeBytes
+    );
     if (oversized) {
-      setError(`"${oversized.name}" exceeds the 10 MB limit.`);
+      setError(
+        `"${oversized.name}" exceeds the ${attachmentLimits.maxFileSizeMb} MB limit.`
+      );
       return;
     }
     const badType = combined.find((f) => !ALLOWED_TYPES.has(f.type));
     if (badType) {
       setError(`"${badType.name}" is not an allowed file type.`);
+      return;
+    }
+    const incomingBytes = combined.reduce((n, f) => n + f.size, 0);
+    const storage = checkTicketStorage({
+      usedBytes: ticketStorageUsedBytes,
+      incomingBytes,
+      limitBytes: attachmentLimits.maxPerTicketSizeBytes,
+    });
+    if (!storage.ok) {
+      setError(
+        ticketStorageError(
+          storage,
+          incomingBytes,
+          attachmentLimits.maxPerTicketSizeBytes
+        )
+      );
       return;
     }
     setFiles(combined);
@@ -133,7 +169,7 @@ export function ReplyForm({ ticketId, token, totalAttachments }: Props) {
       <RichTextEditor
         disabled={submitting}
         onChange={setContent}
-        onFilesDropped={maxNewFiles > 0 ? addFiles : undefined}
+        onFilesDropped={storageFull ? undefined : addFiles}
         onSubmit={handleEnterSubmit}
         placeholder="Write your reply…"
         ref={editorRef}
@@ -168,10 +204,17 @@ export function ReplyForm({ ticketId, token, totalAttachments }: Props) {
       {error && <p className="text-xs text-red-600">{error}</p>}
 
       <div className="flex items-center justify-between gap-3">
-        {maxNewFiles > 0 ? (
+        {storageFull ? (
+          <span className="text-xs text-stone">
+            Ticket attachment storage limit reached
+          </span>
+        ) : (
           <label className="flex items-center gap-1.5 text-xs text-stone hover:text-bark cursor-pointer">
             <PaperclipIcon className="size-3.5" />
             Attach file
+            <span className="text-stone/80">
+              (up to {maxFiles}, {attachmentLimits.maxFileSizeMb} MB each)
+            </span>
             <input
               accept=".jpg,.jpeg,.png,.pdf,.zip,.txt"
               className="hidden"
@@ -182,8 +225,6 @@ export function ReplyForm({ ticketId, token, totalAttachments }: Props) {
               type="file"
             />
           </label>
-        ) : (
-          <span className="text-xs text-stone">Max attachments reached</span>
         )}
 
         <Button

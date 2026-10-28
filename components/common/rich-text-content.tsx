@@ -12,12 +12,9 @@ interface Props {
   content: string;
 }
 
-/**
- * Read-only renderer for reply content stored as Tiptap JSON. Rendering through
- * a non-editable Tiptap instance (rather than raw HTML) means only known nodes
- * are ever produced — so customer-authored content can't inject markup. Legacy
- * plain-text comments render as-is.
- */
+/** Read-only renderer for reply content stored as Tiptap JSON. Going through a
+ * non-editable Tiptap instance rather than raw HTML means only known nodes are
+ * produced, so customer content can't inject markup. Legacy plain text is as-is. */
 export function RichTextContent({ content, className }: Props) {
   const editor = useEditor({
     editable: false,

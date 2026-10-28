@@ -2,13 +2,10 @@ import { createId } from "@paralleldrive/cuid2";
 import { boolean, jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "@/db/schema/auth";
 
-// An admin-configured destination that gets a signed POST when a subscribed
-// ticket event happens (see lib/webhooks/dispatch.ts). `secretEncrypted` is
-// AES-256-GCM encrypted at rest (lib/webhooks/crypto.ts, key derived from
-// env.APP_SECRET) rather than hashed like api_keys.keyHash — unlike an API
-// key (only ever compared against an inbound-supplied value), this secret
-// must be recoverable by our own server to sign outgoing requests. The admin
-// UI still only displays the raw secret once, at creation or rotation.
+// An admin-configured destination receiving a signed POST per subscribed ticket
+// event. `secretEncrypted` is AES-256-GCM encrypted rather than hashed like
+// api_keys.keyHash, because unlike an inbound key this secret must be
+// recoverable to sign outgoing requests. The UI still shows it only once.
 export const webhookEndpoints = pgTable("webhook_endpoints", {
   id: text("id").primaryKey().$defaultFn(createId),
   name: text("name").notNull(),

@@ -1,0 +1,2014 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`agent ticket detail page / thread (characterization) > a ticket with no thread, links, and a merged-from notice 1`] = `
+{
+  "asyncCalls": [],
+  "components": [
+    {
+      "name": "TicketDetailRealtime",
+      "props": {
+        "ticketId": "t-101",
+      },
+    },
+    {
+      "name": "TicketNavLink",
+      "props": {
+        "direction": "prev",
+        "listQuery": "",
+        "ticketNumber": null,
+      },
+    },
+    {
+      "name": "TicketNavLink",
+      "props": {
+        "direction": "next",
+        "listQuery": "",
+        "ticketNumber": 106,
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-15T06:00:00.000Z]",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-101",
+        "customerEmail": "ann@example.test",
+        "customerId": "cust-ann",
+        "customerName": "Ann Adams",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-15T06:00:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+      },
+    },
+    {
+      "key": "t-101",
+      "name": "AgentReplyForm",
+      "props": {
+        "attachmentLimits": {
+          "maxFileSizeBytes": 10485760,
+          "maxFileSizeMb": 10,
+          "maxPerMessage": 5,
+          "maxPerTicketSizeBytes": 262144000,
+          "maxPerTicketSizeMb": 250,
+        },
+        "cannedResponses": [
+          {
+            "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"alpha body"}]}]}",
+            "createdAt": "[Date 2026-02-02T00:00:00.000Z]",
+            "createdById": null,
+            "createdByName": "Deleted Agent",
+            "id": "canned-a",
+            "title": "Alpha",
+            "updatedAt": "[Date 2026-02-02T00:00:00.000Z]",
+          },
+          {
+            "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"beta body"}]}]}",
+            "createdAt": "[Date 2026-02-01T00:00:00.000Z]",
+            "createdById": "user-alice",
+            "createdByName": "Alice Agent",
+            "id": "canned-b",
+            "title": "Beta",
+            "updatedAt": "[Date 2026-02-01T00:00:00.000Z]",
+          },
+        ],
+        "initialDraft": null,
+        "sendReplyOnEnter": true,
+        "ticketId": "t-101",
+        "ticketStorageUsedBytes": 0,
+      },
+    },
+    {
+      "name": "TicketInfoSidebar",
+      "props": {
+        "activity": [
+          {
+            "action": "replied",
+            "actorId": null,
+            "actorName": "Ann Adams",
+            "actorRole": "customer",
+            "createdAt": "[Date 2026-03-15T08:45:00.000Z]",
+            "id": "act-list-3",
+            "metadata": null,
+            "ticketId": "t-101",
+          },
+          {
+            "action": "assigned",
+            "actorId": "user-bob",
+            "actorName": "Bob Admin",
+            "actorRole": "admin",
+            "createdAt": "[Date 2026-03-15T08:30:00.000Z]",
+            "id": "act-list-2",
+            "metadata": null,
+            "ticketId": "t-101",
+          },
+          {
+            "action": "status_changed",
+            "actorId": "user-alice",
+            "actorName": "Alice Agent",
+            "actorRole": "agent",
+            "createdAt": "[Date 2026-03-15T07:00:00.000Z]",
+            "id": "act-list-1",
+            "metadata": null,
+            "ticketId": "t-101",
+          },
+        ],
+        "agents": [
+          {
+            "email": "alice@example.test",
+            "id": "user-alice",
+            "name": "Alice Agent",
+          },
+          {
+            "email": "bob@example.test",
+            "id": "user-bob",
+            "name": "Bob Admin",
+          },
+          {
+            "email": "dave@example.test",
+            "id": "user-dave",
+            "name": "Dave Plain",
+          },
+        ],
+        "canLink": true,
+        "canMerge": true,
+        "categories": [
+          {
+            "color": "red",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-bug",
+            "label": "Bug",
+            "slug": "bug",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "orange",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-issue",
+            "label": "Issue",
+            "slug": "issue",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "purple",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-feature",
+            "label": "Feature Request",
+            "slug": "feature_request",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "green",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-billing",
+            "label": "Billing",
+            "slug": "billing",
+            "sortOrder": 3,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-general",
+            "label": "General Query",
+            "slug": "general_query",
+            "sortOrder": 4,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "currentUserId": "user-alice",
+        "customFields": [
+          {
+            "fieldId": "cf-order",
+            "key": "order_ref",
+            "label": "Order Ref",
+            "options": null,
+            "required": true,
+            "type": "text",
+            "value": null,
+          },
+          {
+            "fieldId": "cf-plan",
+            "key": "plan",
+            "label": "Plan",
+            "options": [
+              "free",
+              "pro",
+            ],
+            "required": false,
+            "type": "select",
+            "value": null,
+          },
+        ],
+        "isAdmin": false,
+        "links": [
+          {
+            "createdByName": "Alice Agent",
+            "direction": "outgoing",
+            "id": "link-1",
+            "ticket": {
+              "id": "t-104",
+              "status": "open",
+              "subject": "Order 1005 delayed",
+              "ticketNumber": 104,
+            },
+            "type": "related_to",
+          },
+        ],
+        "mergeEmailsCustomer": true,
+        "priorities": [
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-low",
+            "isDefault": false,
+            "label": "Low",
+            "slug": "low",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "blue",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-normal",
+            "isDefault": true,
+            "label": "Normal",
+            "slug": "normal",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "amber",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-high",
+            "isDefault": false,
+            "label": "High",
+            "slug": "high",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "red",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-urgent",
+            "isDefault": false,
+            "label": "Urgent",
+            "slug": "urgent",
+            "sortOrder": 3,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "showSlaAndOverdue": false,
+        "slaSnapshot": {
+          "createdAt": "2026-03-15T06:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-15T08:00:00.000Z",
+        },
+        "statuses": [
+          {
+            "color": "blue",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-open",
+            "isClosedState": false,
+            "isDefault": true,
+            "label": "Open",
+            "slug": "open",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "amber",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-in-progress",
+            "isClosedState": false,
+            "isDefault": false,
+            "label": "In Progress",
+            "slug": "in_progress",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-closed",
+            "isClosedState": true,
+            "isDefault": false,
+            "label": "Closed",
+            "slug": "closed",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "tags": [],
+        "ticket": {
+          "assignedAgentEmail": "alice@example.test",
+          "assignedAgentId": "user-alice",
+          "assignedAgentName": "Alice Agent",
+          "awaitingReply": true,
+          "category": "bug",
+          "closedAt": null,
+          "createdAt": "[Date 2026-03-15T06:00:00.000Z]",
+          "customerEmail": "ann@example.test",
+          "customerId": "cust-ann",
+          "customerName": "Ann Adams",
+          "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of Cannot log in"}]}]}",
+          "firstRespondedAt": null,
+          "id": "t-101",
+          "mergedIntoTicketId": null,
+          "priority": "high",
+          "slaActiveSeconds": 0,
+          "status": "open",
+          "subject": "Cannot log in",
+          "ticketNumber": 101,
+          "updatedAt": "[Date 2026-03-15T09:00:00.000Z]",
+          "waitingSince": "[Date 2026-03-15T08:00:00.000Z]",
+        },
+      },
+    },
+  ],
+  "links": [
+    "/tickets",
+    "/tickets/104",
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#101",
+    "·",
+    "Cannot log in",
+    "Open",
+    "Ticket #120 was merged into this ticket.",
+    "#101",
+    "·",
+    "Bug",
+    "·",
+    "Cannot log in",
+    "Linked:",
+    "Related to",
+    "#104",
+    "Order 1005 delayed",
+    "Open",
+    "Open",
+    "AA",
+    "Ann Adams",
+    "Customer",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > as an admin with different preferences (sendReplyOnEnter, no draft) 1`] = `
+{
+  "asyncCalls": [],
+  "components": [
+    {
+      "name": "TicketDetailRealtime",
+      "props": {
+        "ticketId": "t-103",
+      },
+    },
+    {
+      "name": "TicketNavLink",
+      "props": {
+        "direction": "prev",
+        "listQuery": "",
+        "ticketNumber": 110,
+      },
+    },
+    {
+      "name": "TicketNavLink",
+      "props": {
+        "direction": "next",
+        "listQuery": "",
+        "ticketNumber": 112,
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T09:30:00.000Z]",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-103",
+        "customerEmail": "pat@example.test",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T09:30:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of snake_case error in export"}]}]}",
+      },
+    },
+    {
+      "name": "DeletableTicketAttachments",
+      "props": {
+        "items": [
+          {
+            "canDelete": false,
+            "fileSize": 1024,
+            "filename": "screenshot.png",
+            "id": "att-1",
+            "mimeType": "image/png",
+            "url": "/api/files/tickets/t-103/aaa/screenshot.png",
+          },
+          {
+            "canDelete": true,
+            "fileSize": 2048,
+            "filename": "agent-note.pdf",
+            "id": "att-2",
+            "mimeType": "application/pdf",
+            "url": "/api/files/tickets/t-103/bbb/agent-note.pdf",
+          },
+        ],
+        "ticketId": "t-103",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-103",
+        "customerEmail": "pat@example.test",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T10:00:00.000Z]",
+      },
+    },
+    {
+      "name": "SplitCommentButton",
+      "props": {
+        "commentId": "cm-1",
+        "ticketId": "t-103",
+        "ticketNumber": 103,
+        "ticketSubject": "snake_case error in export",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Customer first message"}]}]}",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T11:00:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Public agent reply"}]}]}",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T12:00:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Internal note: check the export job"}]}]}",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-103",
+        "customerEmail": "pat@example.test",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-11T09:00:00.000Z]",
+      },
+    },
+    {
+      "name": "SplitCommentButton",
+      "props": {
+        "commentId": "cm-4",
+        "ticketId": "t-103",
+        "ticketNumber": 103,
+        "ticketSubject": "snake_case error in export",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Customer follow-up with files"}]}]}",
+      },
+    },
+    {
+      "name": "DeletableTicketAttachments",
+      "props": {
+        "items": [
+          {
+            "canDelete": false,
+            "fileSize": 300,
+            "filename": "log-1.txt",
+            "id": "att-3",
+            "mimeType": "text/plain",
+            "url": "/api/files/tickets/t-103/ccc/log-1.txt",
+          },
+          {
+            "canDelete": false,
+            "fileSize": 400,
+            "filename": "log-2.txt",
+            "id": "att-4",
+            "mimeType": "text/plain",
+            "url": "/api/files/tickets/t-103/ddd/log-2.txt",
+          },
+        ],
+        "ticketId": "t-103",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-11T10:00:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "Legacy plain text reply",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-103",
+        "customerEmail": "pat@example.test",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-12T08:00:00.000Z]",
+      },
+    },
+    {
+      "name": "SplitCommentButton",
+      "props": {
+        "commentId": "cm-6",
+        "ticketId": "t-103",
+        "ticketNumber": 103,
+        "ticketSubject": "snake_case error in export",
+      },
+    },
+    {
+      "name": "DeletableTicketAttachments",
+      "props": {
+        "items": [
+          {
+            "canDelete": false,
+            "fileSize": 5000,
+            "filename": "only-file.zip",
+            "id": "att-5",
+            "mimeType": "application/zip",
+            "url": "/api/files/tickets/t-103/eee/only-file.zip",
+          },
+        ],
+        "ticketId": "t-103",
+      },
+    },
+    {
+      "key": "t-103",
+      "name": "AgentReplyForm",
+      "props": {
+        "attachmentLimits": {
+          "maxFileSizeBytes": 10485760,
+          "maxFileSizeMb": 10,
+          "maxPerMessage": 5,
+          "maxPerTicketSizeBytes": 262144000,
+          "maxPerTicketSizeMb": 250,
+        },
+        "cannedResponses": [
+          {
+            "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"alpha body"}]}]}",
+            "createdAt": "[Date 2026-02-02T00:00:00.000Z]",
+            "createdById": null,
+            "createdByName": "Deleted Agent",
+            "id": "canned-a",
+            "title": "Alpha",
+            "updatedAt": "[Date 2026-02-02T00:00:00.000Z]",
+          },
+          {
+            "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"beta body"}]}]}",
+            "createdAt": "[Date 2026-02-01T00:00:00.000Z]",
+            "createdById": "user-alice",
+            "createdByName": "Alice Agent",
+            "id": "canned-b",
+            "title": "Beta",
+            "updatedAt": "[Date 2026-02-01T00:00:00.000Z]",
+          },
+        ],
+        "initialDraft": null,
+        "sendReplyOnEnter": false,
+        "ticketId": "t-103",
+        "ticketStorageUsedBytes": 8772,
+      },
+    },
+    {
+      "name": "TicketInfoSidebar",
+      "props": {
+        "activity": [
+          {
+            "action": "replied",
+            "actorId": "user-alice",
+            "actorName": "Alice Agent",
+            "actorRole": "agent",
+            "createdAt": "[Date 2026-03-11T10:00:00.000Z]",
+            "id": "act-5",
+            "metadata": {
+              "internal": false,
+            },
+            "ticketId": "t-103",
+          },
+          {
+            "action": "assigned",
+            "actorId": "user-bob",
+            "actorName": "Bob Admin",
+            "actorRole": "admin",
+            "createdAt": "[Date 2026-03-10T14:00:00.000Z]",
+            "id": "act-4",
+            "metadata": {
+              "to": "user-bob",
+            },
+            "ticketId": "t-103",
+          },
+          {
+            "action": "priority_changed",
+            "actorId": "user-bob",
+            "actorName": "Bob Admin",
+            "actorRole": "admin",
+            "createdAt": "[Date 2026-03-10T13:00:00.000Z]",
+            "id": "act-3",
+            "metadata": {
+              "from": "normal",
+              "to": "urgent",
+            },
+            "ticketId": "t-103",
+          },
+          {
+            "action": "status_changed",
+            "actorId": "user-bob",
+            "actorName": "Bob Admin",
+            "actorRole": "admin",
+            "createdAt": "[Date 2026-03-10T10:30:00.000Z]",
+            "id": "act-2",
+            "metadata": {
+              "from": "open",
+              "to": "in_progress",
+            },
+            "ticketId": "t-103",
+          },
+          {
+            "action": "created",
+            "actorId": null,
+            "actorName": "Pat Percent",
+            "actorRole": "customer",
+            "createdAt": "[Date 2026-03-10T09:30:00.000Z]",
+            "id": "act-1",
+            "metadata": null,
+            "ticketId": "t-103",
+          },
+        ],
+        "agents": [
+          {
+            "email": "alice@example.test",
+            "id": "user-alice",
+            "name": "Alice Agent",
+          },
+          {
+            "email": "bob@example.test",
+            "id": "user-bob",
+            "name": "Bob Admin",
+          },
+          {
+            "email": "dave@example.test",
+            "id": "user-dave",
+            "name": "Dave Plain",
+          },
+        ],
+        "canLink": true,
+        "canMerge": true,
+        "categories": [
+          {
+            "color": "red",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-bug",
+            "label": "Bug",
+            "slug": "bug",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "orange",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-issue",
+            "label": "Issue",
+            "slug": "issue",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "purple",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-feature",
+            "label": "Feature Request",
+            "slug": "feature_request",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "green",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-billing",
+            "label": "Billing",
+            "slug": "billing",
+            "sortOrder": 3,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-general",
+            "label": "General Query",
+            "slug": "general_query",
+            "sortOrder": 4,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "currentUserId": "user-bob",
+        "customFields": [
+          {
+            "fieldId": "cf-order",
+            "key": "order_ref",
+            "label": "Order Ref",
+            "options": null,
+            "required": true,
+            "type": "text",
+            "value": null,
+          },
+          {
+            "fieldId": "cf-plan",
+            "key": "plan",
+            "label": "Plan",
+            "options": [
+              "free",
+              "pro",
+            ],
+            "required": false,
+            "type": "select",
+            "value": "pro",
+          },
+        ],
+        "isAdmin": true,
+        "links": [
+          {
+            "createdByName": "Bob Admin",
+            "direction": "outgoing",
+            "id": "link-2",
+            "ticket": {
+              "id": "t-105",
+              "status": "open",
+              "subject": "Feature: dark mode",
+              "ticketNumber": 105,
+            },
+            "type": "blocks",
+          },
+        ],
+        "mergeEmailsCustomer": true,
+        "priorities": [
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-low",
+            "isDefault": false,
+            "label": "Low",
+            "slug": "low",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "blue",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-normal",
+            "isDefault": true,
+            "label": "Normal",
+            "slug": "normal",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "amber",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-high",
+            "isDefault": false,
+            "label": "High",
+            "slug": "high",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "red",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-urgent",
+            "isDefault": false,
+            "label": "Urgent",
+            "slug": "urgent",
+            "sortOrder": 3,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "showSlaAndOverdue": false,
+        "slaSnapshot": {
+          "createdAt": "2026-03-10T09:30:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "statuses": [
+          {
+            "color": "blue",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-open",
+            "isClosedState": false,
+            "isDefault": true,
+            "label": "Open",
+            "slug": "open",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "amber",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-in-progress",
+            "isClosedState": false,
+            "isDefault": false,
+            "label": "In Progress",
+            "slug": "in_progress",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-closed",
+            "isClosedState": true,
+            "isDefault": false,
+            "label": "Closed",
+            "slug": "closed",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "tags": [],
+        "ticket": {
+          "assignedAgentEmail": "bob@example.test",
+          "assignedAgentId": "user-bob",
+          "assignedAgentName": "Bob Admin",
+          "awaitingReply": false,
+          "category": "bug",
+          "closedAt": null,
+          "createdAt": "[Date 2026-03-10T09:30:00.000Z]",
+          "customerEmail": "pat@example.test",
+          "customerId": "cust-pat",
+          "customerName": "Pat Percent",
+          "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of snake_case error in export"}]}]}",
+          "firstRespondedAt": null,
+          "id": "t-103",
+          "mergedIntoTicketId": null,
+          "priority": "urgent",
+          "slaActiveSeconds": 0,
+          "status": "in_progress",
+          "subject": "snake_case error in export",
+          "ticketNumber": 103,
+          "updatedAt": "[Date 2026-03-12T09:00:00.000Z]",
+          "waitingSince": null,
+        },
+      },
+    },
+  ],
+  "links": [
+    "/tickets",
+    "/tickets/105",
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#103",
+    "·",
+    "snake_case error in export",
+    "In Progress",
+    "#103",
+    "·",
+    "Bug",
+    "·",
+    "snake_case error in export",
+    "Linked:",
+    "Blocks",
+    "#105",
+    "Feature: dark mode",
+    "Open",
+    "In Progress",
+    "PP",
+    "Pat Percent",
+    "Customer",
+    "PP",
+    "Pat Percent",
+    "Bob Admin",
+    "BA",
+    "Bob Admin",
+    "Internal note",
+    "BA",
+    "PP",
+    "Pat Percent",
+    "Alice Agent",
+    "AA",
+    "PP",
+    "Pat Percent",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > closed ticket has no reply form 1`] = `
+{
+  "hasReplyForm": false,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "",
+      "ticketNumber": 104,
+    },
+    {
+      "direction": "next",
+      "listQuery": "",
+      "ticketNumber": 105,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#107",
+    "·",
+    "General question",
+    "Closed",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > full thread of #103: public replies, internal notes, attachments, activity, sidebar data 1`] = `
+{
+  "asyncCalls": [],
+  "components": [
+    {
+      "name": "TicketDetailRealtime",
+      "props": {
+        "ticketId": "t-103",
+      },
+    },
+    {
+      "name": "TicketNavLink",
+      "props": {
+        "direction": "prev",
+        "listQuery": "",
+        "ticketNumber": 110,
+      },
+    },
+    {
+      "name": "TicketNavLink",
+      "props": {
+        "direction": "next",
+        "listQuery": "",
+        "ticketNumber": 112,
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T09:30:00.000Z]",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-103",
+        "customerEmail": "pat@example.test",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T09:30:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of snake_case error in export"}]}]}",
+      },
+    },
+    {
+      "name": "DeletableTicketAttachments",
+      "props": {
+        "items": [
+          {
+            "canDelete": false,
+            "fileSize": 1024,
+            "filename": "screenshot.png",
+            "id": "att-1",
+            "mimeType": "image/png",
+            "url": "/api/files/tickets/t-103/aaa/screenshot.png",
+          },
+          {
+            "canDelete": true,
+            "fileSize": 2048,
+            "filename": "agent-note.pdf",
+            "id": "att-2",
+            "mimeType": "application/pdf",
+            "url": "/api/files/tickets/t-103/bbb/agent-note.pdf",
+          },
+        ],
+        "ticketId": "t-103",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-103",
+        "customerEmail": "pat@example.test",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T10:00:00.000Z]",
+      },
+    },
+    {
+      "name": "SplitCommentButton",
+      "props": {
+        "commentId": "cm-1",
+        "ticketId": "t-103",
+        "ticketNumber": 103,
+        "ticketSubject": "snake_case error in export",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Customer first message"}]}]}",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T11:00:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Public agent reply"}]}]}",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-10T12:00:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Internal note: check the export job"}]}]}",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-103",
+        "customerEmail": "pat@example.test",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-11T09:00:00.000Z]",
+      },
+    },
+    {
+      "name": "SplitCommentButton",
+      "props": {
+        "commentId": "cm-4",
+        "ticketId": "t-103",
+        "ticketNumber": 103,
+        "ticketSubject": "snake_case error in export",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Customer follow-up with files"}]}]}",
+      },
+    },
+    {
+      "name": "DeletableTicketAttachments",
+      "props": {
+        "items": [
+          {
+            "canDelete": false,
+            "fileSize": 300,
+            "filename": "log-1.txt",
+            "id": "att-3",
+            "mimeType": "text/plain",
+            "url": "/api/files/tickets/t-103/ccc/log-1.txt",
+          },
+          {
+            "canDelete": false,
+            "fileSize": 400,
+            "filename": "log-2.txt",
+            "id": "att-4",
+            "mimeType": "text/plain",
+            "url": "/api/files/tickets/t-103/ddd/log-2.txt",
+          },
+        ],
+        "ticketId": "t-103",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-11T10:00:00.000Z]",
+      },
+    },
+    {
+      "name": "RichTextContent",
+      "props": {
+        "content": "Legacy plain text reply",
+      },
+    },
+    {
+      "name": "CustomerProfilePopover",
+      "props": {
+        "currentTicketId": "t-103",
+        "customerEmail": "pat@example.test",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+      },
+    },
+    {
+      "name": "LocalDateTime",
+      "props": {
+        "date": "[Date 2026-03-12T08:00:00.000Z]",
+      },
+    },
+    {
+      "name": "SplitCommentButton",
+      "props": {
+        "commentId": "cm-6",
+        "ticketId": "t-103",
+        "ticketNumber": 103,
+        "ticketSubject": "snake_case error in export",
+      },
+    },
+    {
+      "name": "DeletableTicketAttachments",
+      "props": {
+        "items": [
+          {
+            "canDelete": false,
+            "fileSize": 5000,
+            "filename": "only-file.zip",
+            "id": "att-5",
+            "mimeType": "application/zip",
+            "url": "/api/files/tickets/t-103/eee/only-file.zip",
+          },
+        ],
+        "ticketId": "t-103",
+      },
+    },
+    {
+      "key": "t-103",
+      "name": "AgentReplyForm",
+      "props": {
+        "attachmentLimits": {
+          "maxFileSizeBytes": 10485760,
+          "maxFileSizeMb": 10,
+          "maxPerMessage": 5,
+          "maxPerTicketSizeBytes": 262144000,
+          "maxPerTicketSizeMb": 250,
+        },
+        "cannedResponses": [
+          {
+            "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"alpha body"}]}]}",
+            "createdAt": "[Date 2026-02-02T00:00:00.000Z]",
+            "createdById": null,
+            "createdByName": "Deleted Agent",
+            "id": "canned-a",
+            "title": "Alpha",
+            "updatedAt": "[Date 2026-02-02T00:00:00.000Z]",
+          },
+          {
+            "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"beta body"}]}]}",
+            "createdAt": "[Date 2026-02-01T00:00:00.000Z]",
+            "createdById": "user-alice",
+            "createdByName": "Alice Agent",
+            "id": "canned-b",
+            "title": "Beta",
+            "updatedAt": "[Date 2026-02-01T00:00:00.000Z]",
+          },
+        ],
+        "initialDraft": {
+          "content": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"alice internal draft on 103"}]}]}",
+          "isInternal": true,
+          "updatedAt": "2026-03-12T10:30:00.000Z",
+        },
+        "sendReplyOnEnter": true,
+        "ticketId": "t-103",
+        "ticketStorageUsedBytes": 8772,
+      },
+    },
+    {
+      "name": "TicketInfoSidebar",
+      "props": {
+        "activity": [
+          {
+            "action": "replied",
+            "actorId": "user-alice",
+            "actorName": "Alice Agent",
+            "actorRole": "agent",
+            "createdAt": "[Date 2026-03-11T10:00:00.000Z]",
+            "id": "act-5",
+            "metadata": {
+              "internal": false,
+            },
+            "ticketId": "t-103",
+          },
+          {
+            "action": "assigned",
+            "actorId": "user-bob",
+            "actorName": "Bob Admin",
+            "actorRole": "admin",
+            "createdAt": "[Date 2026-03-10T14:00:00.000Z]",
+            "id": "act-4",
+            "metadata": {
+              "to": "user-bob",
+            },
+            "ticketId": "t-103",
+          },
+          {
+            "action": "priority_changed",
+            "actorId": "user-bob",
+            "actorName": "Bob Admin",
+            "actorRole": "admin",
+            "createdAt": "[Date 2026-03-10T13:00:00.000Z]",
+            "id": "act-3",
+            "metadata": {
+              "from": "normal",
+              "to": "urgent",
+            },
+            "ticketId": "t-103",
+          },
+          {
+            "action": "status_changed",
+            "actorId": "user-bob",
+            "actorName": "Bob Admin",
+            "actorRole": "admin",
+            "createdAt": "[Date 2026-03-10T10:30:00.000Z]",
+            "id": "act-2",
+            "metadata": {
+              "from": "open",
+              "to": "in_progress",
+            },
+            "ticketId": "t-103",
+          },
+          {
+            "action": "created",
+            "actorId": null,
+            "actorName": "Pat Percent",
+            "actorRole": "customer",
+            "createdAt": "[Date 2026-03-10T09:30:00.000Z]",
+            "id": "act-1",
+            "metadata": null,
+            "ticketId": "t-103",
+          },
+        ],
+        "agents": [
+          {
+            "email": "alice@example.test",
+            "id": "user-alice",
+            "name": "Alice Agent",
+          },
+          {
+            "email": "bob@example.test",
+            "id": "user-bob",
+            "name": "Bob Admin",
+          },
+          {
+            "email": "dave@example.test",
+            "id": "user-dave",
+            "name": "Dave Plain",
+          },
+        ],
+        "canLink": true,
+        "canMerge": true,
+        "categories": [
+          {
+            "color": "red",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-bug",
+            "label": "Bug",
+            "slug": "bug",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "orange",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-issue",
+            "label": "Issue",
+            "slug": "issue",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "purple",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-feature",
+            "label": "Feature Request",
+            "slug": "feature_request",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "green",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-billing",
+            "label": "Billing",
+            "slug": "billing",
+            "sortOrder": 3,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "cat-general",
+            "label": "General Query",
+            "slug": "general_query",
+            "sortOrder": 4,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "currentUserId": "user-alice",
+        "customFields": [
+          {
+            "fieldId": "cf-order",
+            "key": "order_ref",
+            "label": "Order Ref",
+            "options": null,
+            "required": true,
+            "type": "text",
+            "value": null,
+          },
+          {
+            "fieldId": "cf-plan",
+            "key": "plan",
+            "label": "Plan",
+            "options": [
+              "free",
+              "pro",
+            ],
+            "required": false,
+            "type": "select",
+            "value": "pro",
+          },
+        ],
+        "isAdmin": false,
+        "links": [
+          {
+            "createdByName": "Bob Admin",
+            "direction": "outgoing",
+            "id": "link-2",
+            "ticket": {
+              "id": "t-105",
+              "status": "open",
+              "subject": "Feature: dark mode",
+              "ticketNumber": 105,
+            },
+            "type": "blocks",
+          },
+        ],
+        "mergeEmailsCustomer": true,
+        "priorities": [
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-low",
+            "isDefault": false,
+            "label": "Low",
+            "slug": "low",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "blue",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-normal",
+            "isDefault": true,
+            "label": "Normal",
+            "slug": "normal",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "amber",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-high",
+            "isDefault": false,
+            "label": "High",
+            "slug": "high",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "red",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "prio-urgent",
+            "isDefault": false,
+            "label": "Urgent",
+            "slug": "urgent",
+            "sortOrder": 3,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "showSlaAndOverdue": false,
+        "slaSnapshot": {
+          "createdAt": "2026-03-10T09:30:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "statuses": [
+          {
+            "color": "blue",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-open",
+            "isClosedState": false,
+            "isDefault": true,
+            "label": "Open",
+            "slug": "open",
+            "sortOrder": 0,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "amber",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-in-progress",
+            "isClosedState": false,
+            "isDefault": false,
+            "label": "In Progress",
+            "slug": "in_progress",
+            "sortOrder": 1,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+          {
+            "color": "slate",
+            "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+            "id": "status-closed",
+            "isClosedState": true,
+            "isDefault": false,
+            "label": "Closed",
+            "slug": "closed",
+            "sortOrder": 2,
+            "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+          },
+        ],
+        "tags": [],
+        "ticket": {
+          "assignedAgentEmail": "bob@example.test",
+          "assignedAgentId": "user-bob",
+          "assignedAgentName": "Bob Admin",
+          "awaitingReply": false,
+          "category": "bug",
+          "closedAt": null,
+          "createdAt": "[Date 2026-03-10T09:30:00.000Z]",
+          "customerEmail": "pat@example.test",
+          "customerId": "cust-pat",
+          "customerName": "Pat Percent",
+          "description": "{"type":"doc","content":[{"type":"paragraph","content":[{"type":"text","text":"Description of snake_case error in export"}]}]}",
+          "firstRespondedAt": null,
+          "id": "t-103",
+          "mergedIntoTicketId": null,
+          "priority": "urgent",
+          "slaActiveSeconds": 0,
+          "status": "in_progress",
+          "subject": "snake_case error in export",
+          "ticketNumber": 103,
+          "updatedAt": "[Date 2026-03-12T09:00:00.000Z]",
+          "waitingSince": null,
+        },
+      },
+    },
+  ],
+  "links": [
+    "/tickets",
+    "/tickets/105",
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#103",
+    "·",
+    "snake_case error in export",
+    "In Progress",
+    "#103",
+    "·",
+    "Bug",
+    "·",
+    "snake_case error in export",
+    "Linked:",
+    "Blocks",
+    "#105",
+    "Feature: dark mode",
+    "Open",
+    "In Progress",
+    "PP",
+    "Pat Percent",
+    "Customer",
+    "PP",
+    "Pat Percent",
+    "Bob Admin",
+    "BA",
+    "Bob Admin",
+    "Internal note",
+    "BA",
+    "PP",
+    "Pat Percent",
+    "Alice Agent",
+    "AA",
+    "PP",
+    "Pat Percent",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next with sort=waitingTime (real clock) > asc, closed ticket 1`] = `
+{
+  "hasReplyForm": false,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?sort=waitingTime&order=asc",
+      "ticketNumber": 108,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?sort=waitingTime&order=asc",
+      "ticketNumber": 101,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#107",
+    "·",
+    "General question",
+    "Closed",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next with sort=waitingTime (real clock) > desc, closed ticket 1`] = `
+{
+  "hasReplyForm": false,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?sort=waitingTime&order=desc",
+      "ticketNumber": 101,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?sort=waitingTime&order=desc",
+      "ticketNumber": 108,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#107",
+    "·",
+    "General question",
+    "Closed",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > current ticket outside the filtered set 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?status=closed",
+      "ticketNumber": 108,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?status=closed",
+      "ticketNumber": null,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#109",
+    "·",
+    "Ancient bug",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > default sort (updatedAt desc), middle 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "",
+      "ticketNumber": 111,
+    },
+    {
+      "direction": "next",
+      "listQuery": "",
+      "ticketNumber": 103,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#110",
+    "·",
+    "Tagged ticket one",
+    "In Progress",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > default sort, first of the list 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "",
+      "ticketNumber": null,
+    },
+    {
+      "direction": "next",
+      "listQuery": "",
+      "ticketNumber": 106,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#101",
+    "·",
+    "Cannot log in",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > default sort, last of the list 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "",
+      "ticketNumber": 108,
+    },
+    {
+      "direction": "next",
+      "listQuery": "",
+      "ticketNumber": null,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#109",
+    "·",
+    "Ancient bug",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > filtered: mine=1 (alice) 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?mine=1",
+      "ticketNumber": 107,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?mine=1",
+      "ticketNumber": null,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#105",
+    "·",
+    "Feature: dark mode",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > filtered: q search 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?q=o",
+      "ticketNumber": 112,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?q=o",
+      "ticketNumber": 107,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#104",
+    "·",
+    "Order 1005 delayed",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > filtered: status=open, sort=id asc 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?status=open&sort=id&order=asc",
+      "ticketNumber": 104,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?status=open&sort=id&order=asc",
+      "ticketNumber": 109,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#105",
+    "·",
+    "Feature: dark mode",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > filtered: tag=vip 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?tag=vip",
+      "ticketNumber": 111,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?tag=vip",
+      "ticketNumber": null,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#110",
+    "·",
+    "Tagged ticket one",
+    "In Progress",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > filtered: view=awaiting 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?view=awaiting",
+      "ticketNumber": 106,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?view=awaiting",
+      "ticketNumber": 111,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#102",
+    "·",
+    "Refund 100% please",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > filtered: view=open 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?view=open",
+      "ticketNumber": 110,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?view=open",
+      "ticketNumber": 112,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#103",
+    "·",
+    "snake_case error in export",
+    "In Progress",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > sort=id asc 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?sort=id&order=asc",
+      "ticketNumber": 104,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?sort=id&order=asc",
+      "ticketNumber": 106,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#105",
+    "·",
+    "Feature: dark mode",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > sort=id desc 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?sort=id&order=desc",
+      "ticketNumber": 106,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?sort=id&order=desc",
+      "ticketNumber": 104,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#105",
+    "·",
+    "Feature: dark mode",
+    "Open",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > previous/next within the list the agent came from > sort=updatedAt asc 1`] = `
+{
+  "hasReplyForm": true,
+  "nav": [
+    {
+      "direction": "prev",
+      "listQuery": "?sort=updatedAt&order=asc",
+      "ticketNumber": 103,
+    },
+    {
+      "direction": "next",
+      "listQuery": "?sort=updatedAt&order=asc",
+      "ticketNumber": 111,
+    },
+  ],
+  "text": [
+    "All Tickets",
+    "/",
+    "#110",
+    "·",
+    "Tagged ticket one",
+    "In Progress",
+  ],
+}
+`;
+
+exports[`agent ticket detail page / thread (characterization) > redirects and 404s > a merged ticket redirects to its target with ?mergedFrom= 1`] = `"NEXT_REDIRECT:/tickets/101?mergedFrom=120"`;
+
+exports[`agent ticket detail page / thread (characterization) > redirects and 404s > malformed segment "" 1`] = `"NEXT_NOT_FOUND"`;
+
+exports[`agent ticket detail page / thread (characterization) > redirects and 404s > malformed segment "-5" 1`] = `"NEXT_NOT_FOUND"`;
+
+exports[`agent ticket detail page / thread (characterization) > redirects and 404s > malformed segment "0" 1`] = `"NEXT_NOT_FOUND"`;
+
+exports[`agent ticket detail page / thread (characterization) > redirects and 404s > malformed segment "1.5e3" 1`] = `"NEXT_NOT_FOUND"`;
+
+exports[`agent ticket detail page / thread (characterization) > redirects and 404s > malformed segment "abc" 1`] = `"NEXT_NOT_FOUND"`;
+
+exports[`agent ticket detail page / thread (characterization) > redirects and 404s > the other merged ticket 1`] = `"NEXT_REDIRECT:/tickets/105?mergedFrom=121"`;
+
+exports[`agent ticket detail page / thread (characterization) > redirects and 404s > unknown ticket number -> notFound 1`] = `"NEXT_NOT_FOUND"`;

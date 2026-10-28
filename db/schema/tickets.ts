@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   boolean,
   index,
   integer,
@@ -30,10 +31,9 @@ export const tickets = pgTable(
     assignedAgentId: text("assigned_agent_id").references(() => user.id, {
       onDelete: "set null",
     }),
-    // "Awaiting reply": true when the latest public message is from the customer
-    // (a new ticket, or a customer reply). Cleared when an agent posts a public
-    // reply. `pendingReplies` counts customer messages since the last agent reply
-    // — shown as a WhatsApp-style unread badge on the ticket list.
+    // "Awaiting reply": true when the newest public message is the customer's,
+    // cleared when an agent replies publicly. `pendingReplies` counts customer
+    // messages since that reply — the unread badge on the ticket list.
     awaitingReply: boolean("awaiting_reply").notNull().default(false),
     pendingReplies: integer("pending_replies").notNull().default(0),
     // How the ticket entered the system — "portal" (customer form) or "api"
@@ -43,14 +43,19 @@ export const tickets = pgTable(
       onDelete: "set null",
     }),
     closedAt: timestamp("closed_at", { withTimezone: true }),
-    // SLA tracking (see lib/sla.ts). All three are additive bookkeeping next
-    // to the existing awaitingReply/pendingReplies fields, updated by the
-    // same call sites via lib/sla.ts's computeSlaTransition().
-    //
-    // When the CURRENT wait state (waiting for agent vs. waiting for
-    // customer) began — null once the ticket is closed/resolved. Only
-    // updated on an actual awaitingReply flip, not on every message, so a
-    // customer's second follow-up doesn't reset the response clock.
+    // Set when this ticket was merged into another (lib/tickets/merge.ts). The
+    // row is kept, closed, so its old portal link / API id can forward to the
+    // surviving ticket instead of 404ing. Always points at a ticket that is
+    // itself not merged — merging the target later re-points these rows.
+    mergedIntoTicketId: text("merged_into_ticket_id").references(
+      (): AnyPgColumn => tickets.id,
+      { onDelete: "set null" }
+    ),
+    mergedAt: timestamp("merged_at", { withTimezone: true }),
+    // SLA tracking (lib/sla.ts), written by the same call sites as awaitingReply
+    // via computeSlaTransition(). When the current wait state began; null once
+    // closed. Only moves on a real awaitingReply flip, never on every message,
+    // so a customer's second follow-up can't reset the response clock.
     waitingSince: timestamp("waiting_since", { withTimezone: true }),
     // Frozen once set — the first non-internal agent/admin reply. Keeps the
     // First Response outcome displayable after the ticket moves on to
@@ -75,6 +80,7 @@ export const tickets = pgTable(
     index("tickets_created_at_idx").on(t.createdAt),
     index("tickets_awaiting_reply_idx").on(t.awaitingReply),
     index("tickets_priority_idx").on(t.priority),
+    index("tickets_merged_into_ticket_id_idx").on(t.mergedIntoTicketId),
   ]
 );
 

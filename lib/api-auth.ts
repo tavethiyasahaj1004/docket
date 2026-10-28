@@ -7,11 +7,8 @@ function jsonError(status: number, error: string): Response {
   });
 }
 
-/**
- * Auth guard for the public API (app/api/v1/*). Same throw-a-Response
- * pattern as requireAdminFromRequest (lib/authz.ts) — call inside a
- * try/catch and `return e as Response` on failure.
- */
+/** Auth guard for the public API. Same throw-a-Response pattern as
+ * requireAdminFromRequest — call inside try/catch, `return e as Response`. */
 export async function requireApiKey(
   request: Request
 ): Promise<{ id: string; name: string }> {

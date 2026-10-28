@@ -14,10 +14,9 @@ export const COLOR_BADGE: Record<string, string> = {
 
 export const COLOR_OPTIONS = Object.keys(COLOR_BADGE);
 
-// ⚠ CLIENT COMPONENTS ONLY. These format in the runtime's local timezone —
-// on the server that's the SERVER's timezone, shown wrongly to every viewer
-// elsewhere. In server components use <LocalDateTime> from
-// components/common/local-datetime instead.
+// ⚠ CLIENT COMPONENTS ONLY. These format in the runtime's local timezone, which
+// on the server is the SERVER's — wrong for every viewer elsewhere. Server
+// components use <LocalDateTime> from components/common/local-datetime.
 export function formatTicketDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
     month: "short",
@@ -42,16 +41,10 @@ export type AssignableAgent = {
   email: string;
 };
 
-/**
- * Options for an assignee picker.
- *
- * Every agent list in the app is filtered to active users, so a ticket
- * still assigned to a since-deactivated agent has a value with no
- * matching option — and SearchableSelect falls back to its "Select" placeholder,
- * making the ticket look unassigned. Appending the current assignee fixes the
- * label. It only ever appears while it is already the selected value, so a
- * deactivated agent can never be picked for a ticket that isn't already theirs.
- */
+/** Options for an assignee picker. Agent lists are filtered to active users, so a
+ * ticket held by a since-deactivated agent would have no matching option and read
+ * as unassigned. Appending the current assignee fixes the label; it appears only
+ * while already selected, so nobody can pick a deactivated agent afresh. */
 export function buildAssigneeOptions(
   agents: AssignableAgent[],
   assignedAgentId: string | null,

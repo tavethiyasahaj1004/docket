@@ -43,13 +43,13 @@ export default async function ReportsPage({ searchParams }: Props) {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       {/* Title + description come from the TopBar (components/agent/topbar.tsx). */}
       <div className="flex items-center justify-end flex-wrap gap-3">
-        <div className="flex items-center gap-1 rounded-md border border-border bg-card p-1">
+        <div className="flex items-center gap-1 rounded-md border border-base-300 bg-base-100 p-1">
           {RANGE_OPTIONS.map((opt) => (
             <a
               className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
                 range === opt.value
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                  ? "bg-primary text-primary-content"
+                  : "text-base-content-muted hover:text-base-content hover:bg-base-300"
               }`}
               href={rangeHref(opt.value)}
               key={opt.value}

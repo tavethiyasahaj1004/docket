@@ -2,15 +2,10 @@
 
 import * as React from "react";
 
-// Renders a timestamp in the VIEWER'S browser timezone. Use this instead of
-// formatting dates inside server components — those format with the server's
-// timezone (e.g. a US server showing US times to a customer in India).
-//
-// Hydration-safe by construction: the server render and the client's first
-// (hydration) render both format in UTC — identical output, no mismatch —
-// then an effect re-renders with the browser's real timezone. The one-frame
-// UTC flash is invisible in practice and beats a hydration error or an empty
-// cell. The <time dateTime> attribute always carries the exact ISO instant.
+// Renders a timestamp in the VIEWER'S timezone — use instead of formatting in a
+// server component, which would use the SERVER's. Hydration-safe: server and
+// first client render both format UTC, then an effect re-renders locally. The
+// one-frame UTC flash beats a hydration error or an empty cell.
 
 interface Props {
   className?: string;

@@ -1,13 +1,21 @@
-import { createId } from "@paralleldrive/cuid2";
-import { asc, eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { slaPolicies } from "@/db/schema";
-import { audit } from "@/lib/audit";
-import { requireAdminFromRequest } from "@/lib/authz";
-import { db } from "@/lib/db";
-import { getTicketCategories, getTicketPriorities } from "@/lib/ticket-config";
+// SLA is currently hidden from the UI (see docs/tickets.md § SLA) — this
+// whole route is disabled to match, so it can't be reached even by a direct
+// request while there's no UI path to it. Re-enable by restoring the code
+// below alongside the other SLA re-enable steps in docs/tickets.md.
+// import { createId } from "@paralleldrive/cuid2";
+// import { asc, eq } from "drizzle-orm";
+// import type { NextRequest } from "next/server";
+// import { NextResponse } from "next/server";
+// import { slaPolicies } from "@/db/schema";
+// import { audit } from "@/lib/audit";
+// import { requireAdminFromRequest } from "@/lib/authz";
+// import { db } from "@/lib/db";
+// import { getTicketCategories, getTicketPriorities } from "@/lib/ticket-config";
 
+// No handlers exported while disabled — requests to this route 404.
+export {};
+
+/*
 interface PolicyBody {
   category?: string | null;
   firstResponseMinutes?: number;
@@ -18,8 +26,8 @@ interface PolicyBody {
   resolutionMinutes?: number;
 }
 
-/** Validates the shared fields of a create/update body. Returns either the
- * normalized values or an error response to return as-is. */
+// Validates the shared fields of a create/update body. Returns either the
+// normalized values or an error response to return as-is.
 async function validatePolicyBody(body: PolicyBody): Promise<
   | {
       ok: true;
@@ -181,3 +189,4 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json(inserted, { status: 201 });
 }
+*/

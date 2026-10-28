@@ -34,6 +34,8 @@ If your backend sends its own customer emails off these events, turn off Docket'
 | `ticket.category_changed` | An agent changes the ticket's category |
 | `ticket.priority_changed` | An agent changes the ticket's priority |
 | `ticket.assigned` / `ticket.unassigned` | A ticket is assigned to (or unassigned from) an agent |
+| `ticket.merged` | A duplicate ticket was merged into another. `data.ticket` is the surviving ticket, `data.mergedTicket` the one merged away. The merged ticket is closed, but `ticket.closed` is **not** fired for it — integrators often email the customer on `ticket.closed`, and Docket already sends its own "Ticket Merged" email (unless an admin turned it off). |
+| `ticket.split` | A customer reply was split into a new ticket. `data.ticket` is the original, `data.newTicket` the new one. `ticket.created` also fires for the new ticket. |
 
 Each endpoint subscribes to a subset of these events (configurable per endpoint in the admin UI). An endpoint with zero matching events for a given occurrence receives nothing.
 
@@ -92,12 +94,6 @@ Every request carries:
 | `X-Docket-Delivery` | This delivery's unique id — use it to dedupe if your endpoint is retried |
 | `X-Docket-Timestamp` | Unix seconds the request was signed at |
 | `X-Docket-Signature` | `sha256=<hex hmac>` — HMAC-SHA256 of `"{timestamp}.{raw body}"`, keyed with your endpoint's signing secret |
-
-> **Deprecated aliases.** Every delivery also carries `X-Support-Tool-Event`,
-> `-Delivery`, `-Timestamp` and `-Signature` with identical values. These are the
-> names the product used before it was renamed to Docket, and they are sent only so
-> existing endpoints keep working. Read the `X-Docket-*` set; the old names will be
-> removed in a future release.
 
 Recompute the signature yourself and compare — never trust the payload without checking it:
 

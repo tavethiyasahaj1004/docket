@@ -10,10 +10,9 @@ import {
 } from "drizzle-orm/pg-core";
 import { tickets } from "@/db/schema/tickets";
 
-// Admin-managed field definitions — analogous to ticket_statuses/categories.
-// `key` is the stable machine identifier used in API payloads (auto-slugified
-// from `label`, immutable after creation); `options` is only populated when
-// type === "select".
+// Admin-managed field definitions, analogous to ticket_statuses/categories.
+// `key` is the stable API identifier — auto-slugified from `label`, immutable
+// after creation. `options` is populated only when type === "select".
 export const ticketCustomFields = pgTable("ticket_custom_fields", {
   id: text("id").primaryKey(),
   key: text("key").notNull().unique(),
@@ -30,10 +29,9 @@ export const ticketCustomFields = pgTable("ticket_custom_fields", {
     .defaultNow(),
 });
 
-// Per-ticket values — analogous to ticket_tags. Stored as text regardless of
-// field type ("true"/"false" for checkbox, numeric string, ISO date string,
-// or the selected option) so one column covers every type without a schema
-// migration per field. Deleting a field definition cascades here.
+// Per-ticket values, analogous to ticket_tags. Always text — "true"/"false", a
+// numeric or ISO date string, or the selected option — so one column covers
+// every type without a migration per field. Deleting a definition cascades here.
 export const ticketCustomFieldValues = pgTable(
   "ticket_custom_field_values",
   {

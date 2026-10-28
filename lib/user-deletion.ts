@@ -17,26 +17,9 @@ export type DbOrTx =
 /** Replaces a deleted user's name wherever it was snapshotted. */
 export const DELETED_USER_LABEL = "Deleted user";
 
-/**
- * Scrubs a user's name from every denormalized snapshot before their row is
- * deleted.
- *
- * Ticket history stores `authorName`/`actorName`/`uploadedByName` next to a
- * nullable FK, so a reply keeps rendering its author after the account is
- * gone — that's deliberate, and it's why *deactivating* an agent is the
- * normal off-boarding path. Hard delete is the erasure path instead, so the
- * name has to go with the account or "delete" would be a lie.
- *
- * MUST run before the `user` row is deleted: every statement here is keyed on
- * the FK, and those columns are `ON DELETE SET NULL`. Once the user is gone
- * the rows are unreachable. Callers should run this inside the same
- * transaction as the delete.
- *
- * Deliberately leaves `audit_logs` alone. It is the tamper-evident record of
- * admin actions — including this deletion — and is retained under legitimate
- * interest rather than scrubbed. Purge it separately if a given erasure
- * request requires it.
- */
+/** Scrubs a user's name from every denormalized snapshot — deactivating keeps it
+ * for rendering, hard delete is erasure. MUST run inside the delete's transaction
+ * and before it, since every statement keys on an `ON DELETE SET NULL` FK. */
 export async function anonymizeUserContent(tx: DbOrTx, userId: string) {
   await tx
     .update(ticketComments)

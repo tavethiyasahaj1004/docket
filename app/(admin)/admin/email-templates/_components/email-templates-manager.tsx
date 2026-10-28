@@ -183,7 +183,7 @@ function TemplateCard({
   }
 
   return (
-    <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+    <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft overflow-hidden">
       <button
         className="flex w-full items-center justify-between gap-3 p-5 text-left"
         onClick={onToggle}
@@ -191,21 +191,21 @@ function TemplateCard({
       >
         <div className="min-w-0">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground">
+            <h3 className="text-sm font-semibold text-base-content">
               {item.label}
             </h3>
             {isCustomized && (
-              <span className="inline-flex items-center rounded border border-border bg-accent px-1.5 py-0.5 text-2xs font-medium text-foreground">
+              <span className="inline-flex items-center rounded border border-base-300 bg-base-300 px-1.5 py-0.5 text-2xs font-medium text-base-content">
                 Customized
               </span>
             )}
             {locked && (
-              <span className="inline-flex items-center rounded border border-border bg-accent px-1.5 py-0.5 text-2xs font-medium text-muted-foreground">
+              <span className="inline-flex items-center rounded border border-base-300 bg-base-300 px-1.5 py-0.5 text-2xs font-medium text-base-content-muted">
                 Sending off
               </span>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             {locked
               ? "Docket sends email is off — this template can't be edited until it's turned back on."
               : item.description}
@@ -213,18 +213,18 @@ function TemplateCard({
         </div>
         <CaretDownIcon
           className={cn(
-            "size-4 shrink-0 text-muted-foreground transition-transform",
+            "size-4 shrink-0 text-base-content-muted transition-transform",
             isOpen && "rotate-180"
           )}
         />
       </button>
 
       {isOpen && (
-        <div className="border-t border-border p-5 space-y-4">
+        <div className="border-t border-base-300 p-5 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             <div className="md:col-span-2 space-y-4">
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-base-content-muted">
                   Subject
                 </Label>
                 <Input
@@ -237,20 +237,21 @@ function TemplateCard({
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium text-muted-foreground">
+                <Label className="text-xs font-medium text-base-content-muted">
                   Body
                 </Label>
                 <RichTextEditor
                   disabled={locked}
                   onChange={setBody}
                   placeholder="Write this email's body… use merge tags like {{customerName}}."
+                  showButtonStyleOption
                   value={body}
                 />
               </div>
 
               <div className="flex items-center gap-2">
                 <Button
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
+                  className="bg-primary hover:bg-primary/90 text-primary-content rounded-md"
                   disabled={locked || saving || !body.trim() || !isDirty}
                   onClick={handleSave}
                   size="sm"
@@ -258,7 +259,7 @@ function TemplateCard({
                   {saving ? "Saving…" : "Save"}
                 </Button>
                 <Button
-                  className="border-border text-foreground hover:bg-accent rounded-md gap-1.5"
+                  className="border-base-300 text-base-content hover:bg-base-300 rounded-md gap-1.5"
                   disabled={locked}
                   onClick={handlePreview}
                   size="sm"
@@ -269,7 +270,7 @@ function TemplateCard({
                 </Button>
                 {isCustomized && (
                   <Button
-                    className="border-border text-foreground hover:bg-accent rounded-md gap-1.5 ml-auto"
+                    className="border-base-300 text-base-content hover:bg-base-300 rounded-md gap-1.5 ml-auto"
                     disabled={locked || resetting}
                     onClick={handleReset}
                     size="sm"
@@ -283,16 +284,16 @@ function TemplateCard({
             </div>
 
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-muted-foreground">
+              <Label className="text-xs font-medium text-base-content-muted">
                 Merge tags
               </Label>
-              <div className="rounded-md border border-border divide-y divide-border/60">
+              <div className="rounded-md border border-base-300 divide-y divide-base-300/60">
                 {item.mergeTags.map((tag) => (
                   <div className="p-2.5" key={tag.tag}>
-                    <code className="text-xs font-mono text-foreground">
+                    <code className="text-xs font-mono text-base-content">
                       {`{{${tag.tag}}}`}
                     </code>
-                    <p className="text-2xs text-muted-foreground mt-0.5">
+                    <p className="text-2xs text-base-content-muted mt-0.5">
                       {tag.description}
                     </p>
                   </div>
@@ -304,15 +305,15 @@ function TemplateCard({
       )}
 
       <Dialog onOpenChange={setPreviewOpen} open={previewOpen}>
-        <DialogContent className="rounded-xl max-w-2xl">
+        <DialogContent className="rounded-xl max-w-5xl">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               Preview — {item.label}
             </DialogTitle>
           </DialogHeader>
-          <div className="rounded-md border border-border overflow-hidden bg-white">
+          <div className="rounded-md border border-base-300 overflow-hidden bg-white">
             {previewLoading ? (
-              <div className="p-10 text-center text-sm text-muted-foreground">
+              <div className="p-10 text-center text-sm text-base-content-muted">
                 Rendering…
               </div>
             ) : (

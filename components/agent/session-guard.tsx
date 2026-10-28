@@ -7,22 +7,10 @@ import { useEffect } from "react";
 // dead session for minutes.
 const POLL_MS = 60_000;
 
-/**
- * Sends the agent portal to /login once the session behind it has expired.
- *
- * Without this, an expired session is discovered by whatever the client router
- * happens to do next — a <Link> click, a prefetch, or the `router.refresh()`
- * the Pusher listeners fire on every ticket/comment event. Those are RSC
- * requests, and the proxy can only answer them with a redirect to /login. The
- * browser follows it with the RSC headers still attached, so the router gets
- * back a valid flight payload for a route it never asked for, fails to
- * reconcile it against the tree it requested, and renders the global not-found
- * boundary at the URL it was already on — the "404 Page not found" screen at
- * /tickets, instead of the login page.
- *
- * So we find out first, on our own terms, and leave via a full page load
- * (not router.push, which would be another RSC request into the same trap).
- */
+/** Sends the agent portal to /login once its session expires. Left alone, expiry
+ * surfaces on the next RSC request, which the proxy can only answer with a
+ * redirect — and the router, handed a payload for a route it never asked for,
+ * renders "404" at /tickets. So detect it first and leave via a full page load. */
 export function SessionGuard() {
   useEffect(() => {
     let cancelled = false;

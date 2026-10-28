@@ -1,15 +1,7 @@
-// OpenAPI 3.1 specification for the public API (app/api/v1/*).
-//
-// This is the canonical machine-readable contract. It is rendered by the
-// Scalar reference at /admin/api-keys/docs, downloadable from
-// GET /api/admin/api-keys/openapi (importable into Postman and most other
-// tooling), and it must be kept in sync with docs/api.md, the hand-authored
-// Postman collection (app/api/admin/api-keys/postman/route.ts), and the
-// route implementations when the API changes.
-//
-// Hand-authored on purpose: the surface is eight operations, so a generator
-// pipeline (zod-to-openapi etc.) would be more machinery than value. Revisit
-// if the v1 surface grows further.
+// OpenAPI 3.1 contract for the public API — rendered by Scalar at
+// /admin/api-keys/docs. Keep in sync with docs/api.md, the Postman collection
+// route, and the implementations. Hand-authored on purpose: at this size a
+// generator pipeline would be more machinery than value.
 
 const ERROR_SCHEMA = {
   type: "object",
@@ -55,10 +47,8 @@ const TICKET_SUMMARY_SCHEMA = {
   },
 } as const;
 
-/**
- * Build the OpenAPI document with this instance's own base URL as the
- * default server — same pattern as the Postman collection route.
- */
+/** Build the OpenAPI document with this instance's own base URL as the default
+ * server — same pattern as the Postman collection route. */
 export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
   return {
     openapi: "3.1.0",
@@ -81,7 +71,11 @@ export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
         "",
         "## Errors",
         "",
-        'Every error response is `{ "error": "<message>" }` with an appropriate HTTP status (`400` validation, `401` auth, `403` forbidden, `404` not found, `429` rate limited, `500` server error).',
+        'Every error response is `{ "error": "<message>" }` with an appropriate HTTP status (`400` validation, `401` auth, `403` forbidden, `404` not found, `409` conflict, `429` rate limited, `500` server error).',
+        "",
+        "## Merged tickets",
+        "",
+        "Agents can merge a duplicate ticket into another ticket from the same customer. The merged ticket's id keeps working for reads and replies, which act on the ticket it was merged into — reads return that ticket (compare the response's `id` with the one you requested to detect a merge), and replies land on it. Status changes are not forwarded: `PATCH /tickets/{id}/status` on a merged ticket returns `409` naming the ticket it was merged into. Merged tickets are left out of `GET /tickets?email=`. A reply that races a merge gets a `409`; retrying it is safe and applies it to the merged ticket.",
         "",
         "## Outbound webhooks",
         "",
@@ -257,7 +251,7 @@ export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
           operationId: "listTicketsByEmail",
           summary: "List a customer's tickets",
           description:
-            'List a customer\'s tickets, most recent first — e.g. to show "Your Tickets" on your own site. Paginated: 50 per page by default, up to 100 with `per_page`. Matches on exact, case-sensitive equality against the email the ticket was created with — an empty `tickets` array just means no match, not an error.',
+            'List a customer\'s tickets, most recent first — e.g. to show "Your Tickets" on your own site. Paginated: 50 per page by default, up to 100 with `per_page`. Matches on exact, case-sensitive equality against the email the ticket was created with — an empty `tickets` array just means no match, not an error. Tickets merged into another ticket are left out.',
           parameters: [
             {
               name: "email",
@@ -356,7 +350,7 @@ export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
           operationId: "getTicket",
           summary: "Get a ticket",
           description:
-            'Look up a ticket\'s full details — e.g. to show "In Progress" on your own site without redirecting to the portal, or to bind a ticket to the account that owns it. Any active API key can read any ticket on your instance; there is no per-key scoping, since a self-hosted deployment belongs to one owner.',
+            'Look up a ticket\'s full details — e.g. to show "In Progress" on your own site without redirecting to the portal, or to bind a ticket to the account that owns it. Any active API key can read any ticket on your instance; there is no per-key scoping, since a self-hosted deployment belongs to one owner. If the ticket was merged into another, that ticket is returned (its `id` differs from the one requested).',
           parameters: [{ $ref: "#/components/parameters/TicketId" }],
           responses: {
             "200": {
@@ -395,7 +389,7 @@ export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
           operationId: "getTicketAttachment",
           summary: "Download an attachment",
           description:
-            "Download a single attachment's bytes — e.g. to proxy a file the customer or an agent uploaded through to your own users, without exposing storage keys. The attachment must belong to the ticket in the path. This is the endpoint every `url` field elsewhere in the API (on the ticket itself and on comments) points to.",
+            "Download a single attachment's bytes — e.g. to proxy a file the customer or an agent uploaded through to your own users, without exposing storage keys. Matched by attachment id, so a URL keeps working after an agent merges or splits the ticket and the file moves to another ticket. This is the endpoint every `url` field elsewhere in the API (on the ticket itself and on comments) points to.",
           parameters: [
             { $ref: "#/components/parameters/TicketId" },
             { $ref: "#/components/parameters/AttachmentId" },
@@ -595,6 +589,19 @@ export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
             "401": { $ref: "#/components/responses/Unauthorized" },
             "403": { $ref: "#/components/responses/Forbidden" },
             "404": { $ref: "#/components/responses/NotFound" },
+            "409": {
+              description:
+                "The ticket was merged into another ticket. Status changes are not forwarded — apply the change to the ticket named in the message.",
+              content: {
+                "application/json": {
+                  schema: { $ref: "#/components/schemas/Error" },
+                  example: {
+                    error:
+                      "This ticket was merged into ticket clx0abc123, so its status can't be changed. Apply the change to that ticket instead.",
+                  },
+                },
+              },
+            },
             "429": {
               description:
                 "Rate limited — more than 60 status changes in a minute on this key.",
@@ -756,7 +763,7 @@ export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
             attachments: {
               type: "array",
               description:
-                "Up to 5 files, 10 MB each. More can be added later via `POST /tickets/:id/comments`, up to the same 5-per-ticket cap.",
+                "Up to 5 files, 10 MB each. More can be added later via `POST /tickets/:id/comments`. No cap on attachment count per ticket, but their combined size is limited (default 250 MB).",
               maxItems: 5,
               items: { $ref: "#/components/schemas/Base64AttachmentInput" },
             },
@@ -856,7 +863,7 @@ export function buildOpenApiSpec(baseUrl: string): Record<string, unknown> {
             attachments: {
               type: "array",
               description:
-                "Same format as ticket creation, capped at 5 files *total* per ticket (existing attachments count against it).",
+                "Same format as ticket creation, capped at the per-message file count (default 5) and per-file size (default 10 MB); the ticket's combined attachment size is capped (default 250 MB; existing attachments count) — over-limit requests get 400.",
               items: { $ref: "#/components/schemas/Base64AttachmentInput" },
             },
           },

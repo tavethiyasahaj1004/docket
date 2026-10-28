@@ -4,12 +4,9 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getPusherClientForCustomer } from "@/lib/pusher-browser";
 
-/**
- * Subscribes to `private-ticket-{ticketId}` (authorized via the customer's
- * own ticket token, not a session) and soft-refreshes the page on
- * `comment.created` — so a customer sees an agent's reply live, no manual
- * refresh. No-op when Pusher Channels isn't configured. Renders nothing.
- */
+/** Subscribes to `private-ticket-{ticketId}`, authorized by the customer's own
+ * ticket token rather than a session, and soft-refreshes on `comment.created` so
+ * agent replies appear live. Renders nothing; no-op when Channels is unset. */
 export function TicketRealtime({
   ticketId,
   token,

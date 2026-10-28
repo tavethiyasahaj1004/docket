@@ -13,7 +13,7 @@ a manual VPS install.
 | Data | Where it lives | Back up? |
 |---|---|---|
 | Database (tickets, users, comments, config) | Postgres | **Always** |
-| File attachments (`local` driver) | `support_tool_uploads` Docker volume, or `./uploads` on a manual VPS install | **Yes**, unless using S3/R2 |
+| File attachments (`local` driver) | `docket_uploads` Docker volume, or `./uploads` on a manual VPS install | **Yes**, unless using S3/R2 |
 | File attachments (`s3`/`r2` driver) | Your S3/R2 bucket | Covered by the provider's own durability — see [Cloud storage](#cloud-storage-s3--r2) below |
 
 Check `STORAGE_DRIVER` in your `.env` to know which case you're in — see
@@ -26,7 +26,7 @@ Check `STORAGE_DRIVER` in your `.env` to know which case you're in — see
 ### Bundled Postgres (Docker, `docker-compose.yml`)
 
 ```bash
-docker compose exec -T postgres pg_dump -U postgres -d support_tool -Fc > docket-$(date +%F).dump
+docker compose exec -T postgres pg_dump -U postgres -d docket -Fc > docket-$(date +%F).dump
 ```
 
 `-Fc` (custom format) is compressed and restorable with `pg_restore`,
@@ -34,7 +34,7 @@ including selective table restores. A plain SQL dump also works if you
 prefer something human-readable:
 
 ```bash
-docker compose exec -T postgres pg_dump -U postgres -d support_tool > docket-$(date +%F).sql
+docker compose exec -T postgres pg_dump -U postgres -d docket > docket-$(date +%F).sql
 ```
 
 ### External Postgres (Neon, Supabase, RDS, etc.)
@@ -64,7 +64,7 @@ older ones:
 ```bash
 # /etc/cron.d/docket-backup  (adjust path to your compose project dir)
 0 3 * * * root cd /opt/docket && \
-  docker compose exec -T postgres pg_dump -U postgres -d support_tool -Fc \
+  docker compose exec -T postgres pg_dump -U postgres -d docket -Fc \
     > /opt/backups/docket-$(date +\%F).dump && \
   find /opt/backups -name 'docket-*.dump' -mtime +14 -delete
 ```
@@ -84,7 +84,7 @@ live volume fine for this purpose):
 
 ```bash
 docker run --rm \
-  -v support_tool_uploads:/data:ro \
+  -v docket_uploads:/data:ro \
   -v "$(pwd)":/backup \
   alpine tar czf /backup/uploads-$(date +%F).tar.gz -C /data .
 ```
@@ -122,10 +122,10 @@ Postgres running:
 docker compose stop app worker
 
 # Custom-format dump:
-docker compose exec -T postgres pg_restore -U postgres -d support_tool --clean --if-exists < docket-2026-07-20.dump
+docker compose exec -T postgres pg_restore -U postgres -d docket --clean --if-exists < docket-2026-07-20.dump
 
 # Plain SQL dump:
-docker compose exec -T postgres psql -U postgres -d support_tool < docket-2026-07-20.sql
+docker compose exec -T postgres psql -U postgres -d docket < docket-2026-07-20.sql
 
 docker compose start app worker
 ```
@@ -145,7 +145,7 @@ pg_restore -d "$DATABASE_URL" --clean --if-exists docket-2026-07-20.dump
 docker compose stop app worker
 
 docker run --rm \
-  -v support_tool_uploads:/data \
+  -v docket_uploads:/data \
   -v "$(pwd)":/backup \
   alpine sh -c "rm -rf /data/* && tar xzf /backup/uploads-2026-07-20.tar.gz -C /data"
 
@@ -170,7 +170,7 @@ tar xzf uploads-2026-07-20.tar.gz -C /path/to/docket/uploads
    `migrate`/`app`/`worker` yet.
 3. Restore the database dump into it (see above).
 4. Restore the uploads volume (see above) — create it first with
-   `docker volume create support_tool_uploads` if starting from nothing.
+   `docker volume create docket_uploads` if starting from nothing.
 5. Start the rest of the stack: `docker compose up -d`. Skip `pnpm setup`'s
    seeding behavior for statuses/categories since real data is already
    restored — it's idempotent and won't duplicate anything if it runs anyway.

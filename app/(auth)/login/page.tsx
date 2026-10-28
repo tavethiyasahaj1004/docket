@@ -1,12 +1,13 @@
 import { redirect } from "next/navigation";
 import { AuthForm } from "@/app/(auth)/_components/auth-form";
 import { getVerifiedSession } from "@/lib/authz";
+import { isGoogleOAuthConfigured } from "@/lib/integration-settings";
 import {
   getPlatformSettings,
   resolveBrandName,
   resolveLogoUrl,
 } from "@/lib/settings";
-import { isSetupComplete } from "@/lib/setup";
+import { hasAdminUser } from "@/lib/setup";
 
 export const metadata = {
   title: "Sign in",
@@ -20,7 +21,7 @@ export const dynamic = "force-dynamic";
 export default async function LoginPage() {
   // Fresh install with no admin yet — there's nothing to sign into. Send them
   // through the first-run wizard instead.
-  if (!(await isSetupComplete())) {
+  if (!(await hasAdminUser())) {
     redirect("/setup");
   }
 
@@ -32,11 +33,10 @@ export default async function LoginPage() {
     redirect("/post-auth");
   }
 
-  const settings = await getPlatformSettings();
-
-  const googleConfigured = !!(
-    process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-  );
+  const [settings, googleConfigured] = await Promise.all([
+    getPlatformSettings(),
+    isGoogleOAuthConfigured(),
+  ]);
 
   return (
     <AuthForm

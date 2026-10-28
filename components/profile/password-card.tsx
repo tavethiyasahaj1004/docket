@@ -6,17 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { authClient } from "@/lib/auth-client";
 
-/**
- * `hasPassword` — false for accounts with no `credential` row yet (invited
- * via magic link, Google-only sign-in). They get a "set a password" flow
- * instead of a change form, since there's no current password to verify.
- */
+/** `hasPassword` is false for accounts with no `credential` row yet — invited by
+ * magic link, or Google-only. They get a "set a password" flow rather than a
+ * change form, since there is no current password to verify. */
 export function PasswordCard({ hasPassword }: { hasPassword: boolean }) {
   return (
-    <div className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-4">
+    <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-4">
       <div>
-        <h2 className="text-base font-semibold text-foreground">Password</h2>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <h2 className="text-base font-semibold text-base-content">Password</h2>
+        <p className="text-xs text-base-content-muted mt-0.5">
           {hasPassword
             ? "Change the password used to sign in."
             : "You don't have a password set yet — you're signing in another way (Google or a magic link)."}
@@ -73,7 +71,7 @@ function ChangePasswordForm() {
     <form className="space-y-3" onSubmit={handleSubmit}>
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block sm:col-span-2" htmlFor="currentPassword">
-          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+          <span className="mb-1.5 block text-xs font-medium text-base-content-muted">
             Current password
           </span>
           <Input
@@ -86,7 +84,7 @@ function ChangePasswordForm() {
           />
         </label>
         <label className="block" htmlFor="newPassword">
-          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+          <span className="mb-1.5 block text-xs font-medium text-base-content-muted">
             New password
           </span>
           <Input
@@ -100,7 +98,7 @@ function ChangePasswordForm() {
           />
         </label>
         <label className="block" htmlFor="confirmPassword">
-          <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+          <span className="mb-1.5 block text-xs font-medium text-base-content-muted">
             Confirm new password
           </span>
           <Input
@@ -114,10 +112,10 @@ function ChangePasswordForm() {
         </label>
       </div>
 
-      <label className="flex items-center gap-2 text-xs text-muted-foreground">
+      <label className="flex items-center gap-2 text-xs text-base-content-muted">
         <input
           checked={revokeOtherSessions}
-          className="size-3.5 cursor-pointer rounded border-border"
+          className="size-3.5 cursor-pointer rounded border-base-300"
           onChange={(e) => setRevokeOtherSessions(e.target.checked)}
           type="checkbox"
         />
@@ -125,12 +123,12 @@ function ChangePasswordForm() {
       </label>
 
       {error && (
-        <p className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+        <p className="rounded-md bg-error/10 px-3 py-2 text-sm text-error">
           {error}
         </p>
       )}
       {success && (
-        <p className="rounded-md bg-success-subtle px-3 py-2 text-sm text-success-foreground">
+        <p className="rounded-md bg-success-subtle px-3 py-2 text-sm text-success-content">
           Password changed.
         </p>
       )}

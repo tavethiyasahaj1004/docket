@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Forbidden." }, { status: 403 });
   }
 
-  const token = generateBeamsToken(userId);
+  const token = await generateBeamsToken(userId);
   if (!token) {
     return NextResponse.json(
       { error: "Push not configured." },

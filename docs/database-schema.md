@@ -234,6 +234,8 @@ tickets
 ├── source            text NOT NULL DEFAULT 'portal' ← 'portal' | 'api'
 ├── api_key_id        text → api_keys.id (SET NULL on delete), nullable   ← set when source = 'api'
 ├── closed_at         timestamp with time zone, nullable
+├── merged_into_ticket_id text → tickets.id (SET NULL on delete), nullable ← set when merged; never points at another merged ticket
+├── merged_at         timestamp with time zone, nullable
 ├── waiting_since     timestamp with time zone, nullable  ← SLA: when the current wait state began; null once closed (see docs/tickets.md § SLA)
 ├── first_responded_at timestamp with time zone, nullable ← SLA: frozen at the first non-internal agent/admin reply
 ├── sla_active_seconds integer NOT NULL DEFAULT 0         ← SLA: accumulated "waiting for agent" seconds (Resolution clock)
@@ -248,6 +250,7 @@ Indexes:
 - created_at
 - awaiting_reply
 - priority
+- merged_into_ticket_id
 ```
 
 ### `ticket_comments`
@@ -392,6 +395,73 @@ user_ticket_table_prefs
 └── updated_at         timestamp with time zone NOT NULL DEFAULT NOW()
 ```
 
+### `ticket_reply_drafts`
+
+An agent's unsent reply on a ticket, auto-saved by the reply composer. One row per (ticket, agent); deleted when the reply is sent, discarded, or emptied.
+
+```
+ticket_reply_drafts
+├── ticket_id          text NOT NULL → tickets.id (CASCADE DELETE)
+├── user_id            text NOT NULL → user.id (CASCADE DELETE)
+├── content            text NOT NULL   ← Tiptap JSON, same as ticket_comments.content
+├── is_internal        boolean NOT NULL DEFAULT false
+├── created_at         timestamp with time zone NOT NULL DEFAULT NOW()
+├── updated_at         timestamp with time zone NOT NULL DEFAULT NOW()
+└── PRIMARY KEY (ticket_id, user_id)
+```
+
+### `ticket_links`
+
+Agent-only relationships between tickets (see `docs/tickets.md` § Merge, Split & Link). One row per link, read from both ends; `related_to` is symmetric, `duplicate_of` and `blocks` are directional.
+
+```
+ticket_links
+├── id                 text PRIMARY KEY (cuid2)
+├── ticket_id          text NOT NULL → tickets.id (CASCADE DELETE)
+├── linked_ticket_id   text NOT NULL → tickets.id (CASCADE DELETE)
+├── type               text NOT NULL   ← 'related_to' | 'duplicate_of' | 'blocks'
+├── created_by_id      text → user.id (SET NULL on delete), nullable
+├── created_at         timestamp with time zone NOT NULL DEFAULT NOW()
+└── updated_at         timestamp with time zone NOT NULL DEFAULT NOW()
+
+Indexes:
+- (ticket_id, linked_ticket_id, type) unique
+- linked_ticket_id
+```
+
+### `push_subscriptions`
+
+Browser Web Push (VAPID) subscriptions for agents — one row per browser profile. Only used when the push provider is `webpush` (Admin → Integrations → Push Notifications); Pusher Beams keeps its own device registry. Rows are pruned when the push service answers 404/410, and all rows are deleted when the VAPID key pair changes (browsers re-subscribe on next load). See `docs/in-app-notifications.md`.
+
+```
+push_subscriptions
+├── id                 text PRIMARY KEY (cuid2)
+├── user_id            text NOT NULL → user.id (CASCADE DELETE)
+├── endpoint           text NOT NULL UNIQUE   ← push-service URL; upsert key
+├── p256dh             text NOT NULL          ← client public key
+├── auth               text NOT NULL          ← client auth secret
+├── user_agent         text
+├── created_at         timestamp with time zone NOT NULL DEFAULT NOW()
+└── updated_at         timestamp with time zone NOT NULL DEFAULT NOW()
+```
+
+`platform_settings` gained seven ticket-action switches, all `boolean NOT NULL DEFAULT true`
+(Admin → Ticket Config → Ticket Actions): `ticket_merge_enabled`,
+`ticket_merge_notifications_enabled`, `ticket_merge_customer_email_enabled`,
+`ticket_split_enabled`,
+`ticket_split_notifications_enabled`, `ticket_link_enabled`,
+`ticket_link_notifications_enabled`.
+
+`platform_settings` also holds the admin-configurable attachment caps (Admin → Ticket Config →
+Attachment Limits), all `integer NOT NULL`: `attachment_max_per_message` (default 5),
+`attachment_max_file_size_mb` (10) and `attachment_max_per_ticket_size_mb` (250 — combined size of a
+ticket's attachments, summed live from `ticket_attachments.file_size`). Out-of-range stored values fall back to the defaults on read
+(`resolveAttachmentLimits` in `lib/tickets/attachment-limits.ts`). `attachment_max_per_ticket`
+(default 25) still exists but is **deprecated and unused** — Docket does not limit a ticket's attachment
+*count*; the column was left in place to avoid a destructive migration.
+
+`integration_settings` also gained `push_provider` (`pusher` | `webpush`, null = env/`pusher`) and the Web Push VAPID columns (`web_push_vapid_public_key`, `web_push_vapid_private_key_encrypted`, plus the usual `web_push_last_test_*` trio).
+
 ---
 
 ## Scaffold Tables (already exist)
@@ -423,6 +493,8 @@ db/schema/
 ├── user-preferences.ts ← user_ticket_table_prefs
 ├── api-keys.ts        ← api_keys
 ├── settings.ts        ← platform_settings
+├── push-subscriptions.ts ← push_subscriptions
+├── ticket-links.ts    ← ticket_links
 ├── audit-logs.ts      ← audit_logs (scaffold)
 ├── email-outbox.ts    ← email_outbox, email_events (scaffold)
 ├── job-logs.ts        ← job_logs (scaffold)

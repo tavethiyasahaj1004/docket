@@ -36,13 +36,13 @@ export function VolumeChart({ initialData }: { initialData: Day[] }) {
   const max = Math.max(...data.map((d) => d.count), 1);
 
   return (
-    <div className="bg-card rounded-xl border border-border shadow-soft p-6">
+    <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6">
       <div className="flex items-center justify-between mb-5">
         <div>
-          <h2 className="text-base font-semibold text-foreground">
+          <h2 className="text-base font-semibold text-base-content">
             Ticket Volume
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             New tickets per day
           </p>
         </div>
@@ -51,8 +51,8 @@ export function VolumeChart({ initialData }: { initialData: Day[] }) {
             <button
               className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
                 period === d
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted/20"
+                  ? "bg-primary text-primary-content"
+                  : "text-base-content-muted hover:bg-base-300/20"
               }`}
               key={d}
               onClick={() => setPeriod(d)}
@@ -77,7 +77,7 @@ export function VolumeChart({ initialData }: { initialData: Day[] }) {
                 key={d.date}
               >
                 <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 hidden group-hover:flex flex-col items-center pointer-events-none z-10">
-                  <div className="bg-primary text-primary-foreground text-xs rounded px-2 py-1 whitespace-nowrap">
+                  <div className="bg-primary text-primary-content text-xs rounded px-2 py-1 whitespace-nowrap">
                     {new Date(`${d.date}T00:00:00`).toLocaleDateString(
                       "en-US",
                       {
@@ -105,7 +105,7 @@ export function VolumeChart({ initialData }: { initialData: Day[] }) {
               const day = new Date(d.date + "T00:00:00");
               return (
                 <div
-                  className="flex-1 text-center text-[10px] text-muted-foreground"
+                  className="flex-1 text-center text-[10px] text-base-content-muted"
                   key={d.date}
                 >
                   {DAY_ABBR[day.getDay()]}
@@ -125,11 +125,11 @@ export function VolumeChart({ initialData }: { initialData: Day[] }) {
               const showMonth = i === 0 || day.getDate() === 1;
               return (
                 <div
-                  className="flex-1 min-w-0 text-center text-[9px] leading-tight text-muted-foreground overflow-hidden"
+                  className="flex-1 min-w-0 text-center text-[9px] leading-tight text-base-content-muted overflow-hidden"
                   key={d.date}
                 >
                   <div>{day.getDate()}</div>
-                  <div className="text-muted-foreground/70">
+                  <div className="text-base-content-muted/70">
                     {showMonth
                       ? day.toLocaleDateString("en-US", { month: "short" })
                       : " "}

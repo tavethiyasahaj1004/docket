@@ -1,66 +1,15 @@
-/**
- * One-off migration: Zammad → Docket.
- *
- * Pulls every ticket (its opening message, the full reply thread, and all
- * attachments) out of a Zammad instance over its REST API and writes them
- * straight into this app's Postgres + file storage — preserving original
- * timestamps, sender roles, internal-note flags, and "awaiting reply" state.
- *
- * Why a direct DB seed instead of POSTing to /api/v1/tickets:
- *   the public API stamps createdAt = now and auto-assigns ticket numbers, so
- *   it can't reproduce historical timestamps. Inserting directly lets us keep
- *   Zammad's created_at on every ticket and comment.
- *
- * WHAT IS AND ISN'T PRESERVED
- *   ✓ subject, opening message, full conversation, attachments (bytes copied)
- *   ✓ customer name + email (stored inline on the ticket — the Docket has
- *     no separate customer table; only agents are `user` rows)
- *   ✓ created_at on ticket + every comment, open/closed status, priority
- *   ✓ internal notes stay internal (isInternal), awaitingReply/pendingReplies
- *   ✓ tags — joined into this app's shared, case-INSENSITIVE tag pool
- *     (lib/tags.ts lowercases), so Zammad's "DTM" lands as "dtm" and any
- *     case variants of one tag collapse into a single shared row
- *   ✗ Zammad's ticket NUMBER (this app assigns its own serial; the original is
- *     recorded in a `zammad_migrated` activity row's metadata)
- *   ✓ the ASSIGNEE (Zammad's ticket owner) — matched to a Docket user by
- *     email, so the tickets list shows the same agent it did in Zammad
- *   ~ agent ACCOUNTS — run scripts/migrate-zammad-users.ts FIRST (creates a
- *     Docket `user` per Zammad agent/admin) and this script links every
- *     reply's authorId/uploadedById AND the ticket's assignee to that account
- *     by email as it migrates. If they have no matching account yet, the reply
- *     keeps the author's name/role as plain text (authorId stays null) and the
- *     ticket imports Unassigned — safe either order: every ticket records its
- *     Zammad owner in the `zammad_migrated` activity metadata, and re-running
- *     migrate-zammad-users.ts afterwards backfills the assignee from it.
- *
- * IDEMPOTENT / RESUMABLE
- *   Each migrated ticket gets a `ticket_activity` row (action "zammad_migrated",
- *   metadata { zammadTicketId }). On every run that set is loaded first and
- *   already-migrated tickets are skipped, so re-running never duplicates. A
- *   checkpoint file on the uploads volume speeds up resume after a crash.
- *
- * RUN IT — see the block comment at the bottom of this file, or scripts/README.
- *   Must run where process.cwd()/uploads is the SAME volume the app serves from
- *   (i.e. inside the `app` container), so migrated files are actually reachable.
- *
- * Required env: ZAMMAD_BASE_URL, ZAMMAD_API_TOKEN  (+ the app's own DATABASE_URL etc.)
- * Optional env:
- *   MIGRATION_DEFAULT_CATEGORY  category slug for imported tickets (default "issue")
- *   MIGRATION_ZAMMAD_SEARCH     Zammad search query to restrict the export
- *                               (e.g. 'tags:DTM') — omit to export ALL tickets
- *   MIGRATION_PER_PAGE          page size when listing Zammad tickets (default 100)
- *   MIGRATION_LIMIT             stop after seeing this many Zammad tickets
- *                               (oldest-first, since listing is sorted created_at
- *                               asc) — e.g. 100 to migrate just the first batch.
- *                               Omit for no limit.
- *   MIGRATION_DRY_RUN           "1" → read + log only, write nothing
- */
+// Zammad → Docket import. Run migrate-zammad-users.ts first, inside the
+// `app` container. Writes direct to Postgres to preserve Zammad timestamps;
+// idempotent via each ticket's `zammad_migrated` row. A plain re-run imports
+// only tickets that weren't there last time; pass --sync to also pull Zammad-side
+// changes to the ones that were. Docs: deployment §7.
 
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createId } from "@paralleldrive/cuid2";
-import { eq, sql } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import {
+  tags,
   ticketActivity,
   ticketAttachments,
   ticketComments,
@@ -85,10 +34,9 @@ import {
   getTicketStatuses,
 } from "@/lib/ticket-config";
 
-// Host/dev runs load .env via `tsx --env-file=.env` (see the migrate:zammad
-// script in package.json) — it must happen before this file's first import,
-// since @/lib/db reads process.env.DATABASE_URL at module load time, and ESM
-// imports are hoisted ahead of any top-level statement placed here.
+// Host/dev runs load .env via `tsx --env-file=.env` (see package.json), which
+// must happen before the first import: @/lib/db reads DATABASE_URL at module
+// load, and ESM hoists imports above any top-level statement placed here.
 
 // ── Config ──────────────────────────────────────────────────────────────────
 const ZAMMAD_BASE_URL = (process.env.ZAMMAD_BASE_URL ?? "").replace(/\/+$/, "");
@@ -100,6 +48,20 @@ const LIMIT = process.env.MIGRATION_LIMIT
   ? Number(process.env.MIGRATION_LIMIT)
   : null;
 const DRY_RUN = process.env.MIGRATION_DRY_RUN === "1";
+// Tag edits in Zammad don't reliably bump the ticket's own `updated_at`, so the
+// cheap "unchanged since last sync" skip below can miss them. This ignores that
+// check and re-reads every ticket — much slower, but catches everything.
+const SYNC_FORCE =
+  process.env.MIGRATION_SYNC_FORCE === "1" ||
+  process.argv.includes("--sync-force");
+// Re-sync mode. Without it a re-run only imports tickets that didn't exist last
+// time: a ticket already in Docket is skipped whole, so a close, a new reply or
+// a re-tag on the Zammad side never lands. With it, already-imported tickets are
+// re-read and updated in place. Additive — a sync never deletes anything.
+const SYNC =
+  process.env.MIGRATION_SYNC === "1" ||
+  process.argv.includes("--sync") ||
+  SYNC_FORCE;
 
 const CHECKPOINT_FILE = path.join(
   process.cwd(),
@@ -145,10 +107,9 @@ async function zammadGetBinary(pathname: string): Promise<Buffer> {
   return Buffer.from(await res.arrayBuffer());
 }
 
-// Zammad's tag API — GET only, matches the read-only contract of this whole
-// script. Returns [] (and logs) rather than throwing on any failure (older
-// Zammad versions or tokens without tag read access shouldn't abort a
-// ticket's migration over a non-essential field).
+// Zammad's tag API — GET only, like the rest of this script. Returns [] and
+// logs rather than throwing: an old Zammad version or a token without tag read
+// access shouldn't abort a migration over a non-essential field.
 async function getZammadTags(ticketId: number): Promise<string[]> {
   try {
     const res = await zammadGet<{ tags?: string[] }>("/tags", {
@@ -224,11 +185,9 @@ async function getZUser(id: number): Promise<ZUser | null> {
   }
 }
 
-// Zammad user id → this app's user id, resolved by email (null if the
-// Zammad user has no email or no matching Docket account — e.g. the
-// scripts/migrate-zammad-users.ts migration hasn't been run yet, in which
-// case comments/attachments just keep authorId/uploadedById null, same as
-// before this lookup existed).
+// Zammad user id → Docket user id, by email. Null when there's no email or no
+// matching account (typically migrate-zammad-users.ts hasn't run), in which
+// case comments and attachments simply keep a null author.
 const localUserIdByZammadUserId = new Map<number, string | null>();
 async function resolveLocalAuthorId(
   zammadUserId: number
@@ -346,9 +305,9 @@ function priorityForId(id: number, defaultSlug: string): string {
 }
 
 // ── Content conversion ────────────────────────────────────────────────────────
-// Zammad article bodies are usually text/html; store them as the same Tiptap
-// JSON document the app's own editor produces. Empty bodies fall back to a
-// caller-supplied placeholder so notNull columns are satisfied.
+// Zammad article bodies are usually text/html; store them as the Tiptap JSON the
+// app's editor produces. Empty bodies fall back to a caller-supplied
+// placeholder, so notNull columns are satisfied.
 function articleToRichText(article: ZArticle, fallbackPlain: string): string {
   const body = article.body ?? "";
   const isHtml = (article.content_type ?? "").toLowerCase().includes("html");
@@ -414,23 +373,56 @@ async function saveCheckpoint(cp: Checkpoint): Promise<void> {
   await fs.mkdir(path.dirname(CHECKPOINT_FILE), { recursive: true });
   await fs.writeFile(CHECKPOINT_FILE, JSON.stringify(cp, null, 2));
 }
-
 // Authoritative already-migrated set: every migrated ticket left a
-// `zammad_migrated` activity row carrying its source Zammad id.
-async function loadMigratedZammadIds(): Promise<Set<string>> {
+// `zammad_migrated` activity row carrying its source Zammad id. That row is
+// also where a re-sync keeps its bookkeeping — which Zammad articles are
+// already comments here, and the ticket's Zammad `updated_at` as of the last
+// run, so an untouched ticket costs zero extra requests next time.
+interface MigratedRef {
+  articleMap: Map<number, string | null>;
+  markerId: string;
+  metadata: Record<string, unknown>;
+  ticketId: string;
+  zammadUpdatedAt: string | null;
+}
+
+async function loadMigratedTickets(): Promise<Map<string, MigratedRef>> {
   const rows = await db
-    .select({ metadata: ticketActivity.metadata })
+    .select({
+      id: ticketActivity.id,
+      metadata: ticketActivity.metadata,
+      ticketId: ticketActivity.ticketId,
+    })
     .from(ticketActivity)
     .where(eq(ticketActivity.action, "zammad_migrated"));
-  const ids = new Set<string>();
-  for (const r of rows) {
-    const zid = (r.metadata as { zammadTicketId?: string | number } | null)
-      ?.zammadTicketId;
-    if (zid != null) {
-      ids.add(String(zid));
+
+  const refs = new Map<string, MigratedRef>();
+  for (const row of rows) {
+    const meta = (row.metadata ?? {}) as Record<string, unknown>;
+    const zid = meta.zammadTicketId;
+    if (zid == null) {
+      continue;
     }
+    // Absent on imports made before this script tracked the mapping — those
+    // get it rebuilt from comment timestamps on their first sync.
+    const rawMap = (meta.zammadArticleMap ?? {}) as Record<
+      string,
+      string | null
+    >;
+    const articleMap = new Map<number, string | null>();
+    for (const [articleId, commentId] of Object.entries(rawMap)) {
+      articleMap.set(Number(articleId), commentId);
+    }
+    refs.set(String(zid), {
+      articleMap,
+      markerId: row.id,
+      metadata: meta,
+      ticketId: row.ticketId,
+      zammadUpdatedAt:
+        typeof meta.zammadUpdatedAt === "string" ? meta.zammadUpdatedAt : null,
+    });
   }
-  return ids;
+  return refs;
 }
 
 // ── Per-ticket migration ──────────────────────────────────────────────────────
@@ -448,21 +440,34 @@ interface StagedAttachment {
   uploadedByRole: string;
 }
 
-async function migrateOneTicket(
-  zTicket: ZTicket,
-  cfg: {
-    openSlug: string;
-    validCategory: string;
-    defaultPriority: string;
-  }
-): Promise<{
-  ticketId: string;
-  comments: number;
-  attachments: number;
-  tags: number;
-}> {
-  const ticketId = createId();
+interface MigrationConfig {
+  defaultPriority: string;
+  openSlug: string;
+  validCategory: string;
+}
 
+interface ArticleMeta {
+  authorId: string | null;
+  name: string;
+  role: "customer" | "agent";
+}
+
+interface TicketContext {
+  articles: ZArticle[];
+  assignedAgentId: string | null;
+  customerEmail: string;
+  customerName: string;
+  owner: ZUser | null;
+  ownerEmail: string;
+  roleFor: (article: ZArticle) => Promise<ArticleMeta>;
+  tagNames: string[];
+}
+
+// Everything the first import and a later re-sync both need from Zammad about
+// one ticket. Shared so the two paths can't drift on how a display name, the
+// assignee or a tag is derived — a mismatch there would show up as duplicated
+// replies or a flip-flopping assignee on every sync.
+async function loadTicketContext(zTicket: ZTicket): Promise<TicketContext> {
   // Articles = the whole conversation, oldest first.
   const articles = (
     await zammadGet<ZArticle[]>(`/ticket_articles/by_ticket/${zTicket.id}`)
@@ -470,10 +475,9 @@ async function migrateOneTicket(
     .slice()
     .sort((a, b) => a.created_at.localeCompare(b.created_at));
 
-  // Normalized + deduped up front: this app's tag pool is case-insensitive
-  // (lib/tags.ts lowercases), so Zammad's "Billing" and "billing" resolve to
-  // the SAME tag row — and ticket_tags has a UNIQUE (ticket_id, tag_id) index
-  // that a duplicate would trip, failing the whole ticket's transaction.
+  // Normalized and deduped up front: the tag pool is case-insensitive, so
+  // "Billing" and "billing" resolve to one row — and ticket_tags' UNIQUE
+  // (ticket_id, tag_id) would fail the whole transaction on a duplicate.
   const tagNames = [
     ...new Set((await getZammadTags(zTicket.id)).map(normalizeTagName)),
   ].filter(Boolean);
@@ -484,11 +488,9 @@ async function migrateOneTicket(
   const customerName =
     zUserName(customer) || customerEmail.split("@")[0] || "Customer";
 
-  // Assignee — same email-matched lookup used for comment authors. Only
-  // resolves to a real agent if scripts/migrate-zammad-users.ts already
-  // created their account; otherwise the ticket lands unassigned for now and
-  // the owner identity recorded on the `zammad_migrated` activity row below
-  // lets migrate-zammad-users.ts link it on a later run.
+  // Assignee — same email lookup as comment authors, so it resolves only if
+  // migrate-zammad-users.ts already made the account. Otherwise the ticket lands
+  // unassigned and the owner on the `zammad_migrated` row lets a later run fix it.
   const owner =
     zTicket.owner_id && zTicket.owner_id > 1
       ? await getZUser(zTicket.owner_id)
@@ -499,26 +501,10 @@ async function migrateOneTicket(
     unlinkedOwners.add(ownerEmail || zUserName(owner) || `id ${owner.id}`);
   }
 
-  const opening = articles[0];
-  const rest = articles.slice(1);
-
-  const descriptionPlainFallback = zTicket.title || "(no content)";
-  const description = opening
-    ? articleToRichText(opening, descriptionPlainFallback)
-    : textToRichTextJson(descriptionPlainFallback);
-
-  // Resolve a display role/name/local-user-id for an article. authorId is
-  // only ever non-null when scripts/migrate-zammad-users.ts has already run
-  // and created a Docket account matching this Zammad author's email —
-  // run that script FIRST so replies link to a real user as they're migrated,
-  // rather than relying on the separate name-matching backfill it also does.
-  const roleFor = async (
-    article: ZArticle
-  ): Promise<{
-    role: "customer" | "agent";
-    name: string;
-    authorId: string | null;
-  }> => {
+  // Display role/name/local-user-id for an article. authorId is non-null only
+  // once migrate-zammad-users.ts has created a matching account — run it FIRST
+  // so replies link directly rather than via its name-matching backfill.
+  const roleFor = async (article: ZArticle): Promise<ArticleMeta> => {
     const senderName = senderNameById.get(article.sender_id) ?? "Agent";
     if (senderName === "Customer") {
       return { role: "customer", name: customerName, authorId: null };
@@ -532,21 +518,129 @@ async function migrateOneTicket(
     return { role: "agent", name, authorId };
   };
 
-  // Stage comment rows (everything after the opening article) + track the
-  // awaiting-reply bookkeeping the app maintains on every reply.
+  return {
+    articles,
+    assignedAgentId,
+    customerEmail,
+    customerName,
+    owner,
+    ownerEmail,
+    roleFor,
+    tagNames,
+  };
+}
+
+// The ticket columns that are a pure function of the Zammad ticket, so the sync
+// path can recompute exactly what the import path wrote and diff against it.
+function derivedTicketFields(zTicket: ZTicket, cfg: MigrationConfig) {
+  const status = statusForState(zTicket.state_id, cfg.openSlug);
+  const isClosed = status !== cfg.openSlug; // openSlug is the only non-closed default
+  const lastActivityAt = new Date(zTicket.updated_at ?? zTicket.created_at);
+  return {
+    closedAt: zTicket.close_at
+      ? new Date(zTicket.close_at)
+      : isClosed
+        ? lastActivityAt
+        : null,
+    lastActivityAt,
+    priority: priorityForId(zTicket.priority_id, cfg.defaultPriority),
+    status,
+    subject: zTicket.title || "(no subject)",
+  };
+}
+
+// Rebuilds the awaiting-reply bookkeeping the app maintains on every reply,
+// from the whole thread: the opening message counts as the first customer
+// message, and only PUBLIC messages move the counter — an agent's public reply
+// resets it. Recomputed rather than incremented, so a sync converges on the
+// same numbers a fresh import of the same ticket would produce.
+async function computePendingReplies(
+  articles: ZArticle[],
+  roleFor: (article: ZArticle) => Promise<ArticleMeta>
+): Promise<{ awaitingReply: boolean; pendingReplies: number }> {
+  let pending = 0;
+  for (const [index, article] of articles.entries()) {
+    const meta = await roleFor(article);
+    if (index === 0) {
+      pending = meta.role === "customer" ? 1 : 0;
+      continue;
+    }
+    if (!article.internal) {
+      pending = meta.role === "customer" ? pending + 1 : 0;
+    }
+  }
+  return { awaitingReply: pending > 0, pendingReplies: pending };
+}
+
+// What goes on the ticket's `zammad_migrated` row: the audit trail of where the
+// ticket came from, plus everything the next sync run needs to tell new Zammad
+// activity from what it already copied.
+function markerMetadata(
+  zTicket: ZTicket,
+  ctx: TicketContext,
+  articleMap: Map<number, string | null>
+): Record<string, unknown> {
+  return {
+    zammadTicketId: zTicket.id,
+    zammadNumber: zTicket.number,
+    // Owner identity, always recorded (null = no owner in Zammad) even
+    // when already resolved locally: migrate-zammad-users.ts's assignee
+    // backfill matches on it, and skips a Zammad round-trip when present.
+    zammadOwnerId: ctx.owner?.id ?? null,
+    zammadOwnerEmail: ctx.ownerEmail || null,
+    zammadOwnerName: ctx.owner ? zUserName(ctx.owner) || null : null,
+    // Sync bookkeeping. `zammadUpdatedAt` is compared against the ticket in the
+    // listing to skip untouched tickets without fetching anything else;
+    // `zammadArticleMap` (article id → comment id, null = the opening article,
+    // which became the description) is how a re-sync appends only new replies.
+    zammadUpdatedAt: zTicket.updated_at ?? null,
+    zammadArticleMap: Object.fromEntries(
+      [...articleMap].map(([articleId, commentId]) => [
+        String(articleId),
+        commentId,
+      ])
+    ),
+    lastSyncedAt: new Date().toISOString(),
+  };
+}
+
+async function migrateOneTicket(
+  zTicket: ZTicket,
+  cfg: MigrationConfig
+): Promise<{
+  ticketId: string;
+  comments: number;
+  attachments: number;
+  tags: number;
+}> {
+  const ticketId = createId();
+  const ctx = await loadTicketContext(zTicket);
+  const { articles } = ctx;
+
+  const opening = articles[0];
+  const rest = articles.slice(1);
+
+  const descriptionPlainFallback = zTicket.title || "(no content)";
+  const description = opening
+    ? articleToRichText(opening, descriptionPlainFallback)
+    : textToRichTextJson(descriptionPlainFallback);
+
   const openingMeta = opening
-    ? await roleFor(opening)
-    : { role: "customer" as const, name: customerName, authorId: null };
+    ? await ctx.roleFor(opening)
+    : { role: "customer" as const, name: ctx.customerName, authorId: null };
+
+  // Zammad article id → the row it became here, recorded for later syncs. The
+  // opening article maps to null: it is the description, not a comment.
+  const articleMap = new Map<number, string | null>();
+  if (opening) {
+    articleMap.set(opening.id, null);
+  }
 
   const commentRows: Array<typeof ticketComments.$inferInsert> = [];
-  // Opening message counts as the first customer message → pendingReplies 1.
-  let pending = openingMeta.role === "customer" ? 1 : 0;
 
-  // Mirrors the activity rows the live app writes on ticket creation and on
-  // every reply (app/api/tickets/[id]/comments/route.ts, lib/tickets/create-ticket.ts)
-  // — without these, the ticket list's "Updated By" column (which reads the
-  // latest agent/admin ticketActivity row) has nothing to show for migrated
-  // tickets, even ones with real agent replies.
+  // Mirrors the activity rows the live app writes on creation and every reply.
+  // Without them the ticket list's "Updated By" column — which reads the latest
+  // agent ticketActivity row — is blank for migrated tickets.
   const activityRows: Array<typeof ticketActivity.$inferInsert> = [
     {
       id: createId(),
@@ -579,7 +673,7 @@ async function migrateOneTicket(
   }
 
   for (const article of rest) {
-    const meta = await roleFor(article);
+    const meta = await ctx.roleFor(article);
     const content = articleToRichText(article, "(no content)");
 
     // Drop empty, non-internal system chatter (e.g. Zammad state-change notes
@@ -589,6 +683,7 @@ async function migrateOneTicket(
     }
 
     const commentId = createId();
+    articleMap.set(article.id, commentId);
     commentRows.push({
       id: commentId,
       ticketId,
@@ -610,11 +705,6 @@ async function migrateOneTicket(
       createdAt: new Date(article.created_at),
     });
 
-    // Only PUBLIC messages affect awaiting-reply state.
-    if (!article.internal) {
-      pending = meta.role === "customer" ? pending + 1 : 0;
-    }
-
     if (article.attachments?.length) {
       for (const att of article.attachments) {
         const staged = await stageAttachment(
@@ -632,20 +722,17 @@ async function migrateOneTicket(
   }
 
   const createdAt = new Date(zTicket.created_at);
-  const lastActivityAt = new Date(zTicket.updated_at ?? zTicket.created_at);
-  const status = statusForState(zTicket.state_id, cfg.openSlug);
-  const isClosed = status !== cfg.openSlug; // openSlug is the only non-closed default
-  const closedAt = zTicket.close_at
-    ? new Date(zTicket.close_at)
-    : isClosed
-      ? lastActivityAt
-      : null;
+  const derived = derivedTicketFields(zTicket, cfg);
+  const { awaitingReply, pendingReplies } = await computePendingReplies(
+    articles,
+    ctx.roleFor
+  );
 
   if (DRY_RUN) {
     console.log(
       `  [dry-run] would import Zammad #${zTicket.number} → "${zTicket.title}" ` +
-        `(${customerEmail || "no-email"}, ${status}, assignee: ${assignedAgentId ?? "none"}, ` +
-        `${commentRows.length} comments, ${stagedAttachments.length} attachments, ${tagNames.length} tags)`
+        `(${ctx.customerEmail || "no-email"}, ${derived.status}, assignee: ${ctx.assignedAgentId ?? "none"}, ` +
+        `${commentRows.length} comments, ${stagedAttachments.length} attachments, ${ctx.tagNames.length} tags)`
     );
     // Roll back the files we uploaded while staging during a dry run.
     for (const a of stagedAttachments) {
@@ -655,42 +742,37 @@ async function migrateOneTicket(
       ticketId,
       comments: commentRows.length,
       attachments: stagedAttachments.length,
-      tags: tagNames.length,
+      tags: ctx.tagNames.length,
     };
   }
 
-  // Find-or-create every tag and the customer BEFORE opening the ticket's
-  // transaction, and never inside it: both write through the global `db`
-  // handle, so from inside tx they'd run on a *different* pooled connection —
-  // outside the transaction, invisible to it, and able to deadlock against it.
-  // Resolving first also means these rows can't disagree with the tx: they're
-  // committed up front, and the tx only inserts rows that reference them. A
-  // tag/customer left behind by a rolled-back ticket is harmless — shared
-  // pool, not ticket-owned.
-  const tagIds = await Promise.all(tagNames.map(getOrCreateTagId));
+  // Tags and customer are resolved BEFORE the ticket's transaction, never inside
+  // it: they write through the global `db` handle, so from inside tx they'd hit a
+  // different pooled connection — invisible to it, and able to deadlock.
+  const tagIds = await Promise.all(ctx.tagNames.map(getOrCreateTagId));
   const customerRecord = await findOrCreateCustomer(
-    customerName,
-    customerEmail || "unknown@migrated.local"
+    ctx.customerName,
+    ctx.customerEmail || "unknown@migrated.local"
   );
 
   try {
     await db.transaction(async (tx) => {
       await tx.insert(tickets).values({
         id: ticketId,
-        subject: zTicket.title || "(no subject)",
+        subject: derived.subject,
         description,
         category: cfg.validCategory,
-        status,
-        priority: priorityForId(zTicket.priority_id, cfg.defaultPriority),
+        status: derived.status,
+        priority: derived.priority,
         customerId: customerRecord.id,
         customerToken: createId(),
-        assignedAgentId,
+        assignedAgentId: ctx.assignedAgentId,
         source: "portal",
-        awaitingReply: pending > 0,
-        pendingReplies: pending,
-        closedAt,
+        awaitingReply,
+        pendingReplies,
+        closedAt: derived.closedAt,
         createdAt,
-        updatedAt: lastActivityAt,
+        updatedAt: derived.lastActivityAt,
       });
 
       if (commentRows.length > 0) {
@@ -738,19 +820,7 @@ async function migrateOneTicket(
           actorName: "Zammad Migration",
           actorRole: "system",
           action: "zammad_migrated",
-          metadata: {
-            zammadTicketId: zTicket.id,
-            zammadNumber: zTicket.number,
-            // Owner identity, always recorded (null = the ticket had no owner
-            // in Zammad) even when it already resolved to a local account:
-            // it's what scripts/migrate-zammad-users.ts's assignee backfill
-            // matches on when tickets were migrated before the agents had
-            // accounts — and its presence tells that script it doesn't need a
-            // Zammad round-trip for this ticket.
-            zammadOwnerId: owner?.id ?? null,
-            zammadOwnerEmail: ownerEmail || null,
-            zammadOwnerName: owner ? zUserName(owner) || null : null,
-          },
+          metadata: markerMetadata(zTicket, ctx, articleMap),
           createdAt,
         },
       ]);
@@ -767,6 +837,369 @@ async function migrateOneTicket(
     ticketId,
     comments: commentRows.length,
     attachments: stagedAttachments.length,
+    tags: tagIds.length,
+  };
+}
+
+// ── Re-sync of an already-imported ticket (MIGRATION_SYNC=1) ──────────────────
+
+// Reconstruct "Zammad article id → the row it became" for a ticket imported
+// before that map was recorded. The import copies each article's created_at
+// verbatim onto its comment, so this is exact equality, not a heuristic:
+// articles[0] became the description, the rest became comments in order.
+async function rebuildArticleMap(
+  ticketId: string,
+  articles: ZArticle[]
+): Promise<Map<number, string | null>> {
+  const rows = await db
+    .select({ id: ticketComments.id, createdAt: ticketComments.createdAt })
+    .from(ticketComments)
+    .where(eq(ticketComments.ticketId, ticketId))
+    .orderBy(asc(ticketComments.createdAt));
+
+  // Bucketed rather than a flat map: two articles can share a timestamp, and
+  // each must claim a different comment row.
+  const byTimestamp = new Map<number, string[]>();
+  for (const row of rows) {
+    const key = row.createdAt.getTime();
+    const bucket = byTimestamp.get(key);
+    if (bucket) {
+      bucket.push(row.id);
+    } else {
+      byTimestamp.set(key, [row.id]);
+    }
+  }
+
+  const map = new Map<number, string | null>();
+  articles.forEach((article, index) => {
+    if (index === 0) {
+      map.set(article.id, null);
+      return;
+    }
+    const commentId = byTimestamp
+      .get(new Date(article.created_at).getTime())
+      ?.shift();
+    if (commentId) {
+      map.set(article.id, commentId);
+    }
+    // Unmatched → treated as new below. Correct for an article added after the
+    // import; a reply deleted inside Docket also comes back, which is the right
+    // call for what is a one-way mirror of Zammad.
+  });
+  return map;
+}
+
+// Attachment identity across the two systems: Zammad's attachment ids aren't
+// recorded on our rows, so a file already copied is recognised by
+// (comment, filename). Counted rather than set-tested, so an article carrying
+// the same filename twice doesn't collapse into one.
+async function buildAttachmentClaimer(
+  ticketId: string
+): Promise<(commentId: string | null, filename: string) => boolean> {
+  const rows = await db
+    .select({
+      commentId: ticketAttachments.commentId,
+      filename: ticketAttachments.filename,
+    })
+    .from(ticketAttachments)
+    .where(eq(ticketAttachments.ticketId, ticketId));
+
+  const counts = new Map<string, number>();
+  for (const row of rows) {
+    const key = `${row.commentId ?? ""}|${row.filename}`;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+
+  return (commentId, filename) => {
+    const key = `${commentId ?? ""}|${filename}`;
+    const remaining = counts.get(key) ?? 0;
+    if (remaining <= 0) {
+      return false;
+    }
+    counts.set(key, remaining - 1);
+    return true;
+  };
+}
+
+// Bring an already-imported ticket up to date with Zammad: append the articles
+// added since the last run, and refresh the fields Zammad owns (status,
+// priority, subject, assignee, tags, awaiting-reply). Additive only — nothing
+// is deleted here, so an agent's own work inside Docket survives a sync.
+async function syncOneTicket(
+  zTicket: ZTicket,
+  ref: MigratedRef,
+  cfg: MigrationConfig
+): Promise<{
+  attachments: number;
+  changes: string[];
+  comments: number;
+  tags: number;
+}> {
+  const ticketId = ref.ticketId;
+
+  const [current] = await db
+    .select({
+      assignedAgentId: tickets.assignedAgentId,
+      awaitingReply: tickets.awaitingReply,
+      closedAt: tickets.closedAt,
+      description: tickets.description,
+      pendingReplies: tickets.pendingReplies,
+      priority: tickets.priority,
+      status: tickets.status,
+      subject: tickets.subject,
+    })
+    .from(tickets)
+    .where(eq(tickets.id, ticketId))
+    .limit(1);
+  if (!current) {
+    throw new Error(`ticket ${ticketId} named by its marker no longer exists`);
+  }
+
+  const ctx = await loadTicketContext(zTicket);
+  const { articles } = ctx;
+  const articleMap =
+    ref.articleMap.size > 0
+      ? new Map(ref.articleMap)
+      : await rebuildArticleMap(ticketId, articles);
+
+  const changes: string[] = [];
+  const newComments: Array<typeof ticketComments.$inferInsert> = [];
+  const newActivity: Array<typeof ticketActivity.$inferInsert> = [];
+  const stagedAttachments: StagedAttachment[] = [];
+  const claimExistingAttachment = await buildAttachmentClaimer(ticketId);
+
+  for (const [index, article] of articles.entries()) {
+    const known = articleMap.has(article.id);
+    const meta = await ctx.roleFor(article);
+    let commentId = articleMap.get(article.id) ?? null;
+
+    if (!known) {
+      const content = articleToRichText(article, "(no content)");
+      // Same rule as the import path, so a synced thread matches a re-imported
+      // one. index 0 can only be unknown on a ticket that had no articles at
+      // import time — it belongs to the description, not to a comment.
+      if (index > 0 && !(isRichTextEmpty(content) && !article.internal)) {
+        commentId = createId();
+        newComments.push({
+          id: commentId,
+          ticketId,
+          authorId: meta.authorId,
+          authorName: meta.name,
+          authorRole: meta.role,
+          content,
+          isInternal: article.internal,
+          createdAt: new Date(article.created_at),
+          updatedAt: new Date(article.created_at),
+        });
+        newActivity.push({
+          id: createId(),
+          ticketId,
+          actorId: meta.authorId,
+          actorName: meta.name,
+          actorRole: meta.role,
+          action: article.internal ? "internal_note_added" : "comment_added",
+          createdAt: new Date(article.created_at),
+        });
+      }
+      articleMap.set(article.id, commentId);
+    }
+
+    // For a brand-new article every attachment is new. For one already
+    // imported, only files added to it in Zammad afterwards are.
+    for (const att of article.attachments ?? []) {
+      if (known && claimExistingAttachment(commentId, att.filename)) {
+        continue;
+      }
+      const staged = await stageAttachment(
+        ticketId,
+        commentId,
+        article,
+        att,
+        meta
+      );
+      if (staged) {
+        stagedAttachments.push(staged);
+      }
+    }
+  }
+
+  const derived = derivedTicketFields(zTicket, cfg);
+  const { awaitingReply, pendingReplies } = await computePendingReplies(
+    articles,
+    ctx.roleFor
+  );
+  const description = articles[0]
+    ? articleToRichText(articles[0], zTicket.title || "(no content)")
+    : current.description;
+
+  const update: Partial<typeof tickets.$inferInsert> = {};
+  if (derived.subject !== current.subject) {
+    update.subject = derived.subject;
+    changes.push("subject");
+  }
+  if (derived.status !== current.status) {
+    update.status = derived.status;
+    changes.push(`status ${current.status} → ${derived.status}`);
+  }
+  if (derived.priority !== current.priority) {
+    update.priority = derived.priority;
+    changes.push(`priority ${current.priority} → ${derived.priority}`);
+  }
+  if (description !== current.description) {
+    update.description = description;
+    changes.push("description");
+  }
+  if (
+    (derived.closedAt?.getTime() ?? null) !==
+    (current.closedAt?.getTime() ?? null)
+  ) {
+    // Not reported on its own — it moves with `status`, which already is.
+    update.closedAt = derived.closedAt;
+  }
+  if (
+    awaitingReply !== current.awaitingReply ||
+    pendingReplies !== current.pendingReplies
+  ) {
+    update.awaitingReply = awaitingReply;
+    update.pendingReplies = pendingReplies;
+  }
+
+  // Assignee: adopt Zammad's owner whenever we can resolve them. The reverse —
+  // clearing — only mirrors an un-assign in Zammad when the current assignee is
+  // the owner this import last recorded, so an assignment made inside Docket is
+  // never wiped by a sync.
+  let nextAssignee = current.assignedAgentId;
+  if (ctx.assignedAgentId) {
+    nextAssignee = ctx.assignedAgentId;
+  } else if (!ctx.owner && current.assignedAgentId) {
+    const previousOwnerId =
+      typeof ref.metadata.zammadOwnerId === "number"
+        ? ref.metadata.zammadOwnerId
+        : null;
+    const previousLocalId = previousOwnerId
+      ? await resolveLocalAuthorId(previousOwnerId)
+      : null;
+    if (previousLocalId && previousLocalId === current.assignedAgentId) {
+      nextAssignee = null;
+    }
+  }
+  if (nextAssignee !== current.assignedAgentId) {
+    update.assignedAgentId = nextAssignee;
+    changes.push("assignee");
+  }
+
+  // Tags are add-only: a tag removed in Zammad stays here, because agents can
+  // also tag a ticket inside Docket and there's no way to tell the two apart.
+  const existingTagNames = new Set(
+    (
+      await db
+        .select({ name: tags.name })
+        .from(ticketTags)
+        .innerJoin(tags, eq(ticketTags.tagId, tags.id))
+        .where(eq(ticketTags.ticketId, ticketId))
+    ).map((row) => row.name)
+  );
+  const missingTagNames = ctx.tagNames.filter(
+    (name) => !existingTagNames.has(name)
+  );
+
+  if (newComments.length > 0) {
+    changes.push(`+${newComments.length} comment(s)`);
+  }
+  if (stagedAttachments.length > 0) {
+    changes.push(`+${stagedAttachments.length} attachment(s)`);
+  }
+  if (missingTagNames.length > 0) {
+    changes.push(`+${missingTagNames.length} tag(s)`);
+  }
+  // Catch-all for the fields reported silently above (closed date, the
+  // awaiting-reply pair) so a ticket that really was written never gets
+  // counted as unchanged in the summary.
+  if (changes.length === 0 && Object.keys(update).length > 0) {
+    changes.push("state");
+  }
+  if (changes.length > 0) {
+    update.updatedAt = derived.lastActivityAt;
+  }
+
+  if (DRY_RUN) {
+    if (changes.length > 0) {
+      console.log(
+        `  [dry-run] would update #${zTicket.number} → ${ticketId}: ${changes.join(", ")}`
+      );
+    }
+    return {
+      attachments: stagedAttachments.length,
+      changes,
+      comments: newComments.length,
+      tags: missingTagNames.length,
+    };
+  }
+
+  // Resolved outside the transaction for the same reason as the import path:
+  // getOrCreateTagId writes through the global `db` handle.
+  const tagIds = await Promise.all(missingTagNames.map(getOrCreateTagId));
+
+  try {
+    await db.transaction(async (tx) => {
+      if (newComments.length > 0) {
+        await tx.insert(ticketComments).values(newComments);
+      }
+      if (stagedAttachments.length > 0) {
+        await tx.insert(ticketAttachments).values(
+          stagedAttachments.map((a) => ({
+            id: a.id,
+            ticketId: a.ticketId,
+            commentId: a.commentId,
+            filename: a.filename,
+            storageKey: a.storageKey,
+            fileSize: a.fileSize,
+            mimeType: a.mimeType,
+            uploadedById: a.uploadedById,
+            uploadedByName: a.uploadedByName,
+            uploadedByRole: a.uploadedByRole,
+            createdAt: a.createdAt,
+          }))
+        );
+      }
+      if (newActivity.length > 0) {
+        await tx.insert(ticketActivity).values(newActivity);
+      }
+      if (tagIds.length > 0) {
+        await tx
+          .insert(ticketTags)
+          .values(
+            tagIds.map((tagId) => ({
+              id: createId(),
+              ticketId,
+              tagId,
+              createdAt: derived.lastActivityAt,
+            }))
+          )
+          .onConflictDoNothing();
+      }
+      if (Object.keys(update).length > 0) {
+        await tx.update(tickets).set(update).where(eq(tickets.id, ticketId));
+      }
+      // Always rewritten, even for a ticket that turned out unchanged: it
+      // stamps the Zammad `updated_at` we just verified, which is what lets the
+      // next run skip this ticket without fetching its articles at all.
+      await tx
+        .update(ticketActivity)
+        .set({ metadata: markerMetadata(zTicket, ctx, articleMap) })
+        .where(eq(ticketActivity.id, ref.markerId));
+    });
+  } catch (err) {
+    for (const a of stagedAttachments) {
+      await storage.delete(a.storageKey).catch(() => undefined);
+    }
+    throw err;
+  }
+
+  return {
+    attachments: stagedAttachments.length,
+    changes,
+    comments: newComments.length,
     tags: tagIds.length,
   };
 }
@@ -830,6 +1263,13 @@ async function main() {
   );
   console.log(`  source:   ${ZAMMAD_BASE_URL}`);
   console.log(
+    `  mode:     ${
+      SYNC
+        ? `re-sync — updates already-imported tickets${SYNC_FORCE ? " (forced)" : ""}`
+        : "import-only — already-imported tickets are left untouched"
+    }`
+  );
+  console.log(
     `  filter:   ${ZAMMAD_SEARCH ? `search "${ZAMMAD_SEARCH}"` : "ALL tickets"}`
   );
   if (LIMIT == null) {
@@ -870,13 +1310,24 @@ async function main() {
   ]);
 
   const checkpoint = await loadCheckpoint();
-  const alreadyMigrated = await loadMigratedZammadIds();
-  for (const id of Object.keys(checkpoint.done)) {
-    alreadyMigrated.add(id);
-  }
+  const migratedRefs = await loadMigratedTickets();
+  // Ids in the checkpoint but with no marker row (a crash between the two, or a
+  // ticket deleted here since) still count as done, but can't be synced —
+  // there's nothing to sync against.
+  const checkpointOnly = new Set(
+    Object.keys(checkpoint.done).filter((id) => !migratedRefs.has(id))
+  );
+
+  const cfg: MigrationConfig = {
+    defaultPriority: defaultPrioritySlug,
+    openSlug,
+    validCategory,
+  };
 
   let seen = 0;
   let migrated = 0;
+  let updated = 0;
+  let unchanged = 0;
   let skipped = 0;
   let failed = 0;
   let totalComments = 0;
@@ -889,17 +1340,55 @@ async function main() {
     }
     seen += 1;
     const zid = String(zTicket.id);
-    if (alreadyMigrated.has(zid)) {
-      skipped += 1;
+    const ref = migratedRefs.get(zid);
+
+    if (ref || checkpointOnly.has(zid)) {
+      // Already here. Without --sync that's the end of it: this is the mode
+      // that made a second run import only tickets created since the first,
+      // and silently ignore everything that changed on the ones before them.
+      if (!(SYNC && ref)) {
+        skipped += 1;
+        continue;
+      }
+      // Zammad's own updated_at hasn't moved since the last sync, so there is
+      // nothing to fetch for this ticket at all — the listing already told us.
+      if (
+        !SYNC_FORCE &&
+        ref.zammadUpdatedAt &&
+        ref.zammadUpdatedAt === zTicket.updated_at
+      ) {
+        unchanged += 1;
+        continue;
+      }
+      try {
+        const result = await syncOneTicket(zTicket, ref, cfg);
+        totalComments += result.comments;
+        totalAttachments += result.attachments;
+        totalTags += result.tags;
+        if (result.changes.length === 0) {
+          unchanged += 1;
+        } else {
+          updated += 1;
+          if (!DRY_RUN) {
+            console.log(
+              `  ↻ #${zTicket.number} → ${ref.ticketId} (${result.changes.join(", ")})`
+            );
+          }
+        }
+        delete checkpoint.failed[zid];
+      } catch (err) {
+        failed += 1;
+        checkpoint.failed[zid] = (err as Error).message;
+        console.error(
+          `  ✗ sync #${zTicket.number} (Zammad id ${zid}): ${(err as Error).message}`
+        );
+      }
+      await saveCheckpoint(checkpoint);
       continue;
     }
 
     try {
-      const result = await migrateOneTicket(zTicket, {
-        openSlug,
-        validCategory,
-        defaultPriority: defaultPrioritySlug,
-      });
+      const result = await migrateOneTicket(zTicket, cfg);
       migrated += 1;
       totalComments += result.comments;
       totalAttachments += result.attachments;
@@ -926,12 +1415,23 @@ async function main() {
 
   console.log("\n──────── Summary ────────");
   console.log(`  Zammad tickets seen:   ${seen}`);
-  console.log(`  migrated:              ${migrated}`);
+  console.log(`  imported (new):        ${migrated}`);
+  if (SYNC) {
+    console.log(`  updated (re-synced):   ${updated}`);
+    console.log(`  already up to date:    ${unchanged}`);
+  }
   console.log(`  skipped (already done):${skipped}`);
   console.log(`  failed:                ${failed}`);
   console.log(`  comments imported:     ${totalComments}`);
   console.log(`  attachments imported:  ${totalAttachments}`);
   console.log(`  tags imported:         ${totalTags}`);
+  if (!SYNC && skipped > 0) {
+    console.log(
+      `\n  ${skipped} ticket(s) were already imported and left untouched — anything that\n` +
+        "  changed on them in Zammad since (replies, a close, priority/assignee/tag edits)\n" +
+        "  was NOT picked up. Re-run with `--sync` (or MIGRATION_SYNC=1) to pull those in."
+    );
+  }
   if (unlinkedOwners.size > 0) {
     console.log(
       `\n  ${unlinkedOwners.size} Zammad assignee(s) had no Docket account, so those ` +
@@ -959,31 +1459,6 @@ main()
     process.exit(1);
   });
 
-/*
- * ──────────────────────────── HOW TO RUN ────────────────────────────
- *
- * The migration MUST write into the same uploads volume the app serves from
- * (support_tool_uploads → /app/uploads), so run it INSIDE the app container.
- *
- * 1) DRY RUN first (reads Zammad, writes nothing — verify counts & mapping):
- *
- *    docker compose exec \
- *      -e ZAMMAD_BASE_URL="https://your-zammad.example.com" \
- *      -e ZAMMAD_API_TOKEN="your-admin-api-token" \
- *      -e MIGRATION_DRY_RUN=1 \
- *      app pnpm migrate:zammad
- *
- * 2) REAL run (safe to re-run — already-migrated tickets are skipped):
- *
- *    docker compose exec \
- *      -e ZAMMAD_BASE_URL="https://your-zammad.example.com" \
- *      -e ZAMMAD_API_TOKEN="your-admin-api-token" \
- *      app pnpm migrate:zammad
- *
- *    Optional: only DTM tickets →  -e MIGRATION_ZAMMAD_SEARCH="tags:DTM"
- *              different category →  -e MIGRATION_DEFAULT_CATEGORY="general_query"
- *              first 100 tickets only →  -e MIGRATION_LIMIT=100
- *
- * Not using Docker (host / dev, with the app's .env present and uploads/ here):
- *    ZAMMAD_BASE_URL=... ZAMMAD_API_TOKEN=... pnpm migrate:zammad
- */
+// Runnable commands (dry run first, then the real one) are in
+// docs/deployment-and-zammad-migration.md §7.1–7.3 — kept there rather than
+// duplicated here so there is one copy to keep correct.

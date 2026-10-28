@@ -60,7 +60,10 @@ export function UserSearch() {
 
   return (
     <div className="relative w-72">
-      <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+      {/* z-10: daisyUI's `input` is itself `position: relative` with an opaque
+          `base-100` fill, so as a later positioned sibling it would otherwise
+          paint over this icon. */}
+      <MagnifyingGlassIcon className="absolute left-3 top-1/2 z-10 -translate-y-1/2 size-4 text-base-content-muted pointer-events-none" />
       <Input
         autoComplete="off"
         className={cn("h-10 pl-9", q && "pr-9")}
@@ -72,7 +75,7 @@ export function UserSearch() {
       {q && (
         <button
           aria-label="Clear search"
-          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 flex size-6 items-center justify-center rounded-md text-base-content-muted hover:text-base-content hover:bg-base-300 transition-colors"
           onClick={() => setQ("")}
           type="button"
         >

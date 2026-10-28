@@ -111,6 +111,8 @@ Admin-defined extra structured fields — text, number, date, checkbox, or selec
 
 ## SLA
 
+**Currently hidden from the UI.** The admin policy manager, the per-agent "Show SLA & Overdue" setting, and the metric/outcome badges are all disabled — every page that computes an `SlaSnapshot` now resolves a `null` policy, so `firstResponse`/`nextResponse`/`resolution` are always `null` and nothing SLA-specific renders. The underlying code (this section, `lib/sla.ts`, `lib/sla-policies.ts`, `db/schema/sla-policies.ts`, `sla-policies-manager.tsx`, `sla-display-preferences-card.tsx`) is untouched and can be re-enabled by resolving a real policy again in `app/(agent)/tickets/page.tsx` and `app/(agent)/tickets/[ticketNumber]/page.tsx`, re-adding `SlaPoliciesManager` to the ticket-config page, and `SlaDisplayPreferencesCard` to settings. **Waiting Time** (below) is unaffected — it's derived from `tickets.awaitingReply`/`waitingSince` directly, not from a policy.
+
 SLA policies are **admin-configurable** — managed at `/admin/ticket-config`, stored in `sla_policies`. Each policy defines three targets in minutes: **First Response**, **Next Response**, and **Resolution**.
 
 ### Policy scoping and resolution
@@ -150,7 +152,7 @@ The countdown ticks forward client-side every 30 seconds without a page reload �
 **Once the ticket is closed, every clock stops.** There is no countdown left to run, so the display switches to the outcome:
 
 - "Open for" becomes **"Resolved in 2d 4h"** — the ticket's total lifetime (created → closed), a fixed number. It never keeps counting up after closure.
-- The list's SLA column drops the most-urgent-metric pill and shows one **verdict pill** instead: **"SLA met"** (grey) or **"SLA breached"** (red, if *any* target was missed). Hover for the per-target breakdown.
+- The list's Waiting Time column drops the most-urgent-metric pill and shows one **verdict pill** instead: **"SLA met"** (grey) or **"SLA breached"** (red, if *any* target was missed). Hover for the per-target breakdown.
 - The detail sidebar shows the same verdict pill alongside every individual target's final result.
 
 A breach stays red after closing — it's the permanent record the team reports on. A met target goes grey, because a wall of green on closed tickets drowns out the open ones that actually need attention.
@@ -179,14 +181,16 @@ While a ticket is open but **waiting on the customer**, the Resolution clock is 
 
 Each agent/admin can customize their own `/tickets` table — which columns are shown and in what order —
 from the "Columns" button above the table. Checkbox, `#`, and Subject are always pinned first; the rest
-(Status, Category, Priority, SLA, Customer, Assigned, Tags, Updated By, Updated) are toggle/reorderable.
+(Status, Category, Priority, Waiting Time, Customer, Assigned, Tags, Updated By, Updated) are toggle/reorderable.
 
 - Persisted per user in `user_ticket_table_prefs` (`columns` jsonb — visibility + order), via
   `PATCH /api/tickets/table-columns`. Not shared across agents.
-- **SLA** — for an open ticket: "Open for" + current wait state, plus the single most urgent metric
-  (First/Next Response or Resolution, whichever is closest to breaching). For a closed ticket:
-  "Resolved in …" + a single "SLA met" / "SLA breached" verdict pill. See § SLA for the full model;
-  the detail page's SLA sidebar card shows all three metrics.
+- **Waiting Time** (column id `waitingTime` — named for the always-on Waiting Time display, not the
+  disabled SLA feature it also carries) — for an open ticket: "Open for" + current wait state, plus, only
+  if SLA is re-enabled, the single most urgent metric (First/Next Response or Resolution, whichever is
+  closest to breaching). For a closed ticket: "Resolved in …" + a single "SLA met" / "SLA breached"
+  verdict pill when SLA is active. See § SLA for the full model; the detail page's Waiting Time sidebar
+  card shows all three metrics when SLA is active.
 - **Tags** — the ticket's tags, read-only in this view (manage them from the ticket detail sidebar).
 - **Updated By** — the most recent **agent/admin** actor from `ticket_activity` for that ticket (customer
   activity is excluded); shows "—" if no agent/admin has touched it yet.
@@ -255,6 +259,9 @@ Every significant action on a ticket is logged in `ticket_activity` for a full a
 | `attachment_added` | File attached |
 | `tag_added` | Tag added to the ticket |
 | `tag_removed` | Tag removed from the ticket |
+| `ticket_linked` / `ticket_unlinked` | A link to another ticket was added/removed (written on both tickets) |
+| `merged_into` / `merged_from` | This ticket was merged into another / another ticket was merged into this one |
+| `split_to` / `split_from` | A reply was split out of this ticket / this ticket was split from another |
 
 ```
 ticket_activity
@@ -269,6 +276,139 @@ ticket_activity
 ```
 
 Activity history is displayed chronologically on the ticket detail page for agents. Customers see a simplified version (status changes + replies — no internal note activity).
+
+---
+
+## Merge, Split & Link
+
+Each of the three can be turned off (and its notifications separately) under
+**Admin → Ticket Config → Ticket Actions** — see
+[admin-portal.md § Ticket Actions](./admin-portal.md#ticket-actions). The routes then return
+`403` and the UI hides the control; existing links stay visible read-only.
+
+Agent-only actions on the ticket detail page (merge is also in the ticket list's bulk bar). Logic lives in `lib/tickets/merge.ts`,
+`lib/tickets/split.ts` and `lib/tickets/links.ts`.
+
+### Merge
+
+"Merge" folds one or more duplicate tickets (the **sources**) into one **primary**
+ticket (the **target**) — e.g. a customer who opened 3–4 tickets about the same login
+problem. Both entry points open the same dialog (`components/agent/merge-tickets-dialog.tsx`):
+
+- **Ticket sidebar → Merge Ticket:** the current ticket is ticked; the customer's other
+  tickets are listed to tick (open ones first — closed ones can be folded in too).
+- **Ticket list → select 2+ → Merge** (bulk bar): the selected tickets are ticked.
+
+The agent picks the primary (it must be open; the oldest open ticket is preselected), and
+the dialog sends one `POST /api/tickets/merge` with `{ sourceTicketIds, targetTicketNumber }`.
+`mergeTicketsInto()` merges every source **in one transaction — all or nothing** — and
+sends the customer **one** Ticket Merged email listing every merged ticket. Owners get one
+in-app notification each; the audit log and `ticket.merged` webhook still get one entry per
+source, the same shape as a single merge. At most 50 sources per merge. Rules, all enforced
+server-side:
+
+- **Same customer only.** The source's old portal link forwards to the target *with the
+  target's token*; across customers that would hand one customer another's thread.
+- The target must be **open** — the customer is forwarded there and must be able to reply.
+- Neither ticket may already be merged; a ticket can't merge into itself.
+- **Irreversible.** The customer gets the **Ticket Merged** email linking to the target
+  (an admin can turn it off under Ticket Config → Ticket Actions; see
+  [email-notifications.md § Ticket Merged](./email-notifications.md#4-ticket-merged)). Agents
+  who own either ticket get a `ticket_merged` in-app notification (see
+  [in-app-notifications.md](./in-app-notifications.md)).
+
+What happens, in one transaction:
+
+1. The source's description becomes a customer comment on the target, back-dated to the
+   source's `createdAt`; the source's opening attachments are attached to that comment.
+2. All source comments and attachments move to the target (storage keys don't change).
+3. Tags are unioned; custom-field values only fill fields the target left empty.
+4. Reply drafts on the source are deleted (they can't move — the same agent may have one on
+   the target).
+5. Links on the source are re-pointed at the target (self-links/duplicates dropped).
+6. Tickets previously merged into the source now point at the target — forwarding is
+   always a single hop.
+7. The source is closed and gets `mergedIntoTicketId` / `mergedAt`. It is **kept**, not
+   deleted, so its id and portal link keep working.
+8. The target's `awaitingReply` / `pendingReplies` are recomputed from the merged thread
+   (`lib/tickets/thread-state.ts`); `firstRespondedAt` keeps the earlier of the two.
+9. An internal note on the target records the source's number and subject; `merged_into` /
+   `merged_from` activity is written on both.
+
+**Forwarding.** Reads and replies for a merged ticket act on the target:
+the customer portal page redirects (`/ticket/{source}?token=…` → `/ticket/{target}?token=…`),
+and the customer/agent comment routes plus the `/api/v1/tickets/:id` read and comment routes
+resolve the id first (`forwardMergedTicket()` / `resolveMergedTicketId()`). The agent page
+`/tickets/{sourceNumber}` redirects to the target.
+
+**State changes are not forwarded.** Close, reopen, the agent `PATCH /api/tickets/{id}`
+(status / category / priority / assignee) and `PATCH /api/v1/tickets/:id/status` answer `409`
+for a merged ticket (`MERGED_TICKET_CHANGE_MESSAGE`). Forwarding them would let a stale tab or
+an integrator's stored id silently close or reassign the *target* — a different conversation
+than the caller meant. Bulk updates skip merged tickets. Reply drafts aren't forwarded either
+(`409`): the agent may already have a draft on the target, and a stale tab's autosave would
+overwrite it; the composer stops autosaving when it sees the `409`.
+Merged tickets are hidden from the agent ticket list, the dashboard counts, reports, the
+customer's "My Tickets" page (and its email), the customer profile popover, and
+`GET /api/v1/tickets?email=`. The agent-only tag, custom-field and attachment-delete routes
+forward (merge already combined those into the target), so a tab left open on the merged
+ticket doesn't write to the hidden shell. When an admin deletes a status, category or
+priority, merged tickets don't count as "in use" — they're moved to the target's value (or,
+for status, another closed status) first (`moveMergedTicketsOffSlug()`).
+
+**Concurrency.** Merge and split lock their tickets and re-check inside the transaction; a
+conflicting simultaneous merge/split gets a `409` ("just changed by someone else"). A reply
+saved while a merge is in flight waits for it; if the ticket was merged meanwhile the reply
+is rejected with a `409` asking to resend (its uploads are cleaned up), never stranded on the
+hidden ticket. Deleting a ticket also deletes the tickets merged into it, under a row lock so a
+merge into it can't land mid-delete (`deleteTicketsWithMergedShells()`). Merges and splits are also
+recorded in the admin audit log (`ticket.merged` / `ticket.split`).
+
+**First response.** The target keeps its own `firstRespondedAt`; it only inherits the
+source's when it had none and the source's came after the target was created (so a first
+response can never predate the ticket).
+
+### Split
+
+The split icon on a **customer's public reply** moves that reply into a new ticket for the same
+customer: the reply becomes the description, its attachments become the new ticket's opening
+attachments, and it is removed from the original (an internal note, back-dated to the reply,
+marks where it was). The
+new ticket copies category, priority, `source` and `apiKeyId` (so its portal link uses the same
+`portalUrlTemplate`), starts unassigned and awaiting reply, and is linked `related_to` the
+original. The customer receives the normal "ticket created" email with the new link. The
+original's owner gets a `ticket_split` notification (or the plain `ticket_created` one when the
+admin turned split notifications off); every other active agent gets the usual
+`ticket_created` one (the new ticket is unassigned), plus OS push. A reply with only
+attachments gets a short placeholder description. Agent
+replies and internal notes can't be split.
+
+### Link
+
+The **Linked Tickets** sidebar card connects tickets without moving anything. Types:
+
+| Type | On the ticket that added it | On the other ticket |
+|---|---|---|
+| `related_to` | Related to #N | Related to #N |
+| `duplicate_of` | Duplicate of #N | Duplicated by #N |
+| `blocks` | Blocks #N | Blocked by #N |
+
+One `ticket_links` row per link, read from both ends. Self-links, links to merged tickets,
+and a second link of the same type between the same pair — in either direction (so no
+"A blocks B" plus "B blocks A") — are rejected. Links are agent-only —
+never shown to customers.
+
+So a teammate working the *other* ticket can't miss a link, it surfaces in four places:
+
+- **Ticket header** — a "Linked:" row of chips under the subject (type, `#N`, subject,
+  status), each linking to the other ticket.
+- **Sidebar card** — the "Linked Tickets" header shows a count even while collapsed; each
+  entry says who linked it ("Linked by …").
+- **Ticket list** — a link icon + count next to the subject; hover lists the numbers.
+- **Notification** — adding a link sends a `ticket_linked` in-app notification for each
+  end: to its assignee, or to all active agents/admins if it's unassigned (same routing as
+  `customer_replied`). The agent who added it is skipped, and each person gets at most one.
+  Removing a link only writes activity.
 
 ---
 
@@ -300,5 +440,10 @@ Activity history is displayed chronologically on the ticket detail page for agen
 | PATCH | `/api/tickets/{id}/reopen` | Customer (token) / Agent | Reopen the ticket |
 | POST | `/api/tickets/{id}/comments` | Customer (token) / Agent | Add a comment or internal note |
 | DELETE | `/api/tickets/{id}` | Admin only | Hard delete (spam removal) |
+| POST | `/api/tickets/{id}/merge` | Agent/Admin | Merge this ticket into another (body: `{ targetTicketNumber }`) |
+| POST | `/api/tickets/merge` | Agent/Admin | Merge several tickets into one, all or nothing (body: `{ sourceTicketIds, targetTicketNumber }`; max 50 sources) |
+| POST | `/api/tickets/{id}/split` | Agent/Admin | Split a customer reply into a new ticket (body: `{ commentId, subject }`) |
+| GET / POST | `/api/tickets/{id}/links` | Agent/Admin | List links / add one (body: `{ ticketNumber, type }`) |
+| DELETE | `/api/tickets/{id}/links/{linkId}` | Agent/Admin | Remove a link (from either end) |
 | PATCH | `/api/tickets/bulk` | Admin only | Bulk assign, change status, change priority, or add a tag across up to 200 tickets at once (body: `{ ids, action: "assign" \| "status" \| "priority" \| "tag", value }`) |
 | DELETE | `/api/tickets/bulk` | Admin only | Bulk hard delete (spam removal) across up to 200 tickets at once |

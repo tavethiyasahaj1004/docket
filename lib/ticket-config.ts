@@ -4,7 +4,9 @@ import {
   ticketPriorities,
   ticketStatuses,
 } from "@/db/schema";
+import { getCustomFields } from "@/lib/custom-fields";
 import { db } from "@/lib/db";
+import { searchTags } from "@/lib/tags";
 
 export type TicketStatus = typeof ticketStatuses.$inferSelect;
 export type TicketCategory = typeof ticketCategories.$inferSelect;
@@ -70,4 +72,46 @@ export async function isClosedStatusSlug(slug: string): Promise<boolean> {
     .where(eq(ticketStatuses.slug, slug))
     .limit(1);
   return row?.isClosedState ?? false;
+}
+
+/** The valid category/priority/status slugs plus custom fields and the shared
+ * tag pool — what GET /api/v1/config serializes. */
+export async function getPublicTicketConfig() {
+  const [categories, priorities, statuses, customFields, tags] =
+    await Promise.all([
+      getTicketCategories(),
+      getTicketPriorities(),
+      getTicketStatuses(),
+      getCustomFields(),
+      searchTags("", Number.MAX_SAFE_INTEGER),
+    ]);
+
+  return {
+    categories: categories.map((c) => ({
+      slug: c.slug,
+      label: c.label,
+      color: c.color,
+    })),
+    priorities: priorities.map((p) => ({
+      slug: p.slug,
+      label: p.label,
+      color: p.color,
+      isDefault: p.isDefault,
+    })),
+    statuses: statuses.map((s) => ({
+      slug: s.slug,
+      label: s.label,
+      color: s.color,
+      isDefault: s.isDefault,
+      isClosedState: s.isClosedState,
+    })),
+    customFields: customFields.map((f) => ({
+      key: f.key,
+      label: f.label,
+      type: f.type,
+      options: f.options ?? undefined,
+      required: f.required,
+    })),
+    tags: tags.map((t) => ({ id: t.id, name: t.name })),
+  };
 }

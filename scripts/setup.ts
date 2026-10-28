@@ -1,19 +1,7 @@
-/**
- * Guided first-run setup.
- *
- *   pnpm setup
- *
- * Validates required environment variables, runs database migrations, and
- * seeds the default ticket statuses & categories.
- *
- * Deliberately does NOT create the first admin — that's a separate,
- * explicit step (`pnpm create:admin`) run by hand so you get immediate,
- * visible success/failure feedback right in your terminal, instead of it
- * happening silently inside a detached `docker compose up -d` service
- * where a failure could easily go unnoticed.
- *
- * Safe to re-run: migrations and seeds are idempotent.
- */
+// Guided first-run setup (`pnpm setup`): validates env vars, runs migrations,
+// seeds the default statuses and categories. Safe to re-run. Creating the first
+// admin is a separate `pnpm create:admin` on purpose, so its success or failure
+// is visible in your terminal rather than buried in a detached container.
 import { execSync } from "node:child_process";
 import { existsSync } from "node:fs";
 

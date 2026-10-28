@@ -3,12 +3,9 @@ import type { NextRequest } from "next/server";
 import { rateLimitHits } from "@/db/schema";
 import { db } from "@/lib/db";
 
-/**
- * Best-effort client IP extraction for a self-hosted deploy behind a reverse
- * proxy (Nginx/Caddy per the README). Requires the proxy to forward
- * `X-Forwarded-For`; falls back to `"unknown"` (which still rate-limits —
- * just as one shared bucket — rather than throwing).
- */
+/** Best-effort client IP for a self-hosted deploy behind a reverse proxy, which
+ * must forward `X-Forwarded-For`. Falls back to `"unknown"` — still rate-limited,
+ * just as one shared bucket, rather than throwing. */
 export function getClientIp(request: NextRequest): string {
   const forwardedFor = request.headers.get("x-forwarded-for");
   if (forwardedFor) {
@@ -20,12 +17,9 @@ export function getClientIp(request: NextRequest): string {
   return request.headers.get("x-real-ip") ?? "unknown";
 }
 
-/**
- * Fixed-window rate limiter backed by Postgres (not in-memory) so limits
- * survive restarts and hold across multiple app processes. Rounds `now` down
- * to the window boundary, upserts a per-(action, key, window) counter, and
- * reports whether this request is still within the limit.
- */
+/** Fixed-window rate limiter backed by Postgres rather than memory, so limits
+ * survive restarts and hold across processes. Rounds `now` to the window
+ * boundary, upserts a per-(action, key, window) counter, reports if within. */
 export async function checkRateLimit(opts: {
   action: string;
   key: string;

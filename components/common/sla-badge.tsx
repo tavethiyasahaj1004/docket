@@ -17,14 +17,14 @@ const STATUS_CLASSES: Record<MetricStatus, string> = {
   // "met" only ever applies to a finished target, so it's history, not a
   // signal — muted, so a list of closed tickets doesn't read as a wall of
   // urgent green and the still-running/breached SLAs are the ones that pop.
-  met: "bg-muted text-muted-foreground border-border",
+  met: "bg-base-300 text-base-content-muted border-base-300",
   on_track: "bg-emerald-50 text-emerald-700 border-emerald-200",
   warning: "bg-amber-100 text-amber-700 border-amber-200",
   breached: "bg-red-50 text-red-700 border-red-200",
 };
 
 const OUTCOME_CLASSES: Record<SlaOutcome, string> = {
-  met: "bg-muted text-muted-foreground border-border",
+  met: "bg-base-300 text-base-content-muted border-base-300",
   // A breach stays red after closing — it's the permanent record the team
   // reports on, not a transient alert.
   breached: "bg-red-50 text-red-700 border-red-200",
@@ -68,7 +68,7 @@ export function SlaWaitBadge({
   // ticket was alive instead of an "open for" figure that climbs forever.
   if (snapshot.waitState === "resolved") {
     return (
-      <div className={cn("text-xs text-muted-foreground", className)}>
+      <div className={cn("text-xs text-base-content-muted", className)}>
         {snapshot.resolvedInSeconds === null
           ? "Resolved"
           : `Resolved in ${formatDuration(snapshot.resolvedInSeconds)}`}
@@ -87,7 +87,7 @@ export function SlaWaitBadge({
   return (
     <div
       className={cn(
-        "text-xs text-muted-foreground",
+        "text-xs text-base-content-muted",
         compact ? "space-y-0" : "space-y-0.5",
         className
       )}
@@ -96,7 +96,7 @@ export function SlaWaitBadge({
       <div
         className={cn(
           snapshot.waitState === "waiting_for_agent" &&
-            "text-foreground font-medium"
+            "text-base-content font-medium"
         )}
       >
         {waitLabel}
@@ -151,12 +151,9 @@ interface SlaOutcomeBadgeProps {
   snapshot: SlaSnapshot;
 }
 
-/**
- * The final verdict pill for a closed ticket — what the ticket list shows in
- * place of a countdown that has nothing left to count. Renders nothing while
- * the ticket is open, or when no SLA policy applies. Hovering gives the
- * per-target breakdown behind the verdict.
- */
+/** The final verdict pill for a closed ticket, shown where a countdown with
+ * nothing left to count would be. Hovering gives the per-target breakdown.
+ * Renders nothing while the ticket is open or no policy applies. */
 export function SlaOutcomeBadge({ snapshot, className }: SlaOutcomeBadgeProps) {
   const outcome = getSlaOutcome(snapshot);
   if (!outcome) {

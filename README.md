@@ -8,8 +8,8 @@ People write to you when something goes wrong. Docket puts every one of those me
 one place, so nothing slips through and your whole team can see what is happening. It runs
 on your own server, which means your customers' messages stay with you.
 
-[![CI](https://github.com/stack256/docket/actions/workflows/ci.yml/badge.svg)](https://github.com/stack256/docket/actions/workflows/ci.yml)
-[![Release](https://github.com/stack256/docket/actions/workflows/release.yml/badge.svg)](https://github.com/stack256/docket/actions/workflows/release.yml)
+[![CI](https://github.com/stack256org/docket/actions/workflows/ci.yml/badge.svg)](https://github.com/stack256org/docket/actions/workflows/ci.yml)
+[![Release](https://github.com/stack256org/docket/actions/workflows/release.yml/badge.svg)](https://github.com/stack256org/docket/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 [Quick Start](#quick-start) · [Running it](#running-it-with-docker) · [Public API](#public-api) · [Docs](docs/)
@@ -62,6 +62,7 @@ palettes and six colour presets are switchable in `/admin/appearance`.</sub>
 ## Contents
 
 - [What you get](#what-you-get)
+- [Two ways to use it](#two-ways-to-use-it)
 - [Built with](#built-with)
 - [Quick start](#quick-start)
 - [Settings](#settings)
@@ -119,6 +120,23 @@ palettes and six colour presets are switchable in `/admin/appearance`.</sub>
 
 ---
 
+## Two ways to use it
+
+There are two ways to get requests into Docket, and they are not mutually exclusive — use
+either one, or both.
+
+1. **Docket's own form.** Send customers to `/` on your install. No integration work: they
+   fill it in, submit, and get a private link by email to follow the reply. This is what
+   you get the moment you deploy Docket, described in [What you get](#what-you-get) above.
+2. **Your own website, through the API.** Keep your existing "Contact support" page and
+   have it call Docket's REST API instead of Docket's form. Docket still creates the
+   request, sends the emails, and hosts the customer's reply page — your site just sends
+   the initial request and, optionally, reads status back. See [Public API](#public-api).
+
+Either way, requests land in the same queue and your team replies the same way.
+
+---
+
 ## Built with
 
 | Layer | Choice |
@@ -128,7 +146,7 @@ palettes and six colour presets are switchable in `/admin/appearance`.</sub>
 | Database | PostgreSQL |
 | Database access | Drizzle ORM |
 | Sign-in | Better Auth (password, magic link, Google) |
-| Styling | Tailwind CSS v4 and shadcn/ui |
+| Styling | Tailwind CSS v4, daisyUI, and Headless UI |
 | Email | Nodemailer over SMTP |
 | Background jobs | pg-boss |
 | File storage | Local disk, S3, or Cloudflare R2 |
@@ -149,8 +167,8 @@ Check you have a recent Docker with `docker compose version`. The commands below
 **1. Get the two files.**
 
 ```bash
-curl -O https://raw.githubusercontent.com/stack256/docket/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/stack256/docket/main/.env.docker.example
+curl -O https://raw.githubusercontent.com/stack256org/docket/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/stack256org/docket/main/.env.docker.example
 ```
 
 **2. Open `.env` and set two things.** Everything else has a working default.
@@ -166,23 +184,26 @@ curl -o .env https://raw.githubusercontent.com/stack256/docket/main/.env.docker.
 docker compose up -d
 ```
 
-This downloads `ghcr.io/stack256/docket` from
-[GitHub Packages](https://github.com/stack256/docket/pkgs/container/docket), then starts
+This downloads `ghcr.io/stack256org/docket` from
+[GitHub Packages](https://github.com/stack256org/docket/pkgs/container/docket), then starts
 PostgreSQL, prepares the database, and leaves the app and the worker running. The first
 run takes a minute or two while the image downloads.
 
 Port 3000 already taken? Use `HOST_PORT=8080 docker compose up -d`. Use `HOST_PORT`, never
 `PORT`, for the reason explained under [Updating](#updating).
 
-**4. Make your own login.**
+**4. Open your app's URL** — `http://localhost:3000` by default, or
+`http://localhost:8080` (or whatever port you chose) if you set `HOST_PORT` above. With
+no admin account yet, this lands you on the setup wizard automatically — it walks you
+through creating your login and, optionally, email and storage integrations. Your
+customers' form is at `/`, and you sign in afterward at `/login`.
+
+Prefer the command line, or scripting the install? Skip the wizard's account step with:
 
 ```bash
 docker compose run --rm app \
   pnpm create:admin you@example.com "Your Name" "a-strong-password"
 ```
-
-**5. Open http://localhost:3000.** Your customers' form is at `/`, and you sign in at
-`/login`.
 
 That is the whole install. Useful next commands:
 
@@ -204,7 +225,7 @@ For local development without Docker.
 you would rather not install Postgres, `pnpm db:local` starts a bundled one.
 
 ```bash
-git clone https://github.com/stack256/docket
+git clone https://github.com/stack256org/docket
 cd docket
 pnpm install
 cp .env.example .env
@@ -217,11 +238,17 @@ alone unless you are pointing at your own.
 ```bash
 pnpm db:local                 # optional: start the bundled Postgres on :5432
 pnpm setup                    # create the tables and add default stages and categories
-pnpm create:admin you@example.com "Your Name" "a-strong-password"
 pnpm dev                      # runs the app and the background worker together
 ```
 
-Open `http://localhost:3000`.
+Open your app's URL, for example `http://localhost:3000` — with no admin account yet,
+this lands you on the setup wizard automatically to create your login.
+
+Prefer the command line?
+
+```bash
+pnpm create:admin you@example.com "Your Name" "a-strong-password"
+```
 
 The password lets you sign in straight away with no email set up. Leave it off to create
 a magic-link-only account instead.
@@ -233,8 +260,13 @@ a magic-link-only account instead.
 
 ## Settings
 
-Everything is set through environment variables. The full annotated list is in
-[`.env.example`](.env.example) and [`.env.docker.example`](.env.docker.example).
+Only three settings are environment variables — everything else (email, sign-in,
+notifications, file storage) can be set from inside the app instead: the setup wizard's
+skippable "Integrations" step, or **Admin → Integrations** afterward. Prefer env vars
+anyway (CI, a secrets manager, Kubernetes)? Every one below still works exactly as
+before — a value saved in Integrations just takes priority over its matching env var.
+The full annotated list is in [`.env.example`](.env.example) and
+[`.env.docker.example`](.env.docker.example).
 
 **Required**
 
@@ -258,37 +290,41 @@ Everything is set through environment variables. The full annotated list is in
 
 | Variable | What it is |
 |----------|------------|
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Turns on the "Continue with Google" button |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Turns on the "Continue with Google" button. Saved from Integrations instead? It needs an app restart (`docker compose restart app`) before sign-in picks it up — every other setting on this page applies immediately. |
 
 **Notifications (optional)**
 
 | Variable | What it is |
 |----------|------------|
-| `NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID`, `PUSHER_BEAMS_SECRET_KEY` | Notifications that reach your team even with the app closed |
+| `PUSH_PROVIDER` | Which service sends notifications that reach your team even with the app closed: `pusher` (default) or `webpush`. Easier to pick from Admin → Integrations → Push Notifications. |
+| `WEB_PUSH_VAPID_PUBLIC_KEY`, `WEB_PUSH_VAPID_PRIVATE_KEY` | Keys for `webpush`, the browser's built-in push. Needs no outside account; Integrations can generate the keys for you. |
+| `NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID`, `PUSHER_BEAMS_SECRET_KEY` | Credentials for `pusher`, which sends through Pusher Beams |
 | `PUSHER_APP_ID`, `NEXT_PUBLIC_PUSHER_KEY`, `PUSHER_SECRET`, `NEXT_PUBLIC_PUSHER_CLUSTER` | Lists and open requests that update without a refresh. A different Pusher product from the one above, so create a separate app for it. |
 
 Without any of these, your team still gets the in-app notification bell and the pages
 still work normally. See [docs/in-app-notifications.md](docs/in-app-notifications.md) and
 [docs/realtime-updates.md](docs/realtime-updates.md).
 
-> The three `NEXT_PUBLIC_*` values above are compiled into the browser code when the image
-> is built, not read while it runs. Changing one means rebuilding. This is also why the
-> published image ships with them empty: baking one operator's keys into a public image
-> would hand them to everyone who downloads it.
+> Set these from Integrations and they apply immediately — no rebuild, works with the
+> plain downloaded image. The three `NEXT_PUBLIC_*` env vars above are the one case that
+> still needs a rebuild to change: they're compiled into the browser code when the image
+> is built, and the published image ships with them empty (baking one operator's keys
+> into a public image would hand them to everyone who downloads it). Only relevant if you
+> specifically want env-based config instead of Integrations.
 
 **File storage (optional)**
 
 | Variable | What it is |
 |----------|------------|
 | `STORAGE_DRIVER` | `local` (default), `s3`, or `r2` |
-| `S3_BUCKET`, `S3_REGION` | Required when `STORAGE_DRIVER=s3`. Credentials come from the normal AWS chain: environment variables, an IAM role, or a shared profile. |
+| `S3_BUCKET`, `S3_REGION` | Required when `STORAGE_DRIVER=s3`. Credentials come from Integrations, or fall back to the normal AWS chain: environment variables, an IAM role, or a shared profile. |
 | `R2_BUCKET`, `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | Required when `STORAGE_DRIVER=r2` |
 | `STORAGE_PUBLIC_BASE_URL` | Only needed if some other tool reads your bucket directly. Docket never needs it. |
 
 > **On the default `local` setting,** attachments go to `./uploads`. In Docker that has to
 > be a permanent volume or every update wipes them. The supplied compose files already set
-> one up. S3 and R2 need no volume. Settings for whichever option you pick are checked at
-> startup rather than on the first upload. See
+> one up. S3 and R2 need no volume. Settings for whichever option you pick are checked the
+> first time storage is actually used rather than at startup. See
 > [docs/file-uploads.md](docs/file-uploads.md).
 
 ---
@@ -301,7 +337,7 @@ Three compose files. Pick **one**. They are alternatives, never used together.
 |------|-------------|----------------------------|
 | `docker-compose.yml` | **Almost everyone.** PostgreSQL included. | Downloaded, prebuilt |
 | `docker-compose.external-db.yml` | You already have PostgreSQL, such as Neon, Supabase or RDS. | Downloaded, prebuilt |
-| `docker-compose.build.yml` | You changed the code, or you need the optional Pusher features. | Compiled on your machine |
+| `docker-compose.build.yml` | You changed the code. | Compiled on your machine |
 
 All three run the same three parts, chosen by the command each is given: the **app**, the
 **worker** that sends email and runs background jobs (nothing sends without it), and a
@@ -310,27 +346,33 @@ one-off **migrate** step that prepares the database before the other two start.
 ### The normal way
 
 ```bash
-curl -O https://raw.githubusercontent.com/stack256/docket/main/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/stack256/docket/main/.env.docker.example
+curl -O https://raw.githubusercontent.com/stack256org/docket/main/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/stack256org/docket/main/.env.docker.example
 # Set APP_SECRET and NEXT_PUBLIC_APP_URL. DATABASE_URL is already filled in.
 docker compose up -d
 ```
 
+<!-- BEGIN GENERATED: image-tags -->
 Pin a version in production, because `latest` moves with every release:
 
 ```bash
-IMAGE_TAG=1.0.0 docker compose up -d
+IMAGE_TAG=0.8.0 docker compose up -d
 ```
 
-Available tags are `latest`, the `1` / `1.4` / `1.4.2` ladder, `main` (rebuilt on every
-change, expect rough edges), and a fixed `sha-<short>` per build. Each carries builds for
-both Intel and ARM machines:
+Available tags are `latest`, the `0` / `0.8` / `0.8.0` ladder, `main` (rebuilt on
+every change, expect rough edges), and a fixed `sha-<short>` per build. Each carries builds
+for both Intel and ARM machines:
 
 ```bash
-docker pull ghcr.io/stack256/docket:latest
+docker pull ghcr.io/stack256org/docket:0.8.0
 ```
+<!-- END GENERATED: image-tags -->
 
-Images come from [GitHub Packages](https://github.com/stack256/docket/pkgs/container/docket).
+<sub>The block above is generated from the `version` in `package.json` by
+`scripts/sync-readme.mjs`, and CI fails if it drifts. Run `pnpm docs:sync` after a version
+bump rather than editing it by hand.</sub>
+
+Images come from [GitHub Packages](https://github.com/stack256org/docket/pkgs/container/docket).
 No account is needed to download them, and there are no rate limits.
 
 ### With your own database
@@ -338,8 +380,8 @@ No account is needed to download them, and there are no rate limits.
 Same as above but with no bundled PostgreSQL, so you point it at yours.
 
 ```bash
-curl -O https://raw.githubusercontent.com/stack256/docket/main/docker-compose.external-db.yml
-curl -o .env https://raw.githubusercontent.com/stack256/docket/main/.env.docker.example
+curl -O https://raw.githubusercontent.com/stack256org/docket/main/docker-compose.external-db.yml
+curl -o .env https://raw.githubusercontent.com/stack256org/docket/main/.env.docker.example
 # Replace DATABASE_URL with your own connection string.
 docker compose -f docker-compose.external-db.yml up -d
 ```
@@ -351,7 +393,7 @@ are compiled into the browser code and so cannot come from a shared prebuilt ima
 compiles the whole app, which on a small server is slow.
 
 ```bash
-git clone https://github.com/stack256/docket && cd docket
+git clone https://github.com/stack256org/docket && cd docket
 cp .env.docker.example .env
 # Set APP_SECRET and NEXT_PUBLIC_APP_URL.
 docker compose -f docker-compose.build.yml up -d
@@ -367,8 +409,10 @@ docker compose logs -f app worker     # watch what it is doing
 docker compose down                   # stop it. Your data stays.
 ```
 
-Create your first login as a separate, deliberate step, so you see whether it worked
-instead of it failing quietly inside a background service:
+Opening the app creates your first login through the `/setup` wizard, same as in
+[Quick start](#quick-start). Prefer doing it as a separate, deliberate step so you see
+whether it worked instead of it failing quietly inside a background service? Use the CLI
+instead:
 
 ```bash
 docker compose run --rm app pnpm create:admin you@example.com "Your Name" "a-strong-password"
@@ -388,8 +432,8 @@ Two things hold state, and both sit on named Docker volumes:
 
 | Volume | Mounted at | Holds |
 |--------|-----------|-------|
-| `support_tool_pgdata` | `/var/lib/postgresql/data` | Everything: requests, replies, people, sessions, API keys, settings, the audit log, and the job queue |
-| `support_tool_uploads` | `/app/uploads` | Attachments, on the default `local` storage setting only |
+| `docket_pgdata` | `/var/lib/postgresql/data` | Everything: requests, replies, people, sessions, API keys, settings, the audit log, and the job queue |
+| `docket_uploads` | `/app/uploads` | Attachments, on the default `local` storage setting only |
 
 Nothing else on disk matters. Attachments are written through
 [`lib/storage.ts`](lib/storage.ts); everything else in the container is part of the image
@@ -409,9 +453,6 @@ Two details make that reliable rather than lucky:
 - **`PGDATA` is set explicitly.** The official Postgres image changed its default data
   directory in version 18. Left to the default, a future version bump would mount the
   volume at the wrong path and the database would start up empty.
-
-The names still say `support_tool_*` from before the rename, on purpose, so existing
-installs keep their data.
 
 ### Updating
 
@@ -439,7 +480,7 @@ work. [docs/backup-and-restore.md](docs/backup-and-restore.md) has the commands.
 ### Anything that runs a container
 
 Coolify, Dokploy, CapRover, Portainer, Kubernetes, Docker Swarm, ECS. Point them at
-`ghcr.io/stack256/docket` and run three services from the same image:
+`ghcr.io/stack256org/docket` and run three services from the same image:
 
 | Service | Command | Notes |
 |---------|---------|-------|
@@ -544,7 +585,7 @@ rather than a web server.
 
 Backups are not automatic. You need to set them up.
 
-Always back up the **Postgres database**. Also back up the **`support_tool_uploads`
+Always back up the **Postgres database**. Also back up the **`docket_uploads`
 volume** if you are using local file storage, which you do not need on S3 or R2.
 [docs/backup-and-restore.md](docs/backup-and-restore.md) has the commands, a scheduled
 example, and full recovery steps.
@@ -656,7 +697,7 @@ Known gaps, roughly in the order people ask for them:
 - **More polish on small screens** for the two-column request view.
 
 Want one of these, or something not listed?
-[Open an issue](https://github.com/stack256/docket/issues/new/choose) describing the
+[Open an issue](https://github.com/stack256org/docket/issues/new/choose) describing the
 problem you are trying to solve. That is what decides priority.
 
 ---

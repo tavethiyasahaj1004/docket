@@ -5,7 +5,7 @@ import {
   HourglassIcon,
   TicketIcon,
 } from "@phosphor-icons/react/dist/ssr";
-import { and, count, desc, eq, gte, inArray, sql } from "drizzle-orm";
+import { and, count, desc, eq, gte, inArray, isNull, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -78,6 +78,8 @@ export default async function DashboardPage() {
   const statusCounts = await db
     .select({ status: tickets.status, c: count() })
     .from(tickets)
+    // Merged tickets are hidden from the ticket list these counts link to.
+    .where(isNull(tickets.mergedIntoTicketId))
     .groupBy(tickets.status);
 
   let open = 0;
@@ -105,7 +107,12 @@ export default async function DashboardPage() {
           >`EXTRACT(EPOCH FROM AVG(NOW() - ${tickets.createdAt}))`,
         })
         .from(tickets)
-        .where(inArray(tickets.status, nonClosedSlugs))
+        .where(
+          and(
+            inArray(tickets.status, nonClosedSlugs),
+            isNull(tickets.mergedIntoTicketId)
+          )
+        )
     : [{ avgWaitSeconds: null }];
 
   const stats = {
@@ -130,7 +137,12 @@ export default async function DashboardPage() {
       count: count(),
     })
     .from(tickets)
-    .where(gte(tickets.createdAt, sevenDaysAgo))
+    .where(
+      and(
+        gte(tickets.createdAt, sevenDaysAgo),
+        isNull(tickets.mergedIntoTicketId)
+      )
+    )
     .groupBy(sql`DATE(${tickets.createdAt})`)
     .orderBy(sql`DATE(${tickets.createdAt})`);
 
@@ -156,7 +168,10 @@ export default async function DashboardPage() {
     .leftJoin(user, eq(tickets.assignedAgentId, user.id))
     .where(
       nonClosedSlugs.length
-        ? inArray(tickets.status, nonClosedSlugs)
+        ? and(
+            inArray(tickets.status, nonClosedSlugs),
+            isNull(tickets.mergedIntoTicketId)
+          )
         : sql`false`
     )
     .orderBy(desc(tickets.updatedAt))
@@ -176,6 +191,7 @@ export default async function DashboardPage() {
     .where(
       and(
         eq(tickets.assignedAgentId, session.user.id),
+        isNull(tickets.mergedIntoTicketId),
         nonClosedSlugs.length
           ? inArray(tickets.status, nonClosedSlugs)
           : sql`false`
@@ -203,7 +219,7 @@ export default async function DashboardPage() {
       value: stats.total,
       sub: "All time",
       icon: TicketIcon,
-      color: "text-foreground",
+      color: "text-base-content",
       bg: "bg-primary/8",
       href: "/tickets",
     },
@@ -242,8 +258,8 @@ export default async function DashboardPage() {
   return (
     <div className="p-8 space-y-8">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Dashboard</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+        <h1 className="text-2xl font-semibold text-base-content">Dashboard</h1>
+        <p className="text-sm text-base-content-muted mt-1">
           Support queue overview.
         </p>
       </div>
@@ -252,7 +268,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((card) => (
           <Link
-            className="block bg-card rounded-xl border border-border shadow-soft p-5 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-ring/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            className="block bg-base-100 rounded-xl border border-base-300 shadow-soft p-5 transition-all hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
             href={card.href}
             key={card.label}
           >
@@ -264,11 +280,13 @@ export default async function DashboardPage() {
                 />
               </div>
             </div>
-            <p className="text-2xl font-bold text-foreground">{card.value}</p>
-            <p className="text-xs font-medium text-muted-foreground mt-0.5">
+            <p className="text-2xl font-bold text-base-content">{card.value}</p>
+            <p className="text-xs font-medium text-base-content-muted mt-0.5">
               {card.label}
             </p>
-            <p className="text-xs text-muted-foreground/70 mt-1">{card.sub}</p>
+            <p className="text-xs text-base-content-muted/70 mt-1">
+              {card.sub}
+            </p>
           </Link>
         ))}
       </div>
@@ -277,18 +295,18 @@ export default async function DashboardPage() {
       <VolumeChart initialData={initialVolumeData} />
 
       {/* Recent open tickets */}
-      <div className="bg-card rounded-xl border border-border shadow-soft">
-        <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-base font-semibold text-foreground">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft">
+        <div className="px-6 py-4 border-b border-base-300">
+          <h2 className="text-base font-semibold text-base-content">
             Recent Open Tickets
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             Last 10 open tickets by activity
           </p>
         </div>
         {recentTickets.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-base-content-muted">
               No open tickets. Great work!
             </p>
           </div>
@@ -296,20 +314,20 @@ export default async function DashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                <tr className="border-b border-base-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     #
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     Subject
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     Category
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     Assigned To
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     Waiting
                   </th>
                   <th className="w-14 px-6 py-3">
@@ -317,43 +335,43 @@ export default async function DashboardPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-base-300">
                 {recentTickets.map((t) => (
                   <tr
-                    className="hover:bg-accent/30 transition-colors"
+                    className="hover:bg-base-300/30 transition-colors"
                     key={t.id}
                   >
-                    <td className="px-6 py-3 text-muted-foreground font-mono text-xs">
+                    <td className="px-6 py-3 text-base-content-muted font-mono text-xs">
                       #{t.ticketNumber}
                     </td>
                     <td className="px-6 py-3 max-w-xs">
                       <Link
-                        className="text-foreground font-medium hover:underline truncate block"
-                        href={`/tickets/${t.id}`}
+                        className="text-base-content font-medium hover:underline truncate block"
+                        href={`/tickets/${t.ticketNumber}`}
                       >
                         {t.subject}
                       </Link>
                     </td>
                     <td className="px-6 py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted/30 text-foreground">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-base-300/30 text-base-content">
                         {categoryMap[t.category]?.label ?? t.category}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-muted-foreground text-xs">
+                    <td className="px-6 py-3 text-base-content-muted text-xs">
                       {t.agentName ?? (
-                        <span className="italic text-muted-foreground/50">
+                        <span className="italic text-base-content-muted/50">
                           Unassigned
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-3 text-xs text-muted-foreground">
+                    <td className="px-6 py-3 text-xs text-base-content-muted">
                       {formatWait(now - t.createdAt.getTime())}
                     </td>
                     <td className="px-6 py-3 text-right">
                       <Link
                         aria-label={`View ticket #${t.ticketNumber}`}
-                        className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                        href={`/tickets/${t.id}`}
+                        className="inline-flex size-7 items-center justify-center rounded-md text-base-content-muted hover:text-base-content hover:bg-base-300 transition-colors"
+                        href={`/tickets/${t.ticketNumber}`}
                       >
                         <EyeIcon className="size-4" />
                       </Link>
@@ -365,9 +383,9 @@ export default async function DashboardPage() {
           </div>
         )}
         {recentTickets.length > 0 && (
-          <div className="px-6 py-3 border-t border-border">
+          <div className="px-6 py-3 border-t border-base-300">
             <Link
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs text-base-content-muted hover:text-base-content transition-colors"
               href="/tickets"
             >
               View all open tickets →
@@ -377,18 +395,18 @@ export default async function DashboardPage() {
       </div>
 
       {/* My tickets */}
-      <div className="bg-card rounded-xl border border-border shadow-soft">
-        <div className="px-6 py-4 border-b border-border">
-          <h2 className="text-base font-semibold text-foreground">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft">
+        <div className="px-6 py-4 border-b border-base-300">
+          <h2 className="text-base font-semibold text-base-content">
             My Tickets
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             Open and in-progress tickets assigned to you
           </p>
         </div>
         {myTickets.length === 0 ? (
           <div className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-base-content-muted">
               No tickets assigned to you.
             </p>
           </div>
@@ -396,20 +414,20 @@ export default async function DashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border">
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                <tr className="border-b border-base-300">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     #
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     Subject
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     Category
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-base-content-muted">
                     Waiting
                   </th>
                   <th className="w-14 px-6 py-3">
@@ -417,25 +435,25 @@ export default async function DashboardPage() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-base-300">
                 {myTickets.map((t) => (
                   <tr
-                    className="hover:bg-accent/30 transition-colors"
+                    className="hover:bg-base-300/30 transition-colors"
                     key={t.id}
                   >
-                    <td className="px-6 py-3 text-muted-foreground font-mono text-xs">
+                    <td className="px-6 py-3 text-base-content-muted font-mono text-xs">
                       #{t.ticketNumber}
                     </td>
                     <td className="px-6 py-3 max-w-xs">
                       <Link
-                        className="text-foreground font-medium hover:underline truncate block"
-                        href={`/tickets/${t.id}`}
+                        className="text-base-content font-medium hover:underline truncate block"
+                        href={`/tickets/${t.ticketNumber}`}
                       >
                         {t.subject}
                       </Link>
                     </td>
                     <td className="px-6 py-3">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-muted/30 text-foreground">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-base-300/30 text-base-content">
                         {categoryMap[t.category]?.label ?? t.category}
                       </span>
                     </td>
@@ -446,14 +464,14 @@ export default async function DashboardPage() {
                         {statusMap[t.status]?.label ?? t.status}
                       </span>
                     </td>
-                    <td className="px-6 py-3 text-xs text-muted-foreground">
+                    <td className="px-6 py-3 text-xs text-base-content-muted">
                       {formatWait(now - t.createdAt.getTime())}
                     </td>
                     <td className="px-6 py-3 text-right">
                       <Link
                         aria-label={`View ticket #${t.ticketNumber}`}
-                        className="inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                        href={`/tickets/${t.id}`}
+                        className="inline-flex size-7 items-center justify-center rounded-md text-base-content-muted hover:text-base-content hover:bg-base-300 transition-colors"
+                        href={`/tickets/${t.ticketNumber}`}
                       >
                         <EyeIcon className="size-4" />
                       </Link>

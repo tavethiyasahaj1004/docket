@@ -1,0 +1,4273 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`agent ticket list page (characterization) > default list as another agent with columns hidden and a different mine/draft view 1`] = `
+{
+  "asyncCalls": [
+    "TicketViewTabsResults",
+    "TicketsResults",
+  ],
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "table": {
+    "agents": [
+      {
+        "email": "alice@example.test",
+        "id": "user-alice",
+        "name": "Alice Agent",
+      },
+      {
+        "email": "bob@example.test",
+        "id": "user-bob",
+        "name": "Bob Admin",
+      },
+    ],
+    "canMerge": true,
+    "categoryMap": {
+      "billing": {
+        "color": "green",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-billing",
+        "label": "Billing",
+        "slug": "billing",
+        "sortOrder": 3,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "bug": {
+        "color": "red",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-bug",
+        "label": "Bug",
+        "slug": "bug",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "feature_request": {
+        "color": "purple",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-feature",
+        "label": "Feature Request",
+        "slug": "feature_request",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "general_query": {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-general",
+        "label": "General Query",
+        "slug": "general_query",
+        "sortOrder": 4,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "issue": {
+        "color": "orange",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-issue",
+        "label": "Issue",
+        "slug": "issue",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    },
+    "columnPrefs": [
+      {
+        "id": "tags",
+        "visible": false,
+      },
+      {
+        "id": "updatedBy",
+        "visible": false,
+      },
+      {
+        "id": "status",
+        "visible": true,
+      },
+      {
+        "id": "category",
+        "visible": true,
+      },
+      {
+        "id": "priority",
+        "visible": true,
+      },
+      {
+        "id": "waitingTime",
+        "visible": true,
+      },
+      {
+        "id": "customer",
+        "visible": true,
+      },
+      {
+        "id": "assigned",
+        "visible": true,
+      },
+      {
+        "id": "updatedAt",
+        "visible": true,
+      },
+    ],
+    "isAdmin": true,
+    "listQuery": "",
+    "mergeEmailsCustomer": true,
+    "priorities": [
+      {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-low",
+        "isDefault": false,
+        "label": "Low",
+        "slug": "low",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "blue",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-normal",
+        "isDefault": true,
+        "label": "Normal",
+        "slug": "normal",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "amber",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-high",
+        "isDefault": false,
+        "label": "High",
+        "slug": "high",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "red",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-urgent",
+        "isDefault": false,
+        "label": "Urgent",
+        "slug": "urgent",
+        "sortOrder": 3,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    ],
+    "priorityMap": {
+      "high": {
+        "color": "amber",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-high",
+        "isDefault": false,
+        "label": "High",
+        "slug": "high",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "low": {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-low",
+        "isDefault": false,
+        "label": "Low",
+        "slug": "low",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "normal": {
+        "color": "blue",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-normal",
+        "isDefault": true,
+        "label": "Normal",
+        "slug": "normal",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "urgent": {
+        "color": "red",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-urgent",
+        "isDefault": false,
+        "label": "Urgent",
+        "slug": "urgent",
+        "sortOrder": 3,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    },
+    "rows": [
+      {
+        "assignedAgentId": "user-alice",
+        "assignedAgentName": "Alice Agent",
+        "awaitingReply": true,
+        "category": "bug",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-15T06:00:00.000Z]",
+        "customerId": "cust-ann",
+        "customerName": "Ann Adams",
+        "firstRespondedAt": null,
+        "hasDraft": true,
+        "id": "t-101",
+        "linkedTicketNumbers": [
+          104,
+        ],
+        "priority": "high",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-15T06:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-15T08:00:00.000Z",
+        },
+        "status": "open",
+        "subject": "Cannot log in",
+        "tags": [],
+        "ticketNumber": 101,
+        "updatedAt": "[Date 2026-03-15T09:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-15T08:00:00.000Z]",
+      },
+      {
+        "assignedAgentId": "user-bob",
+        "assignedAgentName": "Bob Admin",
+        "awaitingReply": true,
+        "category": "billing",
+        "closedAt": null,
+        "createdAt": "[Date 2026-02-20T10:00:00.000Z]",
+        "customerId": "cust-zed",
+        "customerName": "Zed Zimmer",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-106",
+        "linkedTicketNumbers": [],
+        "priority": "high",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-02-20T10:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-14T14:00:00.000Z",
+        },
+        "status": "in_progress",
+        "subject": "Billing address wrong",
+        "tags": [],
+        "ticketNumber": 106,
+        "updatedAt": "[Date 2026-03-14T15:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-14T14:00:00.000Z]",
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": true,
+        "category": "billing",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-13T09:00:00.000Z]",
+        "customerId": "cust-zed",
+        "customerName": "Zed Zimmer",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-102",
+        "linkedTicketNumbers": [],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-13T09:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-13T09:00:00.000Z",
+        },
+        "status": "open",
+        "subject": "Refund 100% please",
+        "tags": [],
+        "ticketNumber": 102,
+        "updatedAt": "[Date 2026-03-14T09:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-13T09:00:00.000Z]",
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": true,
+        "category": "issue",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-11T08:00:00.000Z]",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-111",
+        "linkedTicketNumbers": [],
+        "priority": "high",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-11T08:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-11T09:00:00.000Z",
+        },
+        "status": "open",
+        "subject": "Tagged ticket two",
+        "tags": [],
+        "ticketNumber": 111,
+        "updatedAt": "[Date 2026-03-13T20:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-11T09:00:00.000Z]",
+      },
+      {
+        "assignedAgentId": "user-alice",
+        "assignedAgentName": "Alice Agent",
+        "awaitingReply": false,
+        "category": "issue",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-12T08:00:00.000Z]",
+        "customerId": "cust-zed",
+        "customerName": "Zed Zimmer",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-110",
+        "linkedTicketNumbers": [],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-12T08:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": "2026-03-12T08:30:00.000Z",
+        },
+        "status": "in_progress",
+        "subject": "Tagged ticket one",
+        "tags": [],
+        "ticketNumber": 110,
+        "updatedAt": "[Date 2026-03-13T08:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-12T08:30:00.000Z]",
+      },
+      {
+        "assignedAgentId": "user-bob",
+        "assignedAgentName": "Bob Admin",
+        "awaitingReply": false,
+        "category": "bug",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-10T09:30:00.000Z]",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-103",
+        "linkedTicketNumbers": [
+          105,
+        ],
+        "priority": "urgent",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-10T09:30:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "in_progress",
+        "subject": "snake_case error in export",
+        "tags": [],
+        "ticketNumber": 103,
+        "updatedAt": "[Date 2026-03-12T09:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": "user-bob",
+        "assignedAgentName": "Bob Admin",
+        "awaitingReply": false,
+        "category": "general_query",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-09T08:00:00.000Z]",
+        "customerId": "cust-una",
+        "customerName": "Una Under_score",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-112",
+        "linkedTicketNumbers": [],
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-09T08:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "open",
+        "subject": "ANN question about #103",
+        "tags": [],
+        "ticketNumber": 112,
+        "updatedAt": "[Date 2026-03-09T09:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": false,
+        "category": "billing",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-08T10:00:00.000Z]",
+        "customerId": "cust-una",
+        "customerName": "Una Under_score",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-104",
+        "linkedTicketNumbers": [
+          101,
+        ],
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-08T10:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "open",
+        "subject": "Order 1005 delayed",
+        "tags": [],
+        "ticketNumber": 104,
+        "updatedAt": "[Date 2026-03-08T11:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": "user-alice",
+        "assignedAgentName": "Alice Agent",
+        "awaitingReply": true,
+        "category": "general_query",
+        "closedAt": "[Date 2026-03-04T11:00:00.000Z]",
+        "createdAt": "[Date 2026-03-03T09:00:00.000Z]",
+        "customerId": "cust-una",
+        "customerName": "Una Under_score",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-107",
+        "linkedTicketNumbers": [],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-03T09:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": 93600,
+          "waitState": "resolved",
+          "waitingSince": null,
+        },
+        "status": "closed",
+        "subject": "General question",
+        "tags": [],
+        "ticketNumber": 107,
+        "updatedAt": "[Date 2026-03-04T11:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": "user-alice",
+        "assignedAgentName": "Alice Agent",
+        "awaitingReply": false,
+        "category": "feature_request",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-01T10:00:00.000Z]",
+        "customerId": "cust-ann",
+        "customerName": "Ann Adams",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-105",
+        "linkedTicketNumbers": [
+          103,
+        ],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-01T10:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "open",
+        "subject": "Feature: dark mode",
+        "tags": [],
+        "ticketNumber": 105,
+        "updatedAt": "[Date 2026-03-02T10:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": false,
+        "category": "issue",
+        "closedAt": "[Date 2026-01-05T12:00:00.000Z]",
+        "createdAt": "[Date 2026-01-05T09:00:00.000Z]",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-108",
+        "linkedTicketNumbers": [],
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-01-05T09:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": 10800,
+          "waitState": "resolved",
+          "waitingSince": null,
+        },
+        "status": "closed",
+        "subject": "Old issue resolved",
+        "tags": [],
+        "ticketNumber": 108,
+        "updatedAt": "[Date 2026-01-05T12:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": false,
+        "category": "bug",
+        "closedAt": null,
+        "createdAt": "[Date 2025-12-01T09:00:00.000Z]",
+        "customerId": "cust-ann",
+        "customerName": "Ann Adams",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-109",
+        "linkedTicketNumbers": [],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2025-12-01T09:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "open",
+        "subject": "Ancient bug",
+        "tags": [],
+        "ticketNumber": 109,
+        "updatedAt": "[Date 2025-12-02T09:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+    ],
+    "showSlaAndOverdue": false,
+    "statusMap": {
+      "closed": {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-closed",
+        "isClosedState": true,
+        "isDefault": false,
+        "label": "Closed",
+        "slug": "closed",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "in_progress": {
+        "color": "amber",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-in-progress",
+        "isClosedState": false,
+        "isDefault": false,
+        "label": "In Progress",
+        "slug": "in_progress",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "open": {
+        "color": "blue",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-open",
+        "isClosedState": false,
+        "isDefault": true,
+        "label": "Open",
+        "slug": "open",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    },
+    "statuses": [
+      {
+        "color": "blue",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-open",
+        "isClosedState": false,
+        "isDefault": true,
+        "label": "Open",
+        "slug": "open",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "amber",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-in-progress",
+        "isClosedState": false,
+        "isDefault": false,
+        "label": "In Progress",
+        "slug": "in_progress",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-closed",
+        "isClosedState": true,
+        "isDefault": false,
+        "label": "Closed",
+        "slug": "closed",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    ],
+  },
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+    "Rows per page",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > default list: full table props, text and tab counts 1`] = `
+{
+  "asyncCalls": [
+    "TicketViewTabsResults",
+    "TicketsResults",
+  ],
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "table": {
+    "agents": [
+      {
+        "email": "alice@example.test",
+        "id": "user-alice",
+        "name": "Alice Agent",
+      },
+      {
+        "email": "bob@example.test",
+        "id": "user-bob",
+        "name": "Bob Admin",
+      },
+    ],
+    "canMerge": true,
+    "categoryMap": {
+      "billing": {
+        "color": "green",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-billing",
+        "label": "Billing",
+        "slug": "billing",
+        "sortOrder": 3,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "bug": {
+        "color": "red",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-bug",
+        "label": "Bug",
+        "slug": "bug",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "feature_request": {
+        "color": "purple",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-feature",
+        "label": "Feature Request",
+        "slug": "feature_request",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "general_query": {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-general",
+        "label": "General Query",
+        "slug": "general_query",
+        "sortOrder": 4,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "issue": {
+        "color": "orange",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "cat-issue",
+        "label": "Issue",
+        "slug": "issue",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    },
+    "columnPrefs": [
+      {
+        "id": "status",
+        "visible": true,
+      },
+      {
+        "id": "category",
+        "visible": true,
+      },
+      {
+        "id": "priority",
+        "visible": true,
+      },
+      {
+        "id": "waitingTime",
+        "visible": true,
+      },
+      {
+        "id": "customer",
+        "visible": true,
+      },
+      {
+        "id": "assigned",
+        "visible": true,
+      },
+      {
+        "id": "tags",
+        "visible": true,
+      },
+      {
+        "id": "updatedBy",
+        "visible": true,
+      },
+      {
+        "id": "updatedAt",
+        "visible": true,
+      },
+    ],
+    "isAdmin": false,
+    "listQuery": "",
+    "mergeEmailsCustomer": true,
+    "priorities": [
+      {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-low",
+        "isDefault": false,
+        "label": "Low",
+        "slug": "low",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "blue",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-normal",
+        "isDefault": true,
+        "label": "Normal",
+        "slug": "normal",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "amber",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-high",
+        "isDefault": false,
+        "label": "High",
+        "slug": "high",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "red",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-urgent",
+        "isDefault": false,
+        "label": "Urgent",
+        "slug": "urgent",
+        "sortOrder": 3,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    ],
+    "priorityMap": {
+      "high": {
+        "color": "amber",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-high",
+        "isDefault": false,
+        "label": "High",
+        "slug": "high",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "low": {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-low",
+        "isDefault": false,
+        "label": "Low",
+        "slug": "low",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "normal": {
+        "color": "blue",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-normal",
+        "isDefault": true,
+        "label": "Normal",
+        "slug": "normal",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "urgent": {
+        "color": "red",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "prio-urgent",
+        "isDefault": false,
+        "label": "Urgent",
+        "slug": "urgent",
+        "sortOrder": 3,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    },
+    "rows": [
+      {
+        "assignedAgentId": "user-alice",
+        "assignedAgentName": "Alice Agent",
+        "awaitingReply": true,
+        "category": "bug",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-15T06:00:00.000Z]",
+        "customerId": "cust-ann",
+        "customerName": "Ann Adams",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-101",
+        "linkedTicketNumbers": [
+          104,
+        ],
+        "priority": "high",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-15T06:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-15T08:00:00.000Z",
+        },
+        "status": "open",
+        "subject": "Cannot log in",
+        "tags": [],
+        "ticketNumber": 101,
+        "updatedAt": "[Date 2026-03-15T09:00:00.000Z]",
+        "updatedByName": "Bob Admin",
+        "waitingSince": "[Date 2026-03-15T08:00:00.000Z]",
+      },
+      {
+        "assignedAgentId": "user-bob",
+        "assignedAgentName": "Bob Admin",
+        "awaitingReply": true,
+        "category": "billing",
+        "closedAt": null,
+        "createdAt": "[Date 2026-02-20T10:00:00.000Z]",
+        "customerId": "cust-zed",
+        "customerName": "Zed Zimmer",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-106",
+        "linkedTicketNumbers": [],
+        "priority": "high",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-02-20T10:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-14T14:00:00.000Z",
+        },
+        "status": "in_progress",
+        "subject": "Billing address wrong",
+        "tags": [],
+        "ticketNumber": 106,
+        "updatedAt": "[Date 2026-03-14T15:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-14T14:00:00.000Z]",
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": true,
+        "category": "billing",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-13T09:00:00.000Z]",
+        "customerId": "cust-zed",
+        "customerName": "Zed Zimmer",
+        "firstRespondedAt": null,
+        "hasDraft": true,
+        "id": "t-102",
+        "linkedTicketNumbers": [],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-13T09:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-13T09:00:00.000Z",
+        },
+        "status": "open",
+        "subject": "Refund 100% please",
+        "tags": [
+          "billing",
+        ],
+        "ticketNumber": 102,
+        "updatedAt": "[Date 2026-03-14T09:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-13T09:00:00.000Z]",
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": true,
+        "category": "issue",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-11T08:00:00.000Z]",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-111",
+        "linkedTicketNumbers": [],
+        "priority": "high",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-11T08:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_agent",
+          "waitingSince": "2026-03-11T09:00:00.000Z",
+        },
+        "status": "open",
+        "subject": "Tagged ticket two",
+        "tags": [
+          "vip",
+        ],
+        "ticketNumber": 111,
+        "updatedAt": "[Date 2026-03-13T20:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-11T09:00:00.000Z]",
+      },
+      {
+        "assignedAgentId": "user-alice",
+        "assignedAgentName": "Alice Agent",
+        "awaitingReply": false,
+        "category": "issue",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-12T08:00:00.000Z]",
+        "customerId": "cust-zed",
+        "customerName": "Zed Zimmer",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-110",
+        "linkedTicketNumbers": [],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-12T08:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": "2026-03-12T08:30:00.000Z",
+        },
+        "status": "in_progress",
+        "subject": "Tagged ticket one",
+        "tags": [
+          "billing",
+          "vip",
+        ],
+        "ticketNumber": 110,
+        "updatedAt": "[Date 2026-03-13T08:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": "[Date 2026-03-12T08:30:00.000Z]",
+      },
+      {
+        "assignedAgentId": "user-bob",
+        "assignedAgentName": "Bob Admin",
+        "awaitingReply": false,
+        "category": "bug",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-10T09:30:00.000Z]",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+        "firstRespondedAt": null,
+        "hasDraft": true,
+        "id": "t-103",
+        "linkedTicketNumbers": [
+          105,
+        ],
+        "priority": "urgent",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-10T09:30:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "in_progress",
+        "subject": "snake_case error in export",
+        "tags": [],
+        "ticketNumber": 103,
+        "updatedAt": "[Date 2026-03-12T09:00:00.000Z]",
+        "updatedByName": "Alice Agent",
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": "user-bob",
+        "assignedAgentName": "Bob Admin",
+        "awaitingReply": false,
+        "category": "general_query",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-09T08:00:00.000Z]",
+        "customerId": "cust-una",
+        "customerName": "Una Under_score",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-112",
+        "linkedTicketNumbers": [],
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-09T08:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "open",
+        "subject": "ANN question about #103",
+        "tags": [],
+        "ticketNumber": 112,
+        "updatedAt": "[Date 2026-03-09T09:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": false,
+        "category": "billing",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-08T10:00:00.000Z]",
+        "customerId": "cust-una",
+        "customerName": "Una Under_score",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-104",
+        "linkedTicketNumbers": [
+          101,
+        ],
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-08T10:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "open",
+        "subject": "Order 1005 delayed",
+        "tags": [],
+        "ticketNumber": 104,
+        "updatedAt": "[Date 2026-03-08T11:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": "user-alice",
+        "assignedAgentName": "Alice Agent",
+        "awaitingReply": true,
+        "category": "general_query",
+        "closedAt": "[Date 2026-03-04T11:00:00.000Z]",
+        "createdAt": "[Date 2026-03-03T09:00:00.000Z]",
+        "customerId": "cust-una",
+        "customerName": "Una Under_score",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-107",
+        "linkedTicketNumbers": [],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-03T09:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": 93600,
+          "waitState": "resolved",
+          "waitingSince": null,
+        },
+        "status": "closed",
+        "subject": "General question",
+        "tags": [],
+        "ticketNumber": 107,
+        "updatedAt": "[Date 2026-03-04T11:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": "user-alice",
+        "assignedAgentName": "Alice Agent",
+        "awaitingReply": false,
+        "category": "feature_request",
+        "closedAt": null,
+        "createdAt": "[Date 2026-03-01T10:00:00.000Z]",
+        "customerId": "cust-ann",
+        "customerName": "Ann Adams",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-105",
+        "linkedTicketNumbers": [
+          103,
+        ],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-03-01T10:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "open",
+        "subject": "Feature: dark mode",
+        "tags": [],
+        "ticketNumber": 105,
+        "updatedAt": "[Date 2026-03-02T10:00:00.000Z]",
+        "updatedByName": "Alice Agent",
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": false,
+        "category": "issue",
+        "closedAt": "[Date 2026-01-05T12:00:00.000Z]",
+        "createdAt": "[Date 2026-01-05T09:00:00.000Z]",
+        "customerId": "cust-pat",
+        "customerName": "Pat Percent",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-108",
+        "linkedTicketNumbers": [],
+        "priority": "low",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2026-01-05T09:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": 10800,
+          "waitState": "resolved",
+          "waitingSince": null,
+        },
+        "status": "closed",
+        "subject": "Old issue resolved",
+        "tags": [],
+        "ticketNumber": 108,
+        "updatedAt": "[Date 2026-01-05T12:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+      {
+        "assignedAgentId": null,
+        "assignedAgentName": null,
+        "awaitingReply": false,
+        "category": "bug",
+        "closedAt": null,
+        "createdAt": "[Date 2025-12-01T09:00:00.000Z]",
+        "customerId": "cust-ann",
+        "customerName": "Ann Adams",
+        "firstRespondedAt": null,
+        "hasDraft": false,
+        "id": "t-109",
+        "linkedTicketNumbers": [],
+        "priority": "normal",
+        "slaActiveSeconds": 0,
+        "slaSnapshot": {
+          "createdAt": "2025-12-01T09:00:00.000Z",
+          "firstResponse": null,
+          "nextResponse": null,
+          "resolution": null,
+          "resolvedInSeconds": null,
+          "waitState": "waiting_for_customer",
+          "waitingSince": null,
+        },
+        "status": "open",
+        "subject": "Ancient bug",
+        "tags": [],
+        "ticketNumber": 109,
+        "updatedAt": "[Date 2025-12-02T09:00:00.000Z]",
+        "updatedByName": null,
+        "waitingSince": null,
+      },
+    ],
+    "showSlaAndOverdue": false,
+    "statusMap": {
+      "closed": {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-closed",
+        "isClosedState": true,
+        "isDefault": false,
+        "label": "Closed",
+        "slug": "closed",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "in_progress": {
+        "color": "amber",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-in-progress",
+        "isClosedState": false,
+        "isDefault": false,
+        "label": "In Progress",
+        "slug": "in_progress",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      "open": {
+        "color": "blue",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-open",
+        "isClosedState": false,
+        "isDefault": true,
+        "label": "Open",
+        "slug": "open",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    },
+    "statuses": [
+      {
+        "color": "blue",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-open",
+        "isClosedState": false,
+        "isDefault": true,
+        "label": "Open",
+        "slug": "open",
+        "sortOrder": 0,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "amber",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-in-progress",
+        "isClosedState": false,
+        "isDefault": false,
+        "label": "In Progress",
+        "slug": "in_progress",
+        "sortOrder": 1,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+      {
+        "color": "slate",
+        "createdAt": "[Date 2026-01-01T00:00:00.000Z]",
+        "id": "status-closed",
+        "isClosedState": true,
+        "isDefault": false,
+        "label": "Closed",
+        "slug": "closed",
+        "sortOrder": 2,
+        "updatedAt": "[Date 2026-01-01T00:00:00.000Z]",
+      },
+    ],
+  },
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+    "Rows per page",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > empty result 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": null,
+  },
+  "rowNumbers": [],
+  "tabs": {
+    "allCount": 0,
+    "awaitingCount": 0,
+    "openCount": 0,
+  },
+  "text": [
+    "0 tickets matching your filters",
+    "No tickets found",
+    "Try adjusting your filters.",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > assignee=all 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > assignee=unassigned 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    102,
+    111,
+    104,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 5,
+    "awaitingCount": 2,
+    "openCount": 4,
+  },
+  "text": [
+    "5 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > assignee=user-alice 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    110,
+    107,
+    105,
+  ],
+  "tabs": {
+    "allCount": 4,
+    "awaitingCount": 1,
+    "openCount": 3,
+  },
+  "text": [
+    "4 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > awaiting=0 (ignored) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > awaiting=1 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    107,
+  ],
+  "tabs": {
+    "allCount": 5,
+    "awaitingCount": 4,
+    "openCount": 4,
+  },
+  "text": [
+    "5 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > category=all 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > category=bug 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    103,
+    109,
+  ],
+  "tabs": {
+    "allCount": 3,
+    "awaitingCount": 1,
+    "openCount": 3,
+  },
+  "text": [
+    "3 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > combined: q + tag + status 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    111,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 1,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > combined: status+category+priority 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    102,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 1,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > combined: view=awaiting + mine=1 + assignee ignored order 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+  ],
+  "tabs": {
+    "allCount": 4,
+    "awaitingCount": 1,
+    "openCount": 3,
+  },
+  "text": [
+    "1 ticket",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > from/to without range=custom (ignored) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > mine=1 (alice) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    110,
+    107,
+    105,
+  ],
+  "tabs": {
+    "allCount": 4,
+    "awaitingCount": 1,
+    "openCount": 3,
+  },
+  "text": [
+    "4 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > mine=1 as bob 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    106,
+    103,
+    112,
+  ],
+  "tabs": {
+    "allCount": 3,
+    "awaitingCount": 1,
+    "openCount": 3,
+  },
+  "text": [
+    "3 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > priority=all 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > priority=high 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    111,
+  ],
+  "tabs": {
+    "allCount": 3,
+    "awaitingCount": 3,
+    "openCount": 3,
+  },
+  "text": [
+    "3 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=7d 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    102,
+    111,
+    110,
+    103,
+    112,
+  ],
+  "tabs": {
+    "allCount": 6,
+    "awaitingCount": 3,
+    "openCount": 6,
+  },
+  "text": [
+    "6 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=30d 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+  ],
+  "tabs": {
+    "allCount": 10,
+    "awaitingCount": 4,
+    "openCount": 9,
+  },
+  "text": [
+    "10 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=90d 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+  ],
+  "tabs": {
+    "allCount": 11,
+    "awaitingCount": 4,
+    "openCount": 9,
+  },
+  "text": [
+    "11 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=all 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=bogus (ignored) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=custom from only 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    102,
+    111,
+    110,
+  ],
+  "tabs": {
+    "allCount": 4,
+    "awaitingCount": 3,
+    "openCount": 4,
+  },
+  "text": [
+    "4 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=custom from+to 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    103,
+    112,
+    104,
+    107,
+    105,
+  ],
+  "tabs": {
+    "allCount": 5,
+    "awaitingCount": 0,
+    "openCount": 4,
+  },
+  "text": [
+    "5 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=custom to only 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    106,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 4,
+    "awaitingCount": 1,
+    "openCount": 3,
+  },
+  "text": [
+    "4 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=custom with malformed dates (ignored) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=last_day 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 1,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=last_week 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    102,
+    111,
+    110,
+    103,
+    112,
+  ],
+  "tabs": {
+    "allCount": 6,
+    "awaitingCount": 3,
+    "openCount": 6,
+  },
+  "text": [
+    "6 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=this_month (behaves like today) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 1,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > range=today 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 1,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > status=all 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > status=closed 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    107,
+    108,
+  ],
+  "tabs": {
+    "allCount": 2,
+    "awaitingCount": 0,
+    "openCount": 0,
+  },
+  "text": [
+    "2 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > status=open 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    102,
+    111,
+    112,
+    104,
+    105,
+    109,
+  ],
+  "tabs": {
+    "allCount": 7,
+    "awaitingCount": 3,
+    "openCount": 7,
+  },
+  "text": [
+    "7 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > status=open, (trailing comma) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    102,
+    111,
+    112,
+    104,
+    105,
+    109,
+  ],
+  "tabs": {
+    "allCount": 7,
+    "awaitingCount": 3,
+    "openCount": 7,
+  },
+  "text": [
+    "7 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > status=open,in_progress (comma list) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    105,
+    109,
+  ],
+  "tabs": {
+    "allCount": 10,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "10 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > tag=all 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > tag=billing 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    102,
+    110,
+  ],
+  "tabs": {
+    "allCount": 2,
+    "awaitingCount": 1,
+    "openCount": 2,
+  },
+  "text": [
+    "2 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > tag=unused-tag (no tickets) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": null,
+  },
+  "rowNumbers": [],
+  "tabs": {
+    "allCount": 0,
+    "awaitingCount": 0,
+    "openCount": 0,
+  },
+  "text": [
+    "0 tickets",
+    "No tickets found",
+    "Customers can submit tickets at your support portal.",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > tag=vip 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    111,
+    110,
+  ],
+  "tabs": {
+    "allCount": 2,
+    "awaitingCount": 1,
+    "openCount": 2,
+  },
+  "text": [
+    "2 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > view=awaiting 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "4 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > view=bogus (ignored) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > filters > view=open 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    105,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "10 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > merged tickets > never appear in any list, even when searched for directly 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": null,
+  },
+  "rowNumbers": [],
+  "tabs": {
+    "allCount": 0,
+    "awaitingCount": 0,
+    "openCount": 0,
+  },
+  "text": [
+    "0 tickets matching your filters",
+    "No tickets found",
+    "Try adjusting your filters.",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > invalid pageSize=0 falls back to 25 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > invalid pageSize=7 falls back to 25 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > invalid pageSize=1000 falls back to 25 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > invalid pageSize=abc falls back to 25 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > last page with pageSize=2 (page 6) 1`] = `
+{
+  "pagination": {
+    "goTo": {
+      "basePath": "/tickets",
+      "totalPages": 6,
+    },
+    "links": [
+      "/tickets?pageSize=2&page=5",
+      "/tickets?pageSize=2",
+      "/tickets?pageSize=2&page=2",
+      "/tickets?pageSize=2&page=3",
+      "/tickets?pageSize=2&page=4",
+      "/tickets?pageSize=2&page=5",
+      "/tickets?pageSize=2&page=6",
+      "/tickets?pageSize=2&page=6",
+    ],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 2,
+    },
+  },
+  "rowNumbers": [
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > page 2 with pageSize=2 1`] = `
+{
+  "pagination": {
+    "goTo": {
+      "basePath": "/tickets",
+      "totalPages": 6,
+    },
+    "links": [
+      "/tickets?pageSize=2",
+      "/tickets?pageSize=2",
+      "/tickets?pageSize=2&page=2",
+      "/tickets?pageSize=2&page=3",
+      "/tickets?pageSize=2&page=4",
+      "/tickets?pageSize=2&page=5",
+      "/tickets?pageSize=2&page=6",
+      "/tickets?pageSize=2&page=3",
+    ],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 2,
+    },
+  },
+  "rowNumbers": [
+    102,
+    111,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > page 2 with pageSize=10 1`] = `
+{
+  "pagination": {
+    "goTo": {
+      "basePath": "/tickets",
+      "totalPages": 2,
+    },
+    "links": [
+      "/tickets?pageSize=10",
+      "/tickets?pageSize=10",
+      "/tickets?pageSize=10&page=2",
+      "/tickets?pageSize=10&page=2",
+    ],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 10,
+    },
+  },
+  "rowNumbers": [
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > page beyond the end is empty 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": null,
+  },
+  "rowNumbers": [],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+    "No tickets found",
+    "Customers can submit tickets at your support portal.",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > pageSize=2 1`] = `
+{
+  "pagination": {
+    "goTo": {
+      "basePath": "/tickets",
+      "totalPages": 6,
+    },
+    "links": [
+      "/tickets?pageSize=2",
+      "/tickets?pageSize=2",
+      "/tickets?pageSize=2&page=2",
+      "/tickets?pageSize=2&page=3",
+      "/tickets?pageSize=2&page=4",
+      "/tickets?pageSize=2&page=5",
+      "/tickets?pageSize=2&page=6",
+      "/tickets?pageSize=2&page=2",
+    ],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 2,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > pageSize=10 1`] = `
+{
+  "pagination": {
+    "goTo": {
+      "basePath": "/tickets",
+      "totalPages": 2,
+    },
+    "links": [
+      "/tickets?pageSize=10",
+      "/tickets?pageSize=10",
+      "/tickets?pageSize=10&page=2",
+      "/tickets?pageSize=10&page=2",
+    ],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 10,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > pageSize=25 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > pageSize=50 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 50,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > pageSize=100 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 100,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > pagination > pagination links carry filters and sort 1`] = `
+{
+  "pagination": {
+    "goTo": {
+      "basePath": "/tickets",
+      "totalPages": 4,
+    },
+    "links": [
+      "/tickets?q=a&status=open&sort=id&order=asc&pageSize=2",
+      "/tickets?q=a&status=open&sort=id&order=asc&pageSize=2",
+      "/tickets?q=a&status=open&sort=id&order=asc&pageSize=2&page=2",
+      "/tickets?q=a&status=open&sort=id&order=asc&pageSize=2&page=3",
+      "/tickets?q=a&status=open&sort=id&order=asc&pageSize=2&page=4",
+      "/tickets?q=a&status=open&sort=id&order=asc&pageSize=2&page=3",
+    ],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 2,
+    },
+  },
+  "rowNumbers": [
+    104,
+    105,
+  ],
+  "tabs": {
+    "allCount": 7,
+    "awaitingCount": 3,
+    "openCount": 7,
+  },
+  "text": [
+    "7 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > customer email 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    111,
+    103,
+    108,
+  ],
+  "tabs": {
+    "allCount": 3,
+    "awaitingCount": 1,
+    "openCount": 2,
+  },
+  "text": [
+    "3 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > customer name (case-insensitive) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    106,
+    102,
+    110,
+  ],
+  "tabs": {
+    "allCount": 3,
+    "awaitingCount": 2,
+    "openCount": 3,
+  },
+  "text": [
+    "3 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > literal underscore term 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    103,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 0,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > numeric prefix collides with subject text (1005) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    104,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 0,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > percent after digits (100%) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    102,
+    104,
+  ],
+  "tabs": {
+    "allCount": 2,
+    "awaitingCount": 1,
+    "openCount": 2,
+  },
+  "text": [
+    "2 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > percent only (wildcard, not escaped) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > subject substring 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 1,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > ticket number 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    104,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 0,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > ticket number with hash 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    103,
+    112,
+  ],
+  "tabs": {
+    "allCount": 2,
+    "awaitingCount": 0,
+    "openCount": 2,
+  },
+  "text": [
+    "2 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > trimmed 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    105,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 0,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > underscore as single-char wildcard (s_ake) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    103,
+  ],
+  "tabs": {
+    "allCount": 1,
+    "awaitingCount": 0,
+    "openCount": 1,
+  },
+  "text": [
+    "1 ticket matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > underscore in an email 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    112,
+    104,
+    107,
+  ],
+  "tabs": {
+    "allCount": 3,
+    "awaitingCount": 0,
+    "openCount": 2,
+  },
+  "text": [
+    "3 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > underscore matching any char (una-under) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    112,
+    104,
+    107,
+  ],
+  "tabs": {
+    "allCount": 3,
+    "awaitingCount": 0,
+    "openCount": 2,
+  },
+  "text": [
+    "3 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > search (q) > underscore only (wildcard, not escaped) 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets matching your filters",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > sort > sort without order defaults to desc 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    112,
+    111,
+    110,
+    109,
+    108,
+    107,
+    106,
+    105,
+    104,
+    103,
+    102,
+    101,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > sort > sort=id order=asc 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109,
+    110,
+    111,
+    112,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > sort > sort=id order=desc 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    112,
+    111,
+    110,
+    109,
+    108,
+    107,
+    106,
+    105,
+    104,
+    103,
+    102,
+    101,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > sort > sort=updatedAt order=asc 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    109,
+    108,
+    105,
+    107,
+    104,
+    112,
+    103,
+    110,
+    111,
+    102,
+    106,
+    101,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > sort > sort=updatedAt order=desc 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > sort > sort=waitingTime order=asc 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    108,
+    107,
+    101,
+    106,
+    102,
+    110,
+    111,
+    103,
+    112,
+    104,
+    105,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > sort > sort=waitingTime order=desc 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    109,
+    105,
+    104,
+    112,
+    103,
+    111,
+    110,
+    102,
+    106,
+    101,
+    107,
+    108,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;
+
+exports[`agent ticket list page (characterization) > sort > unknown sort falls back to updatedAt; unknown order to desc 1`] = `
+{
+  "pagination": {
+    "goTo": null,
+    "links": [],
+    "pageSize": {
+      "basePath": "/tickets",
+      "options": [
+        2,
+        10,
+        25,
+        50,
+        100,
+      ],
+      "pageSize": 25,
+    },
+  },
+  "rowNumbers": [
+    101,
+    106,
+    102,
+    111,
+    110,
+    103,
+    112,
+    104,
+    107,
+    105,
+    108,
+    109,
+  ],
+  "tabs": {
+    "allCount": 12,
+    "awaitingCount": 4,
+    "openCount": 10,
+  },
+  "text": [
+    "12 tickets",
+  ],
+}
+`;

@@ -9,6 +9,7 @@ import {
 import {
   getPlatformSettings,
   resolveBrandName,
+  resolveEmailAccentColor,
   resolveLogoUrl,
 } from "@/lib/settings";
 
@@ -61,6 +62,7 @@ export async function POST(
     body: body.body,
     brandName: resolveBrandName(settings.brandName),
     logoUrl: resolveLogoUrl(settings.logoKey, true),
+    accentColor: resolveEmailAccentColor(settings.emailAccentColor),
   });
 
   return NextResponse.json(preview);

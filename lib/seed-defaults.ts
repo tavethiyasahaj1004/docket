@@ -1,24 +1,23 @@
 import { createId } from "@paralleldrive/cuid2";
 import {
-  slaPolicies,
+  // slaPolicies,
   ticketCategories,
   ticketPriorities,
   ticketStatuses,
 } from "@/db/schema";
 import { db } from "@/lib/db";
 
-// Fixed id so onConflictDoNothing() treats this as the same seed row across
-// repeated runs, same as the statuses/categories/priorities seeds below
-// (which are keyed by their unique `slug` instead — sla_policies has no
-// slug, so the row's own id is the natural dedup key here).
-const DEFAULT_SLA_POLICY_ID = "seed-default-sla-policy";
+// SLA is currently hidden from the UI (see docs/tickets.md § SLA) — the
+// default policy seed below is disabled to match, so a fresh install doesn't
+// get an orphaned sla_policies row.
+// Fixed id so onConflictDoNothing() sees the same seed row across runs. The
+// seeds below dedup on their unique `slug` instead; sla_policies has none, so
+// the row's own id is the natural key here.
+// const DEFAULT_SLA_POLICY_ID = "seed-default-sla-policy";
 
-/**
- * Seeds the default ticket statuses, categories, and priorities every install
- * needs to be usable. Idempotent — `onConflictDoNothing()` skips rows whose
- * slug already exists, so it's safe to run repeatedly (from `pnpm db:seed`, the
- * guided `pnpm setup` script, and the first-run `/setup` wizard alike).
- */
+/** Seeds the default ticket statuses, categories and priorities every install
+ * needs. Idempotent — `onConflictDoNothing()` skips existing slugs — so
+ * `pnpm db:seed`, `pnpm setup` and the `/setup` wizard can all run it. */
 export async function seedDefaults() {
   const statuses = [
     {
@@ -120,27 +119,27 @@ export async function seedDefaults() {
   // One unscoped (Any priority / Any category) fallback policy, so a fresh
   // install has working SLA display immediately. Admins can add scoped
   // overrides and adjust these targets at /admin/ticket-config.
-  const slaPolicy = {
-    id: DEFAULT_SLA_POLICY_ID,
-    name: "Default SLA",
-    priority: null,
-    category: null,
-    firstResponseMinutes: 60,
-    nextResponseMinutes: 240,
-    resolutionMinutes: 1440,
-    isDefault: true,
-    sortOrder: 0,
-  };
+  // const slaPolicy = {
+  //   id: DEFAULT_SLA_POLICY_ID,
+  //   name: "Default SLA",
+  //   priority: null,
+  //   category: null,
+  //   firstResponseMinutes: 60,
+  //   nextResponseMinutes: 240,
+  //   resolutionMinutes: 1440,
+  //   isDefault: true,
+  //   sortOrder: 0,
+  // };
 
   await db.insert(ticketStatuses).values(statuses).onConflictDoNothing();
   await db.insert(ticketCategories).values(categories).onConflictDoNothing();
   await db.insert(ticketPriorities).values(priorities).onConflictDoNothing();
-  await db.insert(slaPolicies).values(slaPolicy).onConflictDoNothing();
+  // await db.insert(slaPolicies).values(slaPolicy).onConflictDoNothing();
 
   return {
     statuses: statuses.length,
     categories: categories.length,
     priorities: priorities.length,
-    slaPolicies: 1,
+    // slaPolicies: 1,
   };
 }

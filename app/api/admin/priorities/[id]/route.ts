@@ -1,10 +1,11 @@
-import { count, eq } from "drizzle-orm";
+import { and, count, eq, isNull } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { ticketPriorities, tickets } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { requireAdminFromRequest } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { moveMergedTicketsOffSlug } from "@/lib/tickets/merge";
 
 // PATCH — admin only
 export async function PATCH(
@@ -124,11 +125,17 @@ export async function DELETE(
     );
   }
 
-  // Check ticket usage
+  // Check ticket usage. Merged tickets are hidden and not counted — they're
+  // moved off this priority below, right before the delete.
   const [{ total: ticketCount }] = await db
     .select({ total: count() })
     .from(tickets)
-    .where(eq(tickets.priority, existing.slug));
+    .where(
+      and(
+        eq(tickets.priority, existing.slug),
+        isNull(tickets.mergedIntoTicketId)
+      )
+    );
 
   if (Number(ticketCount) > 0) {
     return NextResponse.json(
@@ -147,6 +154,8 @@ export async function DELETE(
       { status: 400 }
     );
   }
+
+  await moveMergedTicketsOffSlug("priority", existing.slug);
 
   await db.delete(ticketPriorities).where(eq(ticketPriorities.id, id));
 

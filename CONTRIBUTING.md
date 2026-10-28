@@ -18,13 +18,16 @@ You can run Postgres locally without Docker using the embedded dev database:
 
 ```bash
 pnpm db:local                 # starts an embedded Postgres on port 5432
-pnpm db:migrate               # apply migrations
-pnpm db:seed                  # seed default statuses & categories
-pnpm create:admin you@example.com "Your Name"
+pnpm setup                    # apply migrations and seed default statuses & categories
 pnpm dev                      # runs Next.js + the background worker together
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000 — with no admin account yet, this lands you on the setup
+wizard automatically to create your login. Prefer the command line?
+
+```bash
+pnpm create:admin you@example.com "Your Name" "a-strong-password"
+```
 
 ## Project layout
 
@@ -34,7 +37,7 @@ app/            Next.js App Router
   (agent)/      agent portal (ticket queue, detail, dashboard)
   (admin)/      admin portal (users, appearance, ticket config)
   api/          REST API route handlers
-components/     UI (shadcn/ui primitives in components/ui)
+components/     UI (daisyUI + Headless UI primitives in components/ui)
 db/             Drizzle schema + migrations
 lib/            db client, auth, email, storage, worker
 scripts/        setup, seed, admin, worker entrypoints
@@ -49,7 +52,7 @@ docs/           product specs — read the relevant doc before changing a featur
   security-sensitive pure functions only: signed customer tokens, API key hashing,
   webhook signatures and secret encryption, client IP extraction, and rich-text
   flattening. Adding a test there should never require a database.
-- **UI:** use shadcn/ui components; cards/dialogs use `rounded-xl`, buttons/inputs `rounded-md`.
+- **UI:** use the `components/ui/*` primitives; cards/dialogs use `rounded-xl`, buttons/inputs `rounded-md`.
 - **Colors are theme tokens** (`bark`, `sand`, `stone`, `cream`, `bg-public`) — don't hardcode hex so the admin theme + dark mode keep working.
 - **Statuses & categories are dynamic** — never hardcode status slugs like `"closed"`;
   use the `isClosedState` / `isDefault` flags (see `lib/ticket-config.ts`).

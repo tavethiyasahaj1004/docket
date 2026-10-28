@@ -1,0 +1,1 @@
+ALTER TABLE "platform_settings" ADD COLUMN "attachment_max_per_ticket_size_mb" integer DEFAULT 250 NOT NULL;

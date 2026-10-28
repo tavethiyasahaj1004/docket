@@ -1,11 +1,9 @@
 import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 // Admin-configurable SLA targets, optionally scoped to a priority and/or
-// category slug (both nullable — null means "any"). Resolution precedence
-// (most specific wins) lives in lib/sla-policies.ts, not here. Exactly one
-// row should have is_default = true (the global fallback with both scope
-// columns null) — enforced at the API layer, same pattern as
-// ticket_priorities.is_default.
+// category slug (null means "any"). Most-specific-wins precedence lives in
+// lib/sla-policies.ts. Exactly one row should be is_default with both scopes
+// null — enforced at the API layer, as with ticket_priorities.is_default.
 export const slaPolicies = pgTable("sla_policies", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),

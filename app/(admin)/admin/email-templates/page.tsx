@@ -2,7 +2,6 @@ import {
   EMAIL_TEMPLATE_TYPES,
   getAllEmailTemplates,
 } from "@/lib/email-templates";
-import { textToRichTextJson } from "@/lib/rich-text";
 import { getPlatformSettings } from "@/lib/settings";
 import { EmailTemplatesSection } from "./_components/email-templates-section";
 
@@ -19,7 +18,7 @@ export default async function EmailTemplatesPage() {
     label: meta.label,
     description: meta.description,
     defaultSubject: meta.defaultSubject,
-    defaultBody: textToRichTextJson(meta.defaultBody),
+    defaultBody: meta.defaultBody,
     gatedByTicketToggle: meta.gatedByTicketToggle,
     mergeTags: meta.mergeTags,
     subject: rows[meta.type]?.subject ?? null,
@@ -30,6 +29,7 @@ export default async function EmailTemplatesPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
       <EmailTemplatesSection
+        initialAccentColor={settings.emailAccentColor}
         initialTemplates={templates}
         initialTicketEmailNotificationsEnabled={
           settings.ticketEmailNotificationsEnabled

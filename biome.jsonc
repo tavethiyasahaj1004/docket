@@ -12,7 +12,8 @@
   "files": {
     "includes": [
       "**/*",
-      "!components/ui",
+      "!components/ui/calendar.tsx",
+      "!components/ui/chart.tsx",
       "!lib/utils.ts",
       "!hooks/use-mobile.ts",
       "!db/schema",

@@ -1,185 +1,264 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Select as SelectPrimitive } from "radix-ui"
+import {
+  Listbox,
+  ListboxButton,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/react";
+import { CaretDownIcon, CheckIcon } from "@phosphor-icons/react";
+import {
+  Children,
+  createContext,
+  isValidElement,
+  type ReactNode,
+  useContext,
+} from "react";
 
-import { cn } from "@/lib/utils"
-import { CaretDownIcon, CheckIcon, CaretUpIcon } from "@phosphor-icons/react"
+import { cn } from "@/lib/utils";
 
-function Select({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+type Align = "center" | "end" | "start";
+
+interface SelectContextValue {
+  selectedLabel: ReactNode;
+  size: "sm" | "default";
 }
 
-function SelectGroup({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Group>) {
+const SelectContext = createContext<SelectContextValue | null>(null);
+
+function useSelectContext(name: string) {
+  const context = useContext(SelectContext);
+  if (!context) {
+    throw new Error(`<${name}> must be rendered inside <Select>`);
+  }
+  return context;
+}
+
+// Items only mount once the dropdown has opened (Headless UI doesn't render a
+// closed Listbox.Options), so a registration effect can't know the selected
+// label on first paint. Walking the JSX tree needs no mount, so it works.
+function findSelectedLabel(
+  children: ReactNode,
+  value: string
+): ReactNode | undefined {
+  let found: ReactNode | undefined;
+  Children.forEach(children, (child) => {
+    if (found !== undefined || !isValidElement(child)) {
+      return;
+    }
+    if (child.type === SelectItem) {
+      const itemProps = child.props as { children?: ReactNode; value: string };
+      if (itemProps.value === value) {
+        found = itemProps.children;
+      }
+      return;
+    }
+    const childProps = child.props as { children?: ReactNode } | undefined;
+    if (childProps?.children !== undefined) {
+      found = findSelectedLabel(childProps.children, value);
+    }
+  });
+  return found;
+}
+
+function Select({
+  value,
+  onValueChange,
+  disabled,
+  size = "default",
+  children,
+}: {
+  children: ReactNode;
+  disabled?: boolean;
+  onValueChange?: (value: string) => void;
+  size?: "sm" | "default";
+  value?: string;
+}) {
+  const selectedLabel = value ? findSelectedLabel(children, value) : undefined;
+
   return (
-    <SelectPrimitive.Group
-      data-slot="select-group"
-      className={cn("scroll-my-1.5 p-1.5", className)}
-      {...props}
-    />
-  )
+    <SelectContext.Provider value={{ selectedLabel, size }}>
+      <Listbox
+        disabled={disabled}
+        onChange={(next) => {
+          if (typeof next === "string") {
+            onValueChange?.(next);
+          }
+        }}
+        value={value}
+      >
+        {children}
+      </Listbox>
+    </SelectContext.Provider>
+  );
+}
+
+// A `<ul>` may only contain `<li>`, so a group is an `li > ul` whose inner list
+// is `display: contents` — the options stay direct children of the popup.
+function SelectGroup({ className, children }: React.ComponentProps<"ul">) {
+  return (
+    <li data-slot="select-group" role="none">
+      <ul className={cn("contents", className)} role="none">
+        {children}
+      </ul>
+    </li>
+  );
 }
 
 function SelectValue({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />
+  placeholder,
+  className,
+}: {
+  className?: string;
+  placeholder?: ReactNode;
+}) {
+  const { selectedLabel } = useSelectContext("SelectValue");
+  return (
+    <span className={cn("truncate", className)} data-slot="select-value">
+      {selectedLabel ?? placeholder}
+    </span>
+  );
 }
 
 function SelectTrigger({
   className,
-  size = "default",
+  size,
   children,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Trigger> & {
-  size?: "sm" | "default"
+}: Omit<React.ComponentProps<typeof ListboxButton>, "children"> & {
+  children?: ReactNode;
+  size?: "sm" | "default";
 }) {
+  const context = useSelectContext("SelectTrigger");
+  const resolvedSize = size ?? context.size;
   return (
-    <SelectPrimitive.Trigger
-      data-slot="select-trigger"
-      data-size={size}
+    <ListboxButton
       className={cn(
-        "flex w-fit items-center justify-between gap-1.5 rounded-md border border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap transition-[color,border-color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive data-placeholder:text-muted-foreground data-[size=default]:h-10 data-[size=sm]:h-9 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-1.5 dark:aria-invalid:border-destructive/50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+        // `select` supplies the control box, keeping the trigger dimensionally
+        // identical to `Input`. `bg-none` drops daisyUI's CSS caret (a Phosphor
+        // one renders below) and `px-3` re-evens the padding it reserved.
+        "select flex w-fit items-center justify-between bg-none px-3 whitespace-nowrap data-disabled:cursor-not-allowed aria-invalid:border-error [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+        resolvedSize === "sm" && "select-sm",
         className
       )}
+      data-size={resolvedSize}
+      data-slot="select-trigger"
       {...props}
     >
       {children}
-      <SelectPrimitive.Icon asChild>
-        <CaretDownIcon className="pointer-events-none size-3.5 text-muted-foreground" />
-      </SelectPrimitive.Icon>
-    </SelectPrimitive.Trigger>
-  )
+      <CaretDownIcon className="pointer-events-none size-3.5 text-base-content-muted" />
+    </ListboxButton>
+  );
 }
 
+// The popup is a daisyUI `menu`, so it needs a real `<ul><li>` tree. Headless
+// UI's roving tabindex never moves DOM focus, so `data-focus`/`data-selected`
+// map onto `menu-focus`/`menu-active`; the selected row always stays active.
 function SelectContent({
   className,
   children,
-  position = "popper",
   align = "start",
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
+}: Omit<React.ComponentProps<typeof ListboxOptions>, "as"> & {
+  align?: Align;
+}) {
+  const anchor =
+    align === "end"
+      ? "bottom end"
+      : align === "center"
+        ? "bottom"
+        : "bottom start";
   return (
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Content
-        data-slot="select-content"
-        data-align-trigger={position === "item-aligned"}
-        className={cn(
-          "relative z-50 max-h-(--radix-select-content-available-height) min-w-36 origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-xl bg-popover text-popover-foreground shadow-md ring-1 ring-foreground/10 duration-100 data-[align-trigger=true]:animate-none data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
-          position === "popper" && "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
-          className
-        )}
-        position={position}
-        align={align}
-        {...props}
-      >
-        <SelectScrollUpButton />
-        <SelectPrimitive.Viewport
-          data-position={position}
-          className={cn(
-            "data-[position=popper]:h-(--radix-select-trigger-height) data-[position=popper]:w-full data-[position=popper]:min-w-(--radix-select-trigger-width)"
-          )}
-        >
-          {children}
-        </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
-      </SelectPrimitive.Content>
-    </SelectPrimitive.Portal>
-  )
-}
-
-function SelectLabel({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Label>) {
-  return (
-    <SelectPrimitive.Label
-      data-slot="select-label"
+    <ListboxOptions
+      anchor={{ gap: 4, padding: 8, to: anchor }}
+      as="ul"
+      // z-[60], one above Popover/Dialog (z-50): an open listbox is always
+      // the topmost layer, but it's portaled separately, so at an equal
+      // z-index a Popover mounted later (e.g. the ticket "Link ticket"
+      // popover) paints over its options and swallows clicks on them.
       className={cn(
-        "px-3 py-2 text-xs font-semibold tracking-wider text-muted-foreground uppercase",
+        "menu z-[60] max-h-72 min-w-(--button-width) flex-nowrap overflow-x-hidden overflow-y-auto rounded-box bg-base-100 text-base-content shadow-md ring-1 ring-base-content/10 outline-hidden transition duration-100 data-closed:scale-95 data-closed:opacity-0",
         className
       )}
+      data-slot="select-content"
+      transition
+      {...props}
+    >
+      {children}
+    </ListboxOptions>
+  );
+}
+
+function SelectLabel({ className, ...props }: React.ComponentProps<"li">) {
+  return (
+    <li
+      className={cn("menu-title tracking-wider uppercase", className)}
+      data-slot="select-label"
       {...props}
     />
-  )
+  );
 }
 
 function SelectItem({
   className,
   children,
+  value,
+  disabled,
   ...props
-}: React.ComponentProps<typeof SelectPrimitive.Item>) {
+}: Omit<React.ComponentProps<typeof ListboxOption>, "children" | "value"> & {
+  children?: ReactNode;
+  disabled?: boolean;
+  value: string;
+}) {
   return (
-    <SelectPrimitive.Item
-      data-slot="select-item"
-      className={cn(
-        "relative flex w-full cursor-default items-center gap-2.5 rounded-md py-2 pr-8 pl-3 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
-        className
-      )}
+    <ListboxOption
+      as="li"
+      className={disabled ? "menu-disabled" : undefined}
+      disabled={disabled}
+      value={value}
       {...props}
     >
-      <span className="pointer-events-none absolute right-2 flex size-4 items-center justify-center">
-        <SelectPrimitive.ItemIndicator>
-          <CheckIcon className="pointer-events-none" />
-        </SelectPrimitive.ItemIndicator>
-      </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-    </SelectPrimitive.Item>
-  )
+      {({ selected, focus }) => (
+        <span
+          className={cn(
+            "cursor-pointer [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-3.5",
+            // The selected row stays `menu-active` whether or not it holds the
+            // cursor — otherwise it flips light (on open, when it has focus)
+            // to dark (once the cursor moves to another row), which reads as
+            // two different "selected" colours. The cursor shows on other rows.
+            selected ? "menu-active" : focus && "menu-focus",
+            // Same reason as SearchableSelect: daisyUI's pressed-row fill
+            // matches `menu-active`, so only the selected row may stay dark.
+            !selected && "active:bg-base-content/10 active:text-base-content",
+            className
+          )}
+          data-slot="select-item"
+        >
+          {children}
+          {/* `menu` lays the row out as a grid with `grid-auto-flow: column`,
+              so the tick is just the trailing cell — always present, so
+              labels stay aligned whether or not the row is selected. */}
+          <span className="pointer-events-none size-3.5 justify-self-end">
+            {selected && <CheckIcon />}
+          </span>
+        </span>
+      )}
+    </ListboxOption>
+  );
 }
 
-function SelectSeparator({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Separator>) {
+// An empty `<li>` is daisyUI's menu separator. `role="none"` keeps it out of
+// the listbox's accessibility tree, where a bare `listitem` would be an
+// invalid child of `role="listbox"`.
+function SelectSeparator({ className, ...props }: React.ComponentProps<"li">) {
   return (
-    <SelectPrimitive.Separator
+    <li
+      className={className}
       data-slot="select-separator"
-      className={cn("pointer-events-none -mx-1.5 my-1.5 h-px bg-border/50", className)}
+      role="none"
       {...props}
     />
-  )
-}
-
-function SelectScrollUpButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollUpButton>) {
-  return (
-    <SelectPrimitive.ScrollUpButton
-      data-slot="select-scroll-up-button"
-      className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-3.5",
-        className
-      )}
-      {...props}
-    >
-      <CaretUpIcon />
-    </SelectPrimitive.ScrollUpButton>
-  )
-}
-
-function SelectScrollDownButton({
-  className,
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.ScrollDownButton>) {
-  return (
-    <SelectPrimitive.ScrollDownButton
-      data-slot="select-scroll-down-button"
-      className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-3.5",
-        className
-      )}
-      {...props}
-    >
-      <CaretDownIcon />
-    </SelectPrimitive.ScrollDownButton>
-  )
+  );
 }
 
 export {
@@ -188,9 +267,7 @@ export {
   SelectGroup,
   SelectItem,
   SelectLabel,
-  SelectScrollDownButton,
-  SelectScrollUpButton,
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-}
+};

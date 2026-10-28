@@ -116,7 +116,7 @@ same anonymization, so both erasure paths behave identically.
 
 ---
 
-## 2. Delete Ticket (Spam) (`/tickets/{ticketId}`)
+## 2. Delete Ticket (Spam) (`/tickets/{ticketNumber}`)
 
 Admins see a "Delete Ticket" button in the ticket detail sidebar that agents do not see.
 
@@ -137,6 +137,33 @@ Admins see a "Delete Ticket" button in the ticket detail sidebar that agents do 
 ## 3. Ticket Configuration (`/admin/ticket-config`)
 
 Admins can manage the statuses and categories used across all tickets. Changes take effect immediately for all new and existing ticket displays.
+
+### Attachment Limits
+
+The top card sets three limits — maximum files per message (default 5), maximum file size in MB
+(default 10) and **maximum attachment storage per ticket** in MB (default 250, range 1–10,000, and not
+smaller than the per-file size). The per-ticket value caps the combined size of all attachments across
+a ticket's messages and replies; the number of attachments per ticket is not limited. Integers only,
+validated client- and server-side. They live on `platform_settings`, are read per request via
+`getAttachmentLimits()` in `lib/settings.ts`, and apply to the customer portal, agent replies and the
+public API immediately — no redeploy. Lowering a limit never deletes existing files: a ticket already
+over its storage limit (for example after a merge) keeps and can serve them but takes no new
+attachments until usage is back under the limit. File types and the 2 MB logo/favicon limits are fixed.
+
+### Ticket Actions
+
+The first card on the page switches the agent ticket actions on or off, each with its own
+notification switch (all on by default; stored on `platform_settings`, read via
+`getTicketActionSettings()` in `lib/settings.ts`):
+
+| Action | Feature switch (`…Enabled`) | When off | Notification switch (`…NotificationsEnabled`) |
+|---|---|---|---|
+| Merge | `ticketMergeEnabled` | "Merge Ticket" button hidden; `POST /api/tickets/{id}/merge` → 403 | `ticket_merged` notifications; plus **Email the customer** (`ticketMergeCustomerEmailEnabled`) for the "Ticket Merged" email |
+| Split | `ticketSplitEnabled` | Split icon hidden on customer replies; `POST /api/tickets/{id}/split` → 403 | The owner's `ticket_split` notification (with it off, the owner gets the plain `ticket_created` one instead — the new ticket's `ticket_created` notification and push always go out, like any new ticket) |
+| Link | `ticketLinkEnabled` | Add/remove controls hidden — existing links stay visible read-only (sidebar card hidden if there are none); link add/remove APIs → 403 | `ticket_linked` notifications |
+
+A notification switch is greyed out while its feature is off. Changes apply on the next
+page load / request — no restart. Saved through `PATCH /api/admin/settings`.
 
 ### 3a. Statuses
 
@@ -282,6 +309,6 @@ This is provided by the scaffold — no custom implementation needed.
 
 - Admin-only items (Delete Ticket button, Users/Reports nav links) are conditionally rendered based on `session.user.role === 'admin'`.
 - The Users and Reports pages (`/admin/users`, `/admin/reports`) are not linked in the agent sidebar — only visible to admins.
-- Destructive actions (delete ticket, delete user, deactivate user) always use shadcn `Dialog` with explicit confirmation — never `window.confirm()`.
+- Destructive actions (delete ticket, delete user, deactivate user) always use `Dialog` from `components/ui/dialog.tsx` with explicit confirmation — never `window.confirm()`.
 - Use Phosphor Icons: `TrashIcon` for delete, `UserMinusIcon` / `UserPlusIcon` for deactivate / reactivate, `ShieldCheckIcon` for admin role.
 - Deactivate uses primary (not destructive) button styling and a muted status badge — it's routine off-boarding, not an error state. Only Delete Permanently is styled destructive.

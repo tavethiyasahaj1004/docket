@@ -17,13 +17,10 @@ export interface CreateAdminResult {
   name: string;
 }
 
-/**
- * Creates a new admin user directly (no self-service sign-up flow — this is
- * the only way a password-based account ever comes into existence). Used by
- * both the `create:admin` CLI script and the guided `setup` script; called
- * in-process (not shelled out) so a password with shell-special characters
- * can never be mangled by argument quoting.
- */
+/** Creates an admin directly — with no self-service sign-up, the only way a
+ * password account comes into existence. Called in-process by both the
+ * `create:admin` and `setup` scripts, never shelled out, so a password with
+ * shell-special characters can't be mangled by argument quoting. */
 export async function createAdminUser({
   email,
   name,

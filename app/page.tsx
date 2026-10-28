@@ -13,14 +13,15 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { BrandMark } from "@/components/common/brand-mark";
 import { ThemeResetScript } from "@/components/theme/theme-reset-script";
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import { getCurrentSession } from "@/lib/authz";
 import {
   getPlatformSettings,
   resolveBrandName,
   resolveLogoUrl,
 } from "@/lib/settings";
-import { isSetupComplete } from "@/lib/setup";
+import { hasAdminUser } from "@/lib/setup";
+import { cn } from "@/lib/utils";
 
 // The setup check queries the database, which must happen per request — never
 // at build time (the Docker builder has no database, and a baked answer would
@@ -57,7 +58,7 @@ const TRUST = [
 export default async function HomePage() {
   // Before an admin exists, route first-time operators to the setup wizard
   // instead of the customer landing page.
-  if (!(await isSetupComplete())) {
+  if (!(await hasAdminUser())) {
     redirect("/setup");
   }
 
@@ -96,16 +97,19 @@ export default async function HomePage() {
             >
               Find My Tickets
             </Link>
-            <Button
-              asChild
-              className="bg-bark hover:bg-bark/90 text-white rounded-md"
-              size="sm"
+            <Link
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "bg-bark hover:bg-bark/90 text-white rounded-md"
+              )}
+              data-size="sm"
+              data-slot="button"
+              data-variant="default"
+              href="/submit"
             >
-              <Link href="/submit">
-                <span className="sm:hidden">Submit</span>
-                <span className="hidden sm:inline">Submit a Ticket</span>
-              </Link>
-            </Button>
+              <span className="sm:hidden">Submit</span>
+              <span className="hidden sm:inline">Submit a Ticket</span>
+            </Link>
           </div>
         </div>
       </header>
@@ -114,8 +118,8 @@ export default async function HomePage() {
       <main className="flex-1">
         <section className="relative overflow-hidden">
           {/* Decorative background */}
-          <div className="pointer-events-none absolute inset-0 -z-0">
-            <div className="absolute -top-24 left-1/2 -translate-x-1/2 size-[36rem] rounded-full bg-sand/30 blur-3xl" />
+          <div className="pointer-events-none absolute inset-0 z-0">
+            <div className="absolute -top-24 left-1/2 -translate-x-1/2 size-144 rounded-full bg-sand/30 blur-3xl" />
             <div className="absolute top-32 -left-20 size-72 rounded-full bg-white/40 blur-3xl" />
             <div className="absolute top-40 -right-16 size-72 rounded-full bg-stone/20 blur-3xl" />
           </div>
@@ -135,27 +139,32 @@ export default async function HomePage() {
             </p>
 
             <div className="mt-9 flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
-              <Button
-                asChild
-                className="w-full sm:w-auto bg-bark hover:bg-bark/90 text-white rounded-md px-8 gap-2 shadow-sm"
-                size="lg"
+              <Link
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "w-full sm:w-auto bg-bark hover:bg-bark/90 text-white rounded-md px-8 gap-2 shadow-sm"
+                )}
+                data-size="lg"
+                data-slot="button"
+                data-variant="default"
+                href="/submit"
               >
-                <Link href="/submit">
-                  Submit a Support Ticket
-                  <ArrowRightIcon className="size-4" />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                className="w-full sm:w-auto border-sand bg-white/60 text-bark hover:bg-white rounded-md px-8 gap-2"
-                size="lg"
-                variant="outline"
+                Submit a Support Ticket
+                <ArrowRightIcon className="size-4" />
+              </Link>
+              <Link
+                className={cn(
+                  buttonVariants({ size: "lg", variant: "outline" }),
+                  "w-full sm:w-auto border-sand bg-white/60 text-bark hover:bg-white rounded-md px-8 gap-2"
+                )}
+                data-size="lg"
+                data-slot="button"
+                data-variant="outline"
+                href="/my-tickets"
               >
-                <Link href="/my-tickets">
-                  <EnvelopeIcon className="size-4" />
-                  Find My Tickets
-                </Link>
-              </Button>
+                <EnvelopeIcon className="size-4" />
+                Find My Tickets
+              </Link>
             </div>
 
             {/* Trust strip */}
@@ -211,16 +220,19 @@ export default async function HomePage() {
               It only takes a minute. Tell us what's going on and we'll take it
               from there.
             </p>
-            <Button
-              asChild
-              className="mt-6 w-full sm:w-auto bg-cream hover:bg-cream/90 text-bark rounded-md px-8 gap-2"
-              size="lg"
+            <Link
+              className={cn(
+                buttonVariants({ size: "lg" }),
+                "mt-6 w-full sm:w-auto bg-cream hover:bg-cream/90 text-bark rounded-md px-8 gap-2"
+              )}
+              data-size="lg"
+              data-slot="button"
+              data-variant="default"
+              href="/submit"
             >
-              <Link href="/submit">
-                Submit a Ticket
-                <ArrowRightIcon className="size-4" />
-              </Link>
-            </Button>
+              Submit a Ticket
+              <ArrowRightIcon className="size-4" />
+            </Link>
           </div>
         </section>
       </main>

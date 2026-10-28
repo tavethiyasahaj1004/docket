@@ -5,18 +5,16 @@ import { user } from "@/db/schema";
 import { getVerifiedSession } from "@/lib/authz";
 import { db } from "@/lib/db";
 
-// This page is pure routing logic, so every exit must be a *terminal*
-// destination for the state that sent us there. Bouncing a broken session back
-// to /login is not terminal — /login's own "already signed in" guard sends it
-// straight back here. Broken sessions go to /api/session-reset instead, which
-// can clear the cookies (a page cannot) before landing on /login.
+// Pure routing logic, so every exit must be *terminal* for the state that sent
+// us here. /login isn't, for a broken session — its "already signed in" guard
+// bounces straight back. Those go to /api/session-reset, which unlike a page can
+// clear the cookies before landing on /login.
 export const dynamic = "force-dynamic";
 
 export default async function PostAuthPage() {
-  // Getting here without a real session means the browser is holding cookies
-  // that no longer resolve to anything. Clear them instead of redirecting to
-  // /login, so they can't keep satisfying the cookie-cache read that the proxy
-  // still does on every protected route.
+  // Arriving without a real session means the browser holds cookies that no
+  // longer resolve. Clear them rather than redirecting, so they can't keep
+  // satisfying the proxy's cookie-cache read on every protected route.
   const session = await getVerifiedSession();
   if (!session) {
     redirect("/api/session-reset");

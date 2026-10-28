@@ -1,11 +1,9 @@
 import { createElement } from "react";
 import { Button, Hr, Link, Section, Text } from "react-email";
-import { EmailLayout, emailStyles } from "@/lib/email/components/layout";
+import { createEmailStyles, EmailLayout } from "@/lib/email/components/layout";
 import { renderEmailTemplate } from "@/lib/email/renderer";
 import { renderCustomEmail } from "@/lib/email-templates";
 import { getEmailBranding } from "@/lib/settings";
-
-const brand = "#384959";
 
 function TicketRepliedEmail({
   customerName,
@@ -16,6 +14,7 @@ function TicketRepliedEmail({
   agentName,
   productName,
   logoUrl,
+  accentColor,
 }: {
   customerName: string;
   ticketNumber: number;
@@ -25,8 +24,10 @@ function TicketRepliedEmail({
   agentName: string;
   productName: string;
   logoUrl: string | null;
+  accentColor: string;
 }) {
   const truncated = replyPreview.length === 500;
+  const emailStyles = createEmailStyles(accentColor);
 
   return (
     <EmailLayout
@@ -37,14 +38,14 @@ function TicketRepliedEmail({
       <Text style={emailStyles.heading}>New reply on your ticket</Text>
       <Text style={emailStyles.paragraph}>Hi {customerName},</Text>
       <Text style={emailStyles.paragraph}>
-        <strong style={{ color: brand }}>{agentName}</strong> from the{" "}
+        <strong style={emailStyles.highlight}>{agentName}</strong> from the{" "}
         {productName} support team has replied to your ticket{" "}
-        <strong style={{ color: brand }}>#{ticketNumber}</strong>.
+        <strong style={emailStyles.highlight}>#{ticketNumber}</strong>.
       </Text>
       <Section
         style={{
           backgroundColor: "#F7F9FB",
-          borderLeft: `3px solid ${brand}`,
+          borderLeft: `3px solid ${accentColor}`,
           borderRadius: "4px",
           margin: "16px 0",
           padding: "12px 16px",
@@ -65,10 +66,7 @@ function TicketRepliedEmail({
         </Text>
       )}
       <Section style={{ margin: "24px 0" }}>
-        <Button
-          href={ticketUrl}
-          style={{ ...emailStyles.button, backgroundColor: brand }}
-        >
+        <Button href={ticketUrl} style={emailStyles.button}>
           View Ticket &amp; Reply
         </Button>
       </Section>
@@ -91,13 +89,14 @@ export async function ticketRepliedTemplate(props: {
   ticketUrl: string;
   agentName: string;
 }) {
-  const { productName, logoUrl } = await getEmailBranding();
+  const { productName, logoUrl, accentColor } = await getEmailBranding();
   const replyPreview = props.replyContent.slice(0, 500);
 
   const custom = await renderCustomEmail({
     type: "ticket_replied",
     brandName: productName,
     logoUrl,
+    accentColor,
     vars: {
       customerName: props.customerName,
       ticketNumber: String(props.ticketNumber),
@@ -122,6 +121,7 @@ export async function ticketRepliedTemplate(props: {
       agentName: props.agentName,
       productName,
       logoUrl,
+      accentColor,
     })
   );
 

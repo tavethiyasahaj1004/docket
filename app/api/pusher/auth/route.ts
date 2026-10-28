@@ -10,21 +10,10 @@ import { authorizeChannel } from "@/lib/realtime";
 const TICKET_CHANNEL_PREFIX = "private-ticket-";
 const USER_CHANNEL_PREFIX = "private-user-";
 
-// POST /api/pusher/auth — authorizes a client's subscription to a private
-// Pusher Channels channel. NOT covered by the middleware matcher (see
-// proxy.ts) because it must serve two different kinds of caller:
-//
-//   - Agent/admin (session cookie): authorized for `private-tickets` (the
-//     list) and any `private-ticket-{id}` — the app already lets any
-//     agent/admin view any ticket, so no finer-grained restriction needed.
-//     `private-user-{id}` (the notification bell) is stricter — only that
-//     exact agent's own session may subscribe to their own channel.
-//   - Customer (no session — proves identity via their ticket's `token`,
-//     sent as an extra `channelAuthorization` param): authorized ONLY for
-//     `private-ticket-{id}` where `token` matches that exact ticket's
-//     customerToken. Never authorized for the `private-tickets` list.
-//
-// pusher-js posts this as a form-urlencoded body by default.
+// POST /api/pusher/auth — authorizes private-channel subscriptions. Outside the
+// middleware matcher because it serves two callers: an agent session gets the
+// ticket list and any ticket (but only their own `private-user-{id}` bell), while
+// a customer proving a ticket `token` gets that one ticket and never the list.
 export async function POST(request: NextRequest) {
   let socketId: string | null;
   let channel: string | null;
@@ -75,7 +64,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unknown channel." }, { status: 403 });
   }
 
-  const authResponse = authorizeChannel(socketId, channel);
+  const authResponse = await authorizeChannel(socketId, channel);
   if (!authResponse) {
     return NextResponse.json({ error: "Not configured." }, { status: 404 });
   }

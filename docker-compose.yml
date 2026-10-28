@@ -1,7 +1,7 @@
 # Docket, the normal way to run it. PostgreSQL included, nothing built locally.
 #
-#   curl -O https://raw.githubusercontent.com/stack256/docket/main/docker-compose.yml
-#   curl -o .env https://raw.githubusercontent.com/stack256/docket/main/.env.docker.example
+#   curl -O https://raw.githubusercontent.com/stack256org/docket/main/docker-compose.yml
+#   curl -o .env https://raw.githubusercontent.com/stack256org/docket/main/.env.docker.example
 #   # edit .env: set APP_SECRET (openssl rand -base64 36) and NEXT_PUBLIC_APP_URL
 #   docker compose up -d
 #
@@ -18,11 +18,11 @@
 #
 # Port 3000 already taken? Use HOST_PORT, never PORT. See the app service below.
 #
-# Your data lives in two named volumes, support_tool_pgdata and
-# support_tool_uploads. They are pinned to literal names and survive `down`,
+# Your data lives in two named volumes, docket_pgdata and
+# docket_uploads. They are pinned to literal names and survive `down`,
 # `pull` and `up -d`. Only `down -v` destroys them. See the bottom of this file.
 
-x-image: &image ${DOCKET_IMAGE:-ghcr.io/stack256/docket}:${IMAGE_TAG:-latest}
+x-image: &image ${DOCKET_IMAGE:-ghcr.io/stack256org/docket}:${IMAGE_TAG:-latest}
 
 services:
   postgres:
@@ -31,14 +31,14 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: support
-      POSTGRES_DB: support_tool
+      POSTGRES_DB: docket
       # Pinned explicitly — the image's default data directory changed in
       # Postgres 18. See the long comment in docker-compose.yml.
       PGDATA: /var/lib/postgresql/data
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d support_tool"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d docket"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -140,9 +140,9 @@ volumes:
   # creates a new empty volume and orphans the old one. All three compose files
   # use these same names, so you can switch between them without losing data.
   pgdata:
-    name: support_tool_pgdata
+    name: docket_pgdata
   uploads:
-    name: support_tool_uploads
+    name: docket_uploads
 
 # ── The optional Pusher features and this image ───────────────────────────────
 # The published image is built with no Pusher keys, on purpose. NEXT_PUBLIC_*

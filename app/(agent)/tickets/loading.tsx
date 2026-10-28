@@ -19,9 +19,9 @@ export default function TicketsLoading() {
       </div>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft overflow-hidden">
         {/* Table header */}
-        <div className="flex items-center gap-4 px-4 py-3 border-b border-border bg-accent/50">
+        <div className="flex items-center gap-4 px-4 py-3 border-b border-base-300 bg-base-300/50">
           <Skeleton className="h-3 w-10" />
           <Skeleton className="h-3 flex-1" />
           <Skeleton className="h-3 w-20" />
@@ -30,7 +30,7 @@ export default function TicketsLoading() {
           <Skeleton className="h-3 w-20" />
         </div>
         {/* Rows */}
-        <div className="divide-y divide-border/50">
+        <div className="divide-y divide-base-300/50">
           {skeletonKeys(10).map((k) => (
             <div className="flex items-center gap-4 px-4 py-3.5" key={k}>
               <Skeleton className="h-4 w-10 shrink-0 font-mono" />

@@ -1,12 +1,20 @@
-import { eq } from "drizzle-orm";
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
-import { slaPolicies } from "@/db/schema";
-import { audit } from "@/lib/audit";
-import { requireAdminFromRequest } from "@/lib/authz";
-import { db } from "@/lib/db";
-import { getTicketCategories, getTicketPriorities } from "@/lib/ticket-config";
+// SLA is currently hidden from the UI (see docs/tickets.md § SLA) — this
+// whole route is disabled to match, so it can't be reached even by a direct
+// request while there's no UI path to it. Re-enable by restoring the code
+// below alongside the other SLA re-enable steps in docs/tickets.md.
+// import { eq } from "drizzle-orm";
+// import type { NextRequest } from "next/server";
+// import { NextResponse } from "next/server";
+// import { slaPolicies } from "@/db/schema";
+// import { audit } from "@/lib/audit";
+// import { requireAdminFromRequest } from "@/lib/authz";
+// import { db } from "@/lib/db";
+// import { getTicketCategories, getTicketPriorities } from "@/lib/ticket-config";
 
+// No handlers exported while disabled — requests to this route 404.
+export {};
+
+/*
 interface PolicyPatchBody {
   category?: string | null;
   firstResponseMinutes?: number;
@@ -217,3 +225,4 @@ export async function DELETE(
 
   return NextResponse.json({ ok: true });
 }
+*/

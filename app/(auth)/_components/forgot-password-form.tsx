@@ -106,7 +106,7 @@ export function ForgotPasswordForm({ brandName, logoUrl }: Props) {
                   </label>
                   <Input
                     autoComplete="email"
-                    className="text-foreground"
+                    className="text-base-content"
                     id="email"
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="you@example.com"

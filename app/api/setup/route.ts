@@ -4,7 +4,7 @@ import { platformSettings } from "@/db/schema/settings";
 import { AdminCreationError, createAdminUser } from "@/lib/bootstrap-admin";
 import { db } from "@/lib/db";
 import { seedDefaults } from "@/lib/seed-defaults";
-import { isSetupComplete } from "@/lib/setup";
+import { hasAdminUser } from "@/lib/setup";
 
 const VALID_THEMES = new Set([
   "default",
@@ -31,7 +31,7 @@ interface SetupBody {
 // authenticate as yet) but self-disabling: the moment an admin exists it
 // returns 403, so it can never be used to add a second admin on a live install.
 export async function POST(request: NextRequest) {
-  if (await isSetupComplete()) {
+  if (await hasAdminUser()) {
     return NextResponse.json(
       { error: "Setup has already been completed." },
       { status: 403 }

@@ -14,7 +14,7 @@ All routes under `/(agent)/` require a valid session.
 |-------|-------------|
 | `/dashboard` | Stats overview |
 | `/tickets` | All tickets list |
-| `/tickets/{ticketId}` | Ticket detail + management |
+| `/tickets/{ticketNumber}` | Ticket detail + management |
 
 ---
 
@@ -43,22 +43,26 @@ Agents can filter the list by:
 | Status | All / Open / In Progress / Closed |
 | Category | All / Bug / Issue / Feature Request / Billing / General Query |
 | Assigned To | All / Unassigned / Me / [Specific agent] |
+| Tag | All / [Any tag from the shared tag pool] (`?tag=<name>`) |
 | Date Range | Created in last 7 / 30 / 90 days / Custom |
 
 Filters are combinable. Active filters are shown as removable chips above the list.
 
-### Bulk Actions (Admin only)
+### Bulk Actions
 
-- Select multiple tickets with checkboxes.
+- Select multiple tickets with checkboxes. Admins get every action below; agents get the
+  checkboxes only for **Merge** (shown only while merging is switched on) — the other
+  actions are admin-only, enforced by `/api/tickets/bulk`.
 - Bulk assign to an agent.
 - Bulk change status.
 - Bulk change priority.
 - Bulk add a tag (search the shared tag pool or create a new one — same freeform pool as the ticket detail page's tag picker).
+- Bulk merge (admins and agents; 2+ tickets from the same customer): pick the primary ticket — it must be open; the oldest open one is preselected — and the rest are merged into it in one all-or-nothing request, with one customer email. Same dialog as the sidebar's Merge Ticket — see [tickets.md § Merge](./tickets.md#merge). Hidden when an admin turns merging off.
 - Bulk delete (spam — admin only).
 
 ---
 
-## 2. Ticket Detail (`/tickets/{ticketId}`)
+## 2. Ticket Detail (`/tickets/{ticketNumber}`)
 
 The full ticket view for agents. Split into two panels:
 
@@ -113,9 +117,18 @@ The full ticket view for agents. Split into two panels:
 
 - Agent composes a message to the customer.
 - Rich text editor (Tiptap) — same shared editor and toolbar as the customer reply form. Content is stored as Tiptap JSON and rendered read-only via Tiptap. See the **Rich Text (Replies)** convention in `CLAUDE.md`.
-- Can attach files (up to 5 total per ticket).
+- Can attach files (up to the configured per-message limit, default 5, within the ticket's combined attachment storage limit, default 250 MB; the number of files per ticket is not limited).
 - Submit button: "Send Reply".
 - After submit: appears in the thread, customer receives an email notification (email/notification previews use a plain-text flattening of the reply).
+
+### Reply Drafts
+
+- The composer auto-saves the agent's unsent reply ~1s after they stop typing (and immediately when they leave the page or move to Previous/Next), to `ticket_reply_drafts` via `PUT /api/tickets/{id}/draft`.
+- Drafts are **per agent, per ticket** — never visible to other agents or the customer — and follow the agent across browsers/devices. The internal-note mode is saved with the text.
+- On returning to the ticket, the draft is restored into the composer. The action bar shows "Saving draft…" / "Draft saved · {time}" / "Couldn't save draft", plus a trash button that discards it (with a confirmation dialog; `DELETE /api/tickets/{id}/draft`).
+- Sending the reply deletes the draft server-side (in the comments route). Clearing the composer also deletes it.
+- Attachments are not drafted — unsent files only live in the browser tab.
+- `/tickets` shows a pencil icon (browser tooltip "Draft — unsent reply saved" on hover) next to the subject of every ticket where the current agent has a saved draft.
 
 ### Internal Note
 
@@ -143,6 +156,19 @@ The full ticket view for agents. Split into two panels:
 - No confirmation dialog needed.
 - Status → `open`, activity logged.
 
+### Merge, Split & Link
+
+- **Merge into another ticket** (sidebar button) — dialog lists the same customer's other
+  open tickets; picking one merges this ticket into it and navigates there. Irreversible.
+- **Split** (icon on each customer reply) — moves that reply into a new ticket; the dialog
+  asks for the new subject.
+- **Linked Tickets** (sidebar card) — add a `related_to` / `duplicate_of` / `blocks` link by
+  ticket number, or remove one. Links also show as chips in the ticket header and as a
+  link icon in the ticket list; the other ticket's assignee gets a notification.
+- Opening `/tickets/{n}` for a merged ticket redirects to the ticket it was merged into.
+
+Full rules: [tickets.md § Merge, Split & Link](./tickets.md#merge-split--link).
+
 ---
 
 ## 3. Activity History
@@ -169,7 +195,7 @@ Events visible to customers (on the customer portal):
 - Top bar shows: agent name + avatar + sign-out.
 - Ticket list uses a table layout on desktop, card layout on mobile.
 - Status badges and category badges use consistent colors (see [design-system.md](./design-system.md)).
-- All interactive elements use shadcn/ui.
+- All interactive elements use the `components/ui/*` primitives.
 
 ---
 

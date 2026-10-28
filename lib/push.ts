@@ -1,8 +1,11 @@
 import { createHmac } from "node:crypto";
 import PushNotifications from "@pusher/push-notifications-server";
-
-const instanceId = process.env.NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID;
-const secretKey = process.env.PUSHER_BEAMS_SECRET_KEY;
+import {
+  getPusherBeamsSettings,
+  getPushProvider,
+  getWebPushSettings,
+} from "@/lib/integration-settings";
+import { sendWebPushToUsers } from "@/lib/web-push";
 
 // Tolerance (seconds) subtracted from the token's `iat` so that a dev machine
 // whose clock runs slightly ahead of Pusher's servers doesn't get the token
@@ -18,37 +21,38 @@ function base64url(input: Buffer | string): string {
     .replace(/=+$/, "");
 }
 
-let client: PushNotifications | null = null;
-
-function getClient(): PushNotifications | null {
-  if (client) {
-    return client;
-  }
-  if (!instanceId || !secretKey) {
+// No permanent singleton here on purpose — see the matching comment in
+// lib/realtime.ts. Settings can change at runtime via /admin/integrations.
+async function getClient(): Promise<PushNotifications | null> {
+  const settings = await getPusherBeamsSettings();
+  if (!settings) {
     return null;
   }
-  client = new PushNotifications({ instanceId, secretKey });
-  return client;
+  return new PushNotifications({
+    instanceId: settings.instanceId,
+    secretKey: settings.secretKey,
+  });
 }
 
-/** Whether Pusher Beams push is configured for this instance. */
-export function isPushConfigured(): boolean {
-  return Boolean(instanceId && secretKey);
+/** Whether the selected push provider (Pusher Beams or Web Push) is configured. */
+export async function isPushConfigured(): Promise<boolean> {
+  return (await getPushProvider()) === "webpush"
+    ? (await getWebPushSettings()) !== null
+    : (await getPusherBeamsSettings()) !== null;
 }
 
-/**
- * Beams device-association token for a user (used by the client token provider).
- *
- * We build the HS256 JWT ourselves instead of using `client.generateToken()` so
- * that we can back-date `iat` by a small leeway. The SDK stamps `iat` with the
- * local clock; if that clock is even a few seconds ahead of Pusher's servers the
- * token is rejected with "Token used before issued". The signed claims otherwise
- * match what the Beams SDK produces.
- */
-export function generateBeamsToken(userId: string): { token: string } | null {
-  if (!(instanceId && secretKey) || !userId) {
+/** Beams device-association token for a user. The HS256 JWT is built by hand
+ * rather than via `client.generateToken()` purely to back-date `iat`: the SDK
+ * stamps it from the local clock, and a few seconds' drift ahead of Pusher gets
+ * the token rejected as "Token used before issued". Claims are otherwise identical. */
+export async function generateBeamsToken(
+  userId: string
+): Promise<{ token: string } | null> {
+  const settings = await getPusherBeamsSettings();
+  if (!settings || !userId) {
     return null;
   }
+  const { instanceId, secretKey } = settings;
 
   const now = Math.floor(Date.now() / 1000);
   const iat = now - CLOCK_SKEW_LEEWAY_SECONDS;
@@ -71,17 +75,30 @@ export function generateBeamsToken(userId: string): { token: string } | null {
   return { token: `${signingInput}.${signature}` };
 }
 
-/**
- * Send a browser/OS push to the given users. No-op when Beams isn't configured.
- * Best-effort: never throws to the caller (callers should still `.catch`).
- */
+/** Send a browser/OS push to the given users via whichever provider the admin
+ * selected (Admin → Integrations → Push Notifications). No-op when that
+ * provider isn't configured. Best-effort: callers should still `.catch`. */
 export async function publishPushToUsers(
   userIds: string[],
-  data: { title: string; body: string; deepLink?: string }
+  data: { title: string; body: string; deepLink?: string; tag?: string }
 ): Promise<void> {
-  const c = getClient();
   const ids = [...new Set(userIds)].filter(Boolean);
-  if (!c || ids.length === 0) {
+  if (ids.length === 0) {
+    return;
+  }
+
+  if ((await getPushProvider()) === "webpush") {
+    await sendWebPushToUsers(ids, {
+      title: data.title,
+      body: data.body,
+      url: data.deepLink,
+      tag: data.tag,
+    });
+    return;
+  }
+
+  const c = await getClient();
+  if (!c) {
     return;
   }
 

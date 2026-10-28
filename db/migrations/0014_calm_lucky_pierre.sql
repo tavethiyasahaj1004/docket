@@ -1,0 +1,1 @@
+ALTER TABLE "platform_settings" ADD COLUMN "ticket_merge_customer_email_enabled" boolean DEFAULT true NOT NULL;

@@ -117,7 +117,7 @@ export function AddUserDialog({ passwordLoginEnabled }: Props) {
   return (
     <>
       <Button
-        className="gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+        className="gap-1.5 bg-primary text-primary-content hover:bg-primary/90"
         onClick={handleOpen}
         size="sm"
       >
@@ -172,8 +172,8 @@ export function AddUserDialog({ passwordLoginEnabled }: Props) {
                     <button
                       className={`flex-1 py-2 text-sm font-medium rounded-md border transition-colors ${
                         role === opt.value
-                          ? "bg-primary text-primary-foreground border-primary"
-                          : "border-border text-muted-foreground hover:bg-accent/60"
+                          ? "bg-primary text-primary-content border-primary"
+                          : "border-base-300 text-base-content-muted hover:bg-base-300/60"
                       }`}
                       key={opt.value}
                       onClick={() => setRole(opt.value)}
@@ -215,16 +215,16 @@ export function AddUserDialog({ passwordLoginEnabled }: Props) {
                 />
               </div>
 
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-base-content-muted">
                 They will not be notified — share the password with them
                 yourself.
               </p>
 
-              {error && <p className="text-sm text-destructive">{error}</p>}
+              {error && <p className="text-sm text-error">{error}</p>}
 
               <DialogFooter className="pt-2">
                 <Button
-                  className="border-border text-foreground hover:bg-accent"
+                  className="border-base-300 text-base-content hover:bg-base-300"
                   disabled={loading}
                   onClick={() => setOpen(false)}
                   type="button"
@@ -233,7 +233,7 @@ export function AddUserDialog({ passwordLoginEnabled }: Props) {
                   Cancel
                 </Button>
                 <Button
-                  className="bg-primary text-primary-foreground hover:bg-primary/90"
+                  className="bg-primary text-primary-content hover:bg-primary/90"
                   disabled={loading || refreshing || !canSubmit}
                   type="submit"
                 >
@@ -243,11 +243,11 @@ export function AddUserDialog({ passwordLoginEnabled }: Props) {
             </form>
           ) : (
             <div className="space-y-4 py-2">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-base-content-muted">
                 Adding a user requires setting their password, but password
                 sign-in is currently disabled. Enable it in{" "}
                 <Link
-                  className="font-medium text-foreground underline underline-offset-2"
+                  className="font-medium text-base-content underline underline-offset-2"
                   href="/admin/appearance"
                 >
                   Appearance settings
@@ -256,7 +256,7 @@ export function AddUserDialog({ passwordLoginEnabled }: Props) {
               </p>
               <DialogFooter>
                 <Button
-                  className="border-border text-foreground hover:bg-accent"
+                  className="border-base-300 text-base-content hover:bg-base-300"
                   onClick={() => setOpen(false)}
                   type="button"
                   variant="outline"

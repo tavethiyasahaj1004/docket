@@ -4,21 +4,10 @@ import { db } from "@/lib/db";
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
-/**
- * Mints a token in the exact shape Better Auth's own `POST /reset-password`
- * endpoint expects (`verification.identifier = "reset-password:<token>"`,
- * `value = userId`) — so a user who has no `credential` account yet (magic
- * link / Google sign-up) can land on our own `/reset-password?token=...`
- * page and have that same endpoint create their password account, no
- * separate token system needed. This is a documented, stable row shape (see
- * node_modules/better-auth/dist/api/routes/password.mjs), not an internal
- * implementation detail we're reaching past — but it does mean this must be
- * revisited if a future Better Auth upgrade changes that identifier format.
- *
- * Uses a longer 7-day expiry than a live "forgot password" request (Better
- * Auth's default is 1 hour) since this doubles as an account-activation
- * link rather than an immediate response to a user request.
- */
+/** Mints a token in the row shape Better Auth's `POST /reset-password` expects,
+ * so a user with no `credential` account yet can have that endpoint create their
+ * password — no second token system. Revisit if an upgrade changes the identifier
+ * format. Expiry is 7 days, not the 1-hour default: this activates an account. */
 export async function createPasswordSetupToken(
   userId: string
 ): Promise<string> {

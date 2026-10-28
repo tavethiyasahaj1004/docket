@@ -47,7 +47,7 @@ const APPEARANCE_OPTIONS = [
     label: "System",
     description: "Sync with OS preference",
     icon: MonitorIcon,
-    iconClass: "text-muted-foreground bg-muted",
+    iconClass: "text-base-content-muted bg-base-300",
   },
 ];
 
@@ -89,7 +89,9 @@ export function AppearanceSettingsForm() {
     <div className="space-y-8 max-w-2xl">
       {/* Appearance mode */}
       <div>
-        <h3 className="text-sm font-medium text-foreground mb-3">Appearance</h3>
+        <h3 className="text-sm font-medium text-base-content mb-3">
+          Appearance
+        </h3>
         <div className="grid grid-cols-3 gap-3">
           {APPEARANCE_OPTIONS.map((opt) => {
             const Icon = opt.icon;
@@ -99,8 +101,8 @@ export function AppearanceSettingsForm() {
                 className={cn(
                   "flex items-center gap-3 rounded-xl border p-4 text-left transition-all focus:outline-none cursor-pointer",
                   selected
-                    ? "border-primary ring-2 ring-ring/20 bg-primary/5"
-                    : "border-border bg-card hover:bg-accent/60"
+                    ? "border-primary ring-2 ring-primary/20 bg-primary/5"
+                    : "border-base-300 bg-base-100 hover:bg-base-300/60"
                 )}
                 key={opt.id}
                 onClick={() => setAppearance(opt.id)}
@@ -110,15 +112,15 @@ export function AppearanceSettingsForm() {
                   <Icon className="size-4" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">
+                  <p className="text-sm font-semibold text-base-content">
                     {opt.label}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-xs text-base-content-muted truncate">
                     {opt.description}
                   </p>
                 </div>
                 {selected && (
-                  <CheckIcon className="size-4 text-foreground shrink-0" />
+                  <CheckIcon className="size-4 text-base-content shrink-0" />
                 )}
               </button>
             );
@@ -128,7 +130,7 @@ export function AppearanceSettingsForm() {
 
       {/* Color theme */}
       <div>
-        <h3 className="text-sm font-medium text-foreground mb-3">
+        <h3 className="text-sm font-medium text-base-content mb-3">
           Color Theme
         </h3>
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
@@ -139,8 +141,8 @@ export function AppearanceSettingsForm() {
                 className={cn(
                   "flex flex-col items-center gap-2 p-4 rounded-xl border text-center transition-all focus:outline-none cursor-pointer",
                   selected
-                    ? "border-primary ring-2 ring-ring/20 bg-primary/5"
-                    : "border-border bg-card hover:bg-accent/60"
+                    ? "border-primary ring-2 ring-primary/20 bg-primary/5"
+                    : "border-base-300 bg-base-100 hover:bg-base-300/60"
                 )}
                 key={theme.id}
                 onClick={() => setTheme(theme.id)}
@@ -154,7 +156,7 @@ export function AppearanceSettingsForm() {
                     <CheckIcon className="size-4 text-white drop-shadow" />
                   )}
                 </div>
-                <span className="text-xs font-semibold text-foreground">
+                <span className="text-xs font-semibold text-base-content">
                   {theme.name}
                 </span>
               </button>
@@ -166,15 +168,15 @@ export function AppearanceSettingsForm() {
       {/* Action bar */}
       <div
         className={cn(
-          "flex items-center justify-end gap-3 border-t border-border pt-4 transition-all duration-200",
+          "flex items-center justify-end gap-3 border-t border-base-300 pt-4 transition-all duration-200",
           hasChanges ? "opacity-100" : "opacity-50 pointer-events-none"
         )}
       >
-        <span className="text-xs text-muted-foreground mr-auto">
+        <span className="text-xs text-base-content-muted mr-auto">
           {hasChanges ? "You have unsaved changes" : "All changes saved"}
         </span>
         <Button
-          className="border-border text-foreground hover:bg-accent"
+          className="border-base-300 text-base-content hover:bg-base-300"
           disabled={!hasChanges || saving}
           onClick={handleCancel}
           size="sm"
@@ -184,7 +186,7 @@ export function AppearanceSettingsForm() {
           Cancel
         </Button>
         <Button
-          className="bg-primary text-primary-foreground hover:bg-primary/90"
+          className="bg-primary text-primary-content hover:bg-primary/90"
           disabled={!hasChanges || saving}
           onClick={handleSave}
           size="sm"

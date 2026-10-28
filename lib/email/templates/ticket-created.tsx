@@ -1,11 +1,9 @@
 import { createElement } from "react";
 import { Button, Hr, Link, Section, Text } from "react-email";
-import { EmailLayout, emailStyles } from "@/lib/email/components/layout";
+import { createEmailStyles, EmailLayout } from "@/lib/email/components/layout";
 import { renderEmailTemplate } from "@/lib/email/renderer";
 import { renderCustomEmail } from "@/lib/email-templates";
 import { getEmailBranding } from "@/lib/settings";
-
-const brand = "#384959";
 
 function TicketCreatedEmail({
   customerName,
@@ -15,6 +13,7 @@ function TicketCreatedEmail({
   myTicketsUrl,
   productName,
   logoUrl,
+  accentColor,
 }: {
   customerName: string;
   ticketNumber: number;
@@ -23,7 +22,9 @@ function TicketCreatedEmail({
   myTicketsUrl: string;
   productName: string;
   logoUrl: string | null;
+  accentColor: string;
 }) {
+  const emailStyles = createEmailStyles(accentColor);
   return (
     <EmailLayout
       logoUrl={logoUrl}
@@ -34,7 +35,7 @@ function TicketCreatedEmail({
       <Text style={emailStyles.paragraph}>Hi {customerName},</Text>
       <Text style={emailStyles.paragraph}>
         Your support ticket{" "}
-        <strong style={{ color: brand }}>#{ticketNumber}</strong> has been
+        <strong style={emailStyles.highlight}>#{ticketNumber}</strong> has been
         received. Our team will review it and get back to you as soon as
         possible.
       </Text>
@@ -42,10 +43,7 @@ function TicketCreatedEmail({
         <strong>Subject:</strong> {ticketSubject}
       </Text>
       <Section style={{ margin: "24px 0" }}>
-        <Button
-          href={ticketUrl}
-          style={{ ...emailStyles.button, backgroundColor: brand }}
-        >
+        <Button href={ticketUrl} style={emailStyles.button}>
           View Your Ticket
         </Button>
       </Section>
@@ -74,12 +72,13 @@ export async function ticketCreatedTemplate(props: {
   ticketUrl: string;
   myTicketsUrl: string;
 }) {
-  const { productName, logoUrl } = await getEmailBranding();
+  const { productName, logoUrl, accentColor } = await getEmailBranding();
 
   const custom = await renderCustomEmail({
     type: "ticket_created",
     brandName: productName,
     logoUrl,
+    accentColor,
     vars: {
       customerName: props.customerName,
       ticketNumber: String(props.ticketNumber),
@@ -94,7 +93,12 @@ export async function ticketCreatedTemplate(props: {
   }
 
   const html = await renderEmailTemplate(
-    createElement(TicketCreatedEmail, { ...props, productName, logoUrl })
+    createElement(TicketCreatedEmail, {
+      ...props,
+      productName,
+      logoUrl,
+      accentColor,
+    })
   );
 
   const text = `Hi ${props.customerName},

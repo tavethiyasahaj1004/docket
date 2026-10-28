@@ -2,117 +2,286 @@
 
 ## Philosophy
 
-**Ocean Blue.** Clean, professional, and trustworthy. Docket uses a cool blue palette that feels modern and calm — clear skies over deep water. Customers feel confident submitting requests; agents feel focused working in it.
+**Ocean Blue.** Clean, professional, and trustworthy. Docket uses a cool blue
+palette that feels modern and calm — clear skies over deep water. Customers feel
+confident submitting requests; agents feel focused working in it.
+
+---
+
+## Architecture
+
+Docket's UI is built from layers, and each one has a job it is not allowed to
+take from the others:
+
+**daisyUI is the primary component styling system.** Everything else exists to
+supply behaviour daisyUI's CSS-only patterns cannot, or layout daisyUI has no
+opinion about.
+
+| Layer | Owns | Never used for |
+|-------|------|----------------|
+| **daisyUI component classes** | Component appearance: `btn`, `badge`, `card`, `modal-box`, `menu`, `input`, `textarea`, `select`, `table`, `checkbox`, `toggle`, `skeleton`, `divider`, `card-actions`, `menu-title`, `rounded-box`/`rounded-field` | Behaviour. daisyUI's state machines (`modal`'s visibility, `dropdown`'s `:focus-within`, `collapse`'s peer checkbox, `tooltip`'s `data-tip`) are **not** used |
+| **daisyUI theme tokens** | Every colour, radius and size in the app (`base-100`, `primary`, `--radius-field`, …) | — |
+| **Headless UI** | Behaviour where real interaction logic is needed: `Dialog`, `Menu`, `Listbox` — focus traps, roving tabindex, typeahead, ARIA | Styling. It ships none |
+| **Floating UI** | Behaviour Headless UI has no equivalent for: controlled `Popover`, `Tooltip`, collision-aware placement, arrows | Anything Headless UI already covers |
+| **Native HTML** | Controls the platform already implements: `<input type="checkbox">` behind `checkbox`/`toggle` | — |
+| **Tailwind utilities** | Layout, positioning, responsive behaviour, and the brand details daisyUI has no opinion about (`uppercase`, `tracking-ui`, icon sizing) | Re-implementing anything daisyUI already ships |
+
+The rule of thumb when adding or changing a primitive: **reach for the daisyUI
+class first, accept its native appearance, and only add a Tailwind override
+where daisyUI is factually wrong for this app** — every such override in
+`components/ui/*` carries a comment saying why.
+
+There is **no shadcn, no Radix, and no `class-variance-authority`** in this
+project. Do not reintroduce them. Variants are plain lookup objects that map
+onto daisyUI's own modifiers (see `components/ui/button.tsx`).
+
+### Pairing daisyUI with Headless UI
+
+daisyUI and Headless UI are not alternatives — they are layers. Headless UI
+owns open state, focus and keyboard; daisyUI owns what the thing looks like.
+Two mechanics make the pairing work:
+
+1. **Render the DOM shape daisyUI expects.** `menu`'s rules are scoped to a
+   `<ul><li>` tree, so `MenuItems`/`ListboxOptions` render `as="ul"` and
+   `MenuItem`/`ListboxOption` render `as="li"` with the row's content in a
+   `<span>` inside — which is exactly `.menu :where(li > *)`.
+2. **Map Headless UI's state onto daisyUI's own state classes.** Headless UI
+   uses a roving tabindex and never moves DOM focus, so `:focus-visible` never
+   fires. Its render prop exposes `focus`/`selected`, which are mapped to
+   daisyUI's `menu-focus`, `menu-active` and `menu-disabled` rather than
+   re-implemented in Tailwind. Real `:hover` daisyUI still handles itself.
+
+The same idea applies to `Dialog`: Headless UI owns mount, Escape, focus trap
+and transition, while `modal-box` supplies the surface. The one thing
+`modal-box` cannot own is its own visibility (it ships `opacity: 0; scale: .95`
+that only `.modal[open]`/`.modal-open` undo), so the panel pins
+`opacity-100 scale-100` and hands the closed state to `data-closed`.
+
+### Why Tailwind utilities always win
+
+daisyUI 5 emits its component classes into a *nested* cascade layer
+(`@layer utilities { @layer daisyui.l1.l2.l3 { … } }`), while Tailwind emits
+utilities unlayered inside `@layer utilities`. Unlayered declarations beat
+nested-layer ones **regardless of specificity**, so:
+
+```tsx
+<button className="btn bg-primary" />   // bg-primary wins, always
+```
+
+This is the mechanism the whole system leans on. It means:
+
+- A daisyUI component class can be adopted for structure while the brand's
+  colours stay in Tailwind utilities — including in states like `:disabled`,
+  where daisyUI would otherwise recolour the control.
+- A caller's `className` always wins over the primitive's defaults.
+- `cn()` (clsx + tailwind-merge) only dedupes *Tailwind* classes. daisyUI class
+  names pass through untouched — with one exception worth knowing: `table` is
+  also a Tailwind `display` utility, so `cn("table", "hidden")` drops it. That
+  is the desired behaviour, but do not pass other `display` classes to `Table`.
+
+### Where the daisyUI theme is defined
+
+`app/globals.css` holds the whole thing:
+
+- `@plugin "daisyui" { themes: false }` — no stock themes are shipped.
+- `@plugin "daisyui/theme" { name: "docket"; … }` — aliases daisyUI's expected
+  variable names onto Docket's own tokens, so `btn-primary`, `card`, `input`
+  etc. resolve to brand values rather than a second palette.
+- `@theme inline { … }` — exposes those same tokens as Tailwind utilities
+  (`bg-base-100`, `text-base-content-muted`, …).
+- `:root` / `.dark` — the light and dark values.
+
+Sizing knobs set on the theme, worth knowing because primitives depend on them:
+
+| Variable | Value | Effect |
+|----------|-------|--------|
+| `--radius-selector` | `--radius-sm` (0.3rem) | checkbox, toggle, badge |
+| `--radius-field` | `--radius-md` (0.4rem) | `btn`, `input`, `select`, `textarea` — identical to `rounded-md` |
+| `--radius-box` | `--radius-xl` (0.7rem) | `card`, `modal-box`, `skeleton` — identical to `rounded-xl` |
+| `--size-field` | `0.25rem` | `btn`/`input`/`select` height = `--size-field × 10` = `2.5rem` (`h-10`) |
+| `--border` | `1px` | every daisyUI component border |
+| `--depth`, `--noise` | `0` | flat surfaces — no gradients, insets or texture |
 
 ---
 
 ## Color System
 
-### The 4 Brand Colors
+### Agent + admin portals — daisyUI theme tokens
 
-All 4 colors are defined as CSS custom properties in `app/globals.css`. To change the entire look of the app, change only these 4 lines.
+These are the tokens to reach for in `(agent)`, `(admin)`, `(orbit)` and any
+shared component. They are defined for **both** light and dark mode and follow
+the admin's chosen preset.
+
+| Token | Role |
+|-------|------|
+| `base-100` | Elevated surface — cards, popovers, modals, menus, the top bar |
+| `base-200` | Page / body surface, and input fills |
+| `base-300` | Border tier and hover fill |
+| `base-content` | Primary text |
+| `base-content-muted` | Secondary text, captions, timestamps, placeholders |
+| `primary` / `primary-content` | Primary buttons, links, focus rings, active accents |
+| `secondary` / `secondary-content` | Secondary buttons, subdued fills |
+| `sidebar`, `sidebar-content`, `sidebar-accent`, `sidebar-border`, `sidebar-primary` | The app frame |
+| `success`, `warning`, `error` (+ `-content`) | Status only — never layout |
+| `chart-1` … `chart-8`, `chart-other` | Categorical series colour |
+
+`base-100/200/300` are **neutral in every preset**. Brand colour lives in
+`primary`/`secondary`/`sidebar`, matching how every stock daisyUI theme works —
+so switching preset recolours buttons, links, the sidebar and focus rings, while
+borders and hover fills stay a fixed neutral gray-blue.
+
+### Customer portal — the 4 brand utilities
+
+The customer portal (`app/(customer)/`) has no `ThemeProvider` and is
+**light-only**, so it uses the brand colours directly. These utilities are
+*static* — they do not flip in dark mode, which is exactly why they must not be
+used in the agent/admin UI.
 
 ```css
-/* app/globals.css */
-@theme {
-  --color-cream: #BDDDFC;   /* lightest — page backgrounds              */
-  --color-sand:  #88BDF2;   /* light    — borders, dividers, muted fills */
-  --color-stone: #6A89A7;   /* mid      — secondary text, captions, icons */
-  --color-bark:  #384959;   /* darkest  — headings, primary actions, sidebar */
+/* app/globals.css — runtime-overridable by ThemeProvider */
+:root {
+  --brand-cream: #bdddfc;  /* lightest — page backgrounds        */
+  --brand-sand:  #88bdf2;  /* light    — borders, muted fills    */
+  --brand-stone: #6a89a7;  /* mid      — secondary text, icons   */
+  --brand-bark:  #384959;  /* darkest  — headings, primary CTA   */
 }
 ```
 
-Use in Tailwind classes: `bg-cream`, `text-bark`, `border-sand`, `text-stone`.
+Used as `bg-cream`, `border-sand`, `text-stone`, `text-bark`, plus the
+`.bg-public` gradient wash for public pages. **Never hardcode hex values.**
 
-### Color Roles
+### Translation table
 
-| Token | Hex | Primary Role |
-|-------|-----|-------------|
-| `cream` | `#BDDDFC` | Page background, lightest surface, internal note bg |
-| `sand` | `#88BDF2` | Card borders, input borders, dividers, muted fills, inactive nav text |
-| `stone` | `#6A89A7` | Secondary text, captions, placeholder text, muted icons |
-| `bark` | `#384959` | Primary text, headings, primary buttons, sidebar background, active states |
+If you are touching agent/admin code and reach for one of the old static
+utilities, use the token instead:
 
-### Surfaces
-
-| Surface | Background | Border | Notes |
-|---------|-----------|--------|-------|
-| Page | `cream` | — | The base canvas |
-| Card | `white` | `sand` (1px) | Pops against cream background |
-| Input | `white` | `sand` (1px) | Focus ring: `bark` |
-| Sidebar | `bark` | — | Deep navy |
-| Internal note | `cream` | `sand` (2px left) | Blue tint note feel |
-| Modal overlay | `black/30` | — | No backdrop blur |
-
-### Semantic Colors (Status, Error, Success)
-
-These are separate from the brand palette — they carry universal meaning and must not be overridden with brand colors.
-
-| Semantic | Color | Use |
-|----------|-------|-----|
-| Error | `red-600` | Destructive actions, validation errors |
-| Warning | `amber-600` | In-progress status |
-| Info | `sky-600` | Open status |
-| Success | `emerald-600` | Closed status (task done) |
-| Neutral | `stone` (brand) | Closed ticket badge |
+| Old (static, light-only) | Use instead (adapts to dark + preset) |
+|---|---|
+| `bg-white` | `bg-base-100` |
+| `bg-cream` | `bg-base-300` |
+| `text-bark` | `text-base-content` |
+| `text-stone` | `text-base-content-muted` |
+| `border-sand` | `border-base-300` |
+| `bg-bark` / `text-cream` | `bg-primary` / `text-primary-content` |
+| `ring-bark` | `ring-primary` |
+| sidebar chrome | `bg-sidebar`, `text-sidebar-content`, `bg-sidebar-accent`, `border-sidebar-border` |
 
 ### Accessibility
 
 | Combination | Contrast | Pass |
 |-------------|----------|------|
-| `bark` (#574A24) on `white` | ~8.1:1 | AAA ✓ |
-| `bark` on `cream` (#FAE8B4) | ~5.2:1 | AA ✓ |
-| `white` on `bark` | ~8.1:1 | AAA ✓ |
-| `stone` on `cream` | ~2.9:1 | Fail for small text ✗ |
-| `stone` on `white` | ~3.5:1 | AA large text only |
+| `base-content` (#384959) on `base-100` (#ffffff) | ~8.1:1 | AAA ✓ |
+| `base-content` on `--page` (#bdddfc) | ~5.2:1 | AA ✓ |
+| `primary-content` on `primary` | ~8.1:1 | AAA ✓ |
+| `base-content-muted` (#6a89a7) on `base-100` | ~3.5:1 | AA large text only |
 
-**Rule:** Never use `stone` for body text or labels. Use it only for captions, timestamps, and helper text (14px+). Always use `bark` for primary text and form labels.
+**Rule:** never use `base-content-muted` for body text or form labels — only
+captions, timestamps and helper text. Primary text and labels use
+`base-content`.
+
+### Theme presets
+
+Admins pick a colour preset and an appearance mode (light / dark / auto) at
+`/admin/appearance`; both persist to `platform_settings` and apply at runtime
+with no CSS rebuild. Six presets ship: `default`, `ocean`, `forest`, `sunset`,
+`indigo`, `slate`. To add one, extend `LIGHT_THEME_VARS` **and**
+`DARK_THEME_VARS` in `components/theme/theme-provider.tsx`, then add the swatch
+to `appearance-settings-form.tsx`.
+
+---
+
+## Component Inventory
+
+Every primitive in `components/ui/*`, what it is built from, and — where it is
+not a daisyUI component — why.
+
+**17 of the 20 primitives now carry daisyUI component classes.** The three that
+do not are `label`, `collapsible` and `chart`, for the reasons in the last
+column.
+
+| Component | daisyUI class | Behaviour layer | Tailwind still doing | Why not more daisyUI |
+|---|---|---|---|---|
+| `button` | `btn`, `btn-primary`/`-secondary`/`-outline`/`-ghost`/`-link`, `btn-error btn-soft`, `btn-xs`/`-sm`/`-lg`, `btn-square` | — | `uppercase` + `tracking-ui`, icon sizing | Nothing — colour, size, radius, hover, active, focus and disabled are all daisyUI |
+| `badge` | `badge`, `badge-soft`, `badge-outline`, `badge-ghost`, `badge-error` | — | `uppercase` + `tracking-ui`, icon sizing | Nothing |
+| `card` | `card`, `card-border`, `card-title`, `card-actions` | — | Section padding model, border colour | `card-border` paints its frame in `base-200`, and this theme sets `base-200 == base-100` in light mode, so the stock border would be invisible → `border-base-300`. `card-body` is not used because this card puts padding on the sections, not on one wrapper |
+| `input` | `input` | Native `<input>` | `w-full` (daisyUI caps at 20rem), placeholder colour, `text-base` below `md` | Placeholder colour: daisyUI only styles placeholders on *nested* inputs. `text-base` below `md` stops iOS Safari zooming the page on focus |
+| `textarea` | `textarea` | Native `<textarea>` | `field-sizing-content`, `min-h-16`, `resize-none`, placeholder colour, `text-base` below `md` | As `input`, plus the auto-growing behaviour daisyUI has no opinion about |
+| `select` | `select`, `select-sm` (trigger); `menu`, `menu-focus`, `menu-active`, `menu-disabled`, `menu-title`, `rounded-box` (popup) | Headless UI `Listbox` | `bg-none` to drop daisyUI's CSS caret (a Phosphor caret is drawn instead), `px-3` for symmetric padding, popup elevation | Nothing |
+| `table` | `table` | — | Header fill, uppercase head type, separator colour, row hover | daisyUI draws separators in `base-content 5%` and hovers rows in `base-200` (== `base-100` here) — both are invisible at this palette, so the border tier and hover fill use `base-300` |
+| `checkbox` | `checkbox`, `checkbox-primary`, `checkbox-sm`/`-xs` | Native `<input type=checkbox>` | Resting border colour, `aria-invalid` state | `--input-color` drives *both* the resting border and the checked fill, so `checkbox-primary` alone frames an unchecked box in full-strength `primary`. The resting border drops to `base-300` and returns to `primary` only when checked/indeterminate |
+| `switch` | `toggle`, `toggle-primary`, `toggle-sm`/`-xs` | Native `<input type=checkbox>` | Track and knob fill, `aria-invalid` state | daisyUI 5's toggle is outline-only — the track is transparent when off and `base-100` when on, so the only difference between states is a dot moving and changing colour. Both states get a filled track instead (`base-300`/`base-content-muted` off, `primary`/`primary-content` on), which is the conventional switch affordance. All four are theme tokens |
+| `skeleton` | `skeleton` | — | — | Nothing — fill, `--radius-box` rounding and the reduced-motion-gated sweep are all daisyUI |
+| `separator` | `divider`, `divider-vertical`/`-horizontal` | — | — | Nothing. Note daisyUI's axis naming is the reverse of ARIA's: `divider-horizontal` draws a *vertical* rule |
+| `dialog` | `modal-box`, `modal-action` | Headless UI `Dialog` | Overlay, panel grid, `opacity-100 scale-100` + `data-closed:` | `modal`/`modal-open` are a CSS-only visibility machine; Headless UI already owns open state, mount, focus trap, Escape and transitions, so only the *surface* is taken from daisyUI |
+| `dropdown-menu` | `menu`, `menu-focus`, `menu-active`, `menu-disabled`, `menu-title`, `rounded-box` | Headless UI `Menu` (+ Floating UI for submenus) | Popup elevation/stacking, destructive-row colour, icon sizing | `dropdown` opens on `:focus-within` with no way to drive it from React state, so positioning stays with Headless UI's `anchor` |
+| `popover` | `rounded-box` + theme tokens | Floating UI | Panel surface | daisyUI has no *controlled* popover: `dropdown-content` only applies inside a `.dropdown` ancestor, so it cannot reach a portalled panel, and flip/shift/size collision handling has no daisyUI equivalent. An `as="ul"` escape hatch lets list-shaped content adopt `menu` (the dropdown submenu does) |
+| `tooltip` | daisyUI's tooltip *appearance*, reproduced from the same tokens (`--color-neutral` surface, `--radius-field`, 0.25/0.5rem padding) | Floating UI | Bubble surface, arrow fill | The `tooltip` class positions `.tooltip-content` absolutely inside a `.tooltip` ancestor and reveals it on `:hover` — it cannot be portalled out of a clipping ancestor, never flips at a viewport edge, and has no controlled open state |
+| `calendar` | via `buttonVariants` → `btn` | react-day-picker | Grid, day-cell states | daisyUI's `calendar` only styles Cally's `<calendar-date>` (through `::part()`) and Pikaday's `.pika-*` markup — it has no react-day-picker selectors |
+| `sonner` | — (themed from daisyUI tokens via CSS variables) | Sonner | Icons, CSS-variable theming | daisyUI's `toast` is only a fixed-position stacking container; Sonner owns the toast DOM, positioning and stack animation |
+| `label` | — | — | Uppercase field label | `label` sets four properties and three must be undone: it mutes the colour to 60% (below this palette's 4.5:1 for form labels), makes the label `inline-flex` (it is a block-level sibling above its control), and forces `white-space: nowrap` (labels wrap in narrow columns) |
+| `collapsible` | — | React state | — (callers style it) | daisyUI's `collapse` toggles from a peer checkbox or `:focus`. This disclosure is state-driven and drops content with `hidden`, keeping it out of the a11y tree. It ships no styling to migrate |
+| `chart` | — | Recharts | Container, legend, tooltip | daisyUI has no charting component and Recharts renders SVG that component classes cannot reach. Series colour comes from the `chart-1…8` tokens |
+
+`components/common/searchable-select.tsx` is not a primitive but follows the
+same pattern — a `select` trigger over a Floating UI popover whose list is a
+daisyUI `menu`, with its keyboard cursor mapped onto `menu-focus`.
+
+**Rule:** always use these primitives. Never build a one-off control when one of
+them covers it, and never reach for a UI library that was removed.
 
 ---
 
 ## Typography
 
-Font: **Inter** (default from scaffold). Clean, humanist, warm at lower weights.
+Font: **Inter**, with `cv02`/`cv03`/`cv04`/`cv11` feature settings.
 
 | Role | Class |
 |------|-------|
-| Page title | `text-2xl font-semibold text-bark` |
-| Section title | `text-lg font-semibold text-bark` |
-| Card title | `text-base font-semibold text-bark` |
-| Body text | `text-sm text-bark` |
-| Secondary / muted | `text-sm text-stone` |
-| Caption / timestamp | `text-xs text-stone` |
-| Form label | `text-sm font-medium text-bark` |
-| Placeholder | `text-stone` (via Tailwind placeholder modifier) |
+| Page title | `text-2xl font-semibold text-base-content` |
+| Section title | `text-lg font-semibold text-base-content` |
+| Card title | `card-title font-heading tracking-ui uppercase` (via `CardTitle`) |
+| Body text | `text-sm text-base-content` |
+| Secondary / muted | `text-sm text-base-content-muted` |
+| Caption / timestamp | `text-xs text-base-content-muted` |
+| Form label | `<Label>` — `text-xs font-semibold tracking-wide uppercase` |
+| Eyebrow | `text-2xs tracking-eyebrow uppercase` |
+| Button / badge type | `uppercase tracking-ui` over daisyUI's own size ramp — `btn`/`badge` set the font size (0.6875 / 0.75 / 0.875 / 1.125rem across `btn-xs`…`btn-lg`), Docket only adds the case and tracking |
+
+`tracking-ui` (0.1em) and `tracking-eyebrow` (0.16em) are theme tokens, not
+arbitrary values.
 
 ---
 
 ## Buttons
 
-### Primary
-```
-bg-bark text-white rounded-md px-4 py-2 text-sm font-medium
-hover:bg-bark/90  focus-visible:ring-2 ring-bark/50
-```
+Use `<Button>`; do not hand-roll `btn`. Every variant and size is a daisyUI
+modifier — there is no Tailwind colour, height or padding left in the
+primitive.
 
-### Secondary / Outline
-```
-bg-white text-bark border border-sand rounded-md px-4 py-2 text-sm font-medium
-hover:bg-cream
-```
+| Variant | daisyUI class | Result |
+|---------|---------------|--------|
+| `default` | `btn-primary` | Solid `primary` on `primary-content` |
+| `outline` | `btn-outline` | Transparent on a `base-content` border, hover fills |
+| `secondary` | `btn-secondary` | Solid `secondary` on `secondary-content` |
+| `ghost` | `btn-ghost` | Transparent, hover fills `base-content/10` |
+| `destructive` | `btn-error btn-soft` | 8% `error` wash, 10% `error` border, `error` text |
+| `link` | `btn-link` | `primary`, underlined, no chrome |
 
-### Ghost
-```
-text-stone rounded-md px-4 py-2 text-sm font-medium
-hover:bg-cream hover:text-bark
-```
+| Size | daisyUI class | Height (`--size-field × n`) |
+|------|---------------|----------------------------|
+| `xs` | `btn-xs` | 1.5rem |
+| `sm` | `btn-sm` | 2rem |
+| `default` | — | 2.5rem |
+| `lg` | `btn-lg` | 3rem |
+| `icon`, `icon-xs`, `icon-sm`, `icon-lg` | `btn-square` (+ size) | square, `--btn-p` zeroed |
 
-### Destructive
-```
-bg-red-600 text-white  (shadcn default variant="destructive")
-```
+Focus is daisyUI's own 2px `outline` in the button's colour at `2px` offset —
+not a Tailwind ring. Disabled is daisyUI's `base-content/10` fill with
+`base-content/20` text. A caller may still override any of it with a Tailwind
+utility (unlayered utilities beat daisyUI's nested layer), and a number of
+customer-portal buttons do exactly that to pin the static brand palette.
 
-Loading state: spinner replaces or appears before the label text. Button stays the same size — never resize on loading.
+Loading state: spinner replaces or precedes the label. The button never resizes.
 
 ---
 
@@ -120,48 +289,52 @@ Loading state: spinner replaces or appears before the label text. Button stays t
 
 ```
 ┌─────────────────────────────────────────┐
-│ Full Name *                             │  ← label: text-sm font-medium text-bark
+│ FULL NAME *                             │  ← <Label>: text-xs font-semibold uppercase
 │ ┌─────────────────────────────────────┐ │
-│ │ Enter your full name                │ │  ← input: white bg, sand border
+│ │ Enter your full name                │ │  ← <Input>: daisyUI `input`
 │ └─────────────────────────────────────┘ │
 │                                         │
-│ Email Address *                         │
+│ DESCRIPTION *                           │
 │ ┌─────────────────────────────────────┐ │
-│ │ jane@example.com                    │ │
+│ │   Describe your issue in detail...  │ │  ← <Textarea>: field-sizing-content
 │ └─────────────────────────────────────┘ │
-│                                         │
-│ Description *                           │
-│ ┌─────────────────────────────────────┐ │
-│ │                                     │ │
-│ │   Describe your issue in detail...  │ │  ← textarea: min-h-[120px]
-│ │                                     │ │
-│ └─────────────────────────────────────┘ │
-│ Helper text or error message            │  ← text-xs text-stone (help) or text-red-600 (error)
+│ Helper text or error message            │  ← text-xs text-base-content-muted / text-error
 └─────────────────────────────────────────┘
 ```
 
-- Input border: `border-sand` → focus: `border-bark ring-1 ring-bark/20`
-- Error state: `border-red-400 ring-1 ring-red-400/20`
-- Labels always above the field, never floating/placeholder labels
-- Required fields: asterisk `*` in `text-bark` (same as label) — not red
-- Use shadcn `Form` + react-hook-form for all forms
+- Surface, border and focus are daisyUI's: `base-100` fill on a
+  `base-content/20` border, focus raises `--input-color` to `base-content` and
+  draws a 2px `outline` at `2px` offset. Height is `--size-field × 10`
+  (2.5rem), identical to `Button` and `SelectTrigger`.
+- Error state: `aria-invalid` → `border-error`
+- Labels always above the field — never floating or placeholder-as-label
+- Required fields: `*` in the label colour, not red
+- Build forms from controlled inputs (`useState`) + `components/ui/*` — no form
+  library
 
 ---
 
 ## Border Radius
 
-| Surface | Class |
-|---------|-------|
-| Cards | `rounded-xl` |
-| Modals / Dialogs | `rounded-xl` |
-| Popovers / Dropdowns | `rounded-xl` |
-| Section containers | `rounded-xl` |
-| Buttons | `rounded-md` |
-| Inputs / Selects | `rounded-md` |
-| Badges | `rounded-full` |
-| Avatars | `rounded-full` |
+Radius is proportional: `--radius: 0.5rem`, and every step is a multiple of it,
+so a preset can rescale the whole UI at once.
 
-Never leave border radius missing on any container.
+Prefer daisyUI's own radius utilities (`rounded-box`, `rounded-field`,
+`rounded-selector`) over the Tailwind scale for anything that sits next to a
+daisyUI component — they read from the same variables, so a preset rescales
+them together.
+
+| Surface | daisyUI source | Tailwind equivalent |
+|---------|----------------|---------------------|
+| Cards, modals, dialogs, popovers, dropdowns | `--radius-box` — applied automatically by `card`, `modal-box`, `skeleton`; `rounded-box` for anything else | `rounded-xl` |
+| Buttons, inputs, selects, textareas, menu rows | `--radius-field` — applied automatically by `btn`/`input`/`select`/`textarea`/`menu`; `rounded-field` for anything else | `rounded-md` |
+| Checkboxes, toggles, badges | `--radius-selector` — applied automatically by `checkbox`/`toggle`/`badge` | — |
+| Avatars | — | `rounded-full` |
+
+Because `btn`, `badge`, `input`, `select`, `textarea`, `card`, `modal-box`,
+`menu` and `skeleton` all carry their own radius, **do not add
+`rounded-md`/`rounded-xl` to them** — it is redundant and breaks preset
+rescaling.
 
 ---
 
@@ -169,57 +342,49 @@ Never leave border radius missing on any container.
 
 | Token | Value |
 |-------|-------|
-| Card padding | `p-6` |
+| Card padding | `p-6` (`--card-spacing`, `p-4` at `size="sm"`) |
 | Section gap | `space-y-6` |
 | Form field gap | `space-y-4` |
-| Sidebar padding | `px-3 py-4` |
+| Sidebar width | `w-60`, `w-16` collapsed |
+| Top bar height | `h-14` |
 | Nav item padding | `px-3 py-2` |
 | Page content padding | `p-6 lg:p-8` |
 
 ---
 
-## Status Badges
+## Status & Category Badges
 
-```
-Open        → bg-sky-100 text-sky-700 border border-sky-200
-In Progress → bg-amber-100 text-amber-700 border border-amber-200
-Closed      → bg-sand/40 text-stone border border-sand
-```
-
-Using brand sand/stone for "Closed" integrates it naturally into the warm palette — closed tickets feel "settled" not "alarming."
+`<Badge>` is daisyUI's `badge` — a chip with `--radius-selector` rounding, a
+1.5rem height and a 1px border. `default`/`secondary`/`destructive` use
+`badge-soft`, which mixes 8% of the badge colour into `base-100` for the fill
+and 10% for the border, so it stays legible in light *and* dark mode. Status
+colour comes from semantic tokens, never from the brand palette:
 
 ```tsx
-// Badge usage example
-<Badge className="bg-sky-100 text-sky-700 border border-sky-200 rounded-full">
-  Open
-</Badge>
+<Badge className="text-success">Closed</Badge>
+<Badge className="text-warning">In Progress</Badge>
+<Badge variant="destructive">Failed</Badge>
 ```
 
----
+| Semantic | Token | Use |
+|----------|-------|-----|
+| Error | `error` | Destructive actions, validation errors, failed deliveries |
+| Warning | `warning` | In-progress / needs attention |
+| Success | `success` | Closed, delivered, healthy |
+| Neutral | `base-content-muted` | Everything else |
 
-## Category Badges
-
-All category badges use the same neutral brand style:
-```
-bg-sand/30 text-stone border border-sand/50 rounded-full text-xs
-```
-
-| Category | Label |
-|----------|-------|
-| `bug` | Bug |
-| `issue` | Issue |
-| `feature_request` | Feature Request |
-| `billing` | Billing |
-| `general_query` | General Query |
+Never use a semantic colour for layout — only for status and errors.
 
 ---
 
 ## Icons
 
-Use **Phosphor Icons** (`@phosphor-icons/react`). Always `weight="regular"` unless emphasis is needed (`weight="bold"` for active/selected states).
+Use **Phosphor Icons** (`@phosphor-icons/react`) — not Lucide, not Heroicons.
+Default `weight="regular"`; `weight="bold"` for active/selected states and
+`weight="duotone"` for stat-card glyphs.
 
-| Usage | Icon Name |
-|-------|-----------|
+| Usage | Icon |
+|-------|------|
 | Dashboard | `SquaresFourIcon` |
 | Ticket | `TicketIcon` |
 | Users | `UsersIcon` |
@@ -229,7 +394,6 @@ Use **Phosphor Icons** (`@phosphor-icons/react`). Always `weight="regular"` unle
 | Deactivate / reactivate user | `UserMinusIcon` / `UserPlusIcon` |
 | Close ticket | `CheckCircleIcon` |
 | Reopen ticket | `ArrowCounterClockwiseIcon` |
-| Assign agent | `UserPlusIcon` |
 | Send reply | `PaperPlaneRightIcon` |
 | Search | `MagnifyingGlassIcon` |
 | Filter | `FunnelsIcon` |
@@ -245,7 +409,8 @@ Use **Phosphor Icons** (`@phosphor-icons/react`). Always `weight="regular"` unle
 | Clock / time | `ClockIcon` |
 | Chevron | `CaretRightIcon` / `CaretDownIcon` |
 
-Icon sizes: `size-4` (16px) inline, `size-5` (20px) nav, `size-6` (24px) standalone/empty states.
+Sizes: `size-4` inline, `size-5` nav, `size-6` standalone/empty states. Buttons
+size their own icons (`size-3.5`, or `size-3` at `xs`).
 
 ---
 
@@ -255,220 +420,161 @@ Icon sizes: `size-4` (16px) inline, `size-5` (20px) nav, `size-6` (24px) standal
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  [Logo] Docket         [Find My Tickets]  [Submit]│  ← white header, sand bottom border
+│  [Logo] Docket        [Find My Tickets]  [Submit]       │  ← white header, sand border
 ├─────────────────────────────────────────────────────────┤
-│                                                         │
-│                  cream background                       │
+│                  .bg-public wash                        │
 │          ┌──────────────────────────────────┐           │
-│          │  white card — rounded-xl          │           │
-│          │  max-w-2xl mx-auto                │           │
-│          │                                   │           │
-│          │  [content here]                   │           │
-│          │                                   │           │
+│          │  white card — rounded-xl          │          │
+│          │  max-w-2xl mx-auto                │          │
 │          └──────────────────────────────────┘           │
-│                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
-- Background: `cream`
-- Header: `white`, bottom border `sand`, max-w-screen, sticky
+- Background: `.bg-public` (a soft gradient derived from `--brand-cream`)
+- Header: white, bottom border `sand`, sticky
 - Content: `max-w-2xl mx-auto` for forms, `max-w-3xl mx-auto` for lists/detail
-- No sidebar
+- No sidebar, light-only — brand utilities are correct here
 
 ### Agent Portal
 
 ```
 ┌──────────┬──────────────────────────────────────────────┐
-│          │ top bar: white, sand bottom border            │
+│          │ top bar: bg-base-100, border-b border-base-300│
 │  SIDEBAR ├──────────────────────────────────────────────┤
 │  w-60    │                                              │
-│  bg-bark │           cream background                   │
-│          │                                              │
-│  cream   │        [main content area]                   │
+│ bg-sidebar│          bg-base-200 surface                │
+│          │        [main content area]                   │
 │  logo    │                                              │
 │  ──────  │                                              │
 │  nav     │                                              │
-│  items   │                                              │
-│          │                                              │
 │  ──────  │                                              │
-│  agent   │                                              │
 │  profile │                                              │
 └──────────┴──────────────────────────────────────────────┘
 ```
 
-- Sidebar: `bg-bark w-60 min-h-screen flex flex-col`
-- Main area: `flex-1 bg-cream`
-- Top bar inside main: `bg-white border-b border-sand h-14`
+- Sidebar: `bg-sidebar w-60 h-full flex flex-col` (`w-16` collapsed, animated
+  with `transition-[width]`)
+- Main area: `flex-1`, page surface `bg-base-200`
+- Top bar: `h-14 border-b border-base-300 bg-base-100 px-6`
 
 **Page title + description live in the top bar, not in the page.** Every
 agent/admin route registers an icon, title, and one-line description in
 `ROUTE_META` in `components/agent/topbar.tsx`, keyed by pathname — a route with
 no entry renders a blank top bar. So when adding a page under `(agent)` or
 `(admin)`, add its `ROUTE_META` entry and **don't** repeat the title as a
-page-level `<h1>`. Card/section headings inside the page (`<h2 class="text-base
-font-semibold">`) are separate and still expected. Standalone docs pages
-(`/admin/api-keys/docs`, `/admin/webhooks/docs`) are the one exception — they
-keep their own in-page hero heading as well.
+page-level `<h1>`. Card/section headings inside the page are separate and still
+expected. Standalone docs pages (`/admin/api-keys/docs`,
+`/admin/webhooks/docs`) are the one exception — they keep their own in-page
+hero heading.
 
 ### Ticket Detail (Agent)
 
 ```
 ┌──────────┬────────────────────────────┬─────────────────┐
-│          │                            │                 │
 │ SIDEBAR  │   THREAD                   │   INFO SIDEBAR  │
 │  (nav)   │   (flex-1, min-w-0)        │   w-80          │
-│          │                            │                 │
 │          │  Subject + badges          │  Status         │
-│          │  ─────────────────         │  Category       │
-│          │  [customer msg]            │  Assigned       │
-│          │  [internal note]           │  ─────────────  │
+│          │  [customer msg]            │  Category       │
+│          │  [internal note]           │  Assigned       │
 │          │  [agent reply]             │  Customer info  │
-│          │                            │  ─────────────  │
-│          │  ─────────────────         │  Dates          │
-│          │  [Reply form]              │  ─────────────  │
-│          │                            │  [Close Ticket] │
+│          │  [Reply form]              │  [Close Ticket] │
 └──────────┴────────────────────────────┴─────────────────┘
 ```
 
 - Thread: `flex-1 overflow-y-auto`
-- Info sidebar: `w-80 border-l border-sand bg-white`
-- On mobile: single column, info sidebar becomes a collapsible section below
+- Info sidebar: `w-80 border-l border-base-300 bg-base-100`
+- Mobile: single column, info sidebar becomes a collapsible section below
 
 ---
 
-## Sidebar Design (Agent/Admin)
+## Sidebar (Agent/Admin)
 
 ```
 ┌────────────────────────┐
-│                        │  bg-bark (#574A24)
-│  ◈  Docket       │  ← logo + name: text-cream font-semibold
-│                        │
-│  ────────────────────  │  ← divider: sand/20 opacity
-│                        │
-│  ⊞  Dashboard          │  ← inactive: text-sand, hover: text-cream bg-cream/10
-│  ✉  All Tickets        │  ← active: text-cream bg-cream/15 border-l-2 border-sand
-│                        │
-│  ── Admin only ──      │  ← section label: text-sand/60 text-xs uppercase
+│                        │  bg-sidebar
+│  ◈  Docket             │  ← logo + name: text-sidebar-content
+│  ────────────────────  │  ← border-sidebar-border
+│  ⊞  Dashboard          │  ← inactive: hover:bg-sidebar-accent
+│  ✉  All Tickets        │  ← active: bg-sidebar-accent + border-l-2 border-sidebar-primary
+│  ── Admin only ──      │  ← section label: text-xs uppercase tracking-wider
 │  👥 Users              │
-│                        │
 │  ────────────────────  │
-│                        │
-│  ○  Jane Smith         │  ← avatar + name: text-cream text-sm
-│     jane@example.com   │  ← email: text-sand text-xs
-│     Sign Out           │  ← text-sand text-xs hover:text-cream
+│  ○  Jane Smith         │  ← avatar: bg-sidebar-primary
+│     jane@example.com   │
 └────────────────────────┘
 ```
 
-**Exact classes:**
-- Container: `w-60 bg-bark min-h-screen flex flex-col`
-- Logo area: `px-4 py-5 border-b border-sand/20`
-- Nav item (inactive): `flex items-center gap-3 px-3 py-2 text-sm text-sand rounded-md hover:bg-cream/10 hover:text-cream transition-colors`
-- Nav item (active): `flex items-center gap-3 px-3 py-2 text-sm text-cream bg-cream/15 rounded-md border-l-2 border-sand font-medium`
-- Section label: `px-3 pt-4 pb-1 text-xs font-medium text-sand/60 uppercase tracking-wider`
-- Bottom agent area: `mt-auto px-3 py-4 border-t border-sand/20`
+- Container: `bg-sidebar h-full flex flex-col shrink-0 transition-[width]`,
+  `w-60` / `w-16`
+- Logo area: `h-14 border-b border-sidebar-border`
+- Nav item: `flex items-center gap-3 px-3 py-2 rounded-md hover:bg-sidebar-accent`
+- Active: `font-medium bg-sidebar-accent border-l-2 border-sidebar-primary`
+- Divider: `h-px bg-sidebar-border`
+- Footer: `py-3 border-t border-sidebar-border`
 
 ---
 
-## Ticket Thread Components
+## Ticket Thread
 
-### Customer Message
-```
-┌──────────────────────────────────────────────────┐
-│  ○ Jane Smith          Bug  |  2 hours ago       │  ← header row
-│                                                  │
-│  My login page keeps returning a 500 error       │
-│  when I try to sign in with Google. It works     │
-│  fine on Firefox but not on Chrome.              │
-│                                                  │
-│  📎 screenshot.png  (245 KB)                     │  ← attachment chip
-└──────────────────────────────────────────────────┘
-```
-- Card: `bg-white border border-sand rounded-xl p-4`
-- Avatar bg: `bg-sand/40 text-bark` (initials)
+The thread is chat-bubble shaped: customer messages align left, agent replies
+right, both capped at `max-w-[85%]`.
 
-### Agent Reply
-```
-┌──────────────────────────────────────────────────┐
-│  ● John Smith  [Agent]     1 hour ago             │
-│                                                  │
-│  Thanks for reaching out! I've reproduced the    │
-│  issue. This looks like a session cookie bug.    │
-│  I'm escalating it to our backend team.          │
-└──────────────────────────────────────────────────┘
-```
-- Card: `bg-white border border-sand rounded-xl p-4`
-- Left accent line: `border-l-2 border-bark` (subtle distinction from customer)
-- Agent badge: `bg-sand/30 text-stone text-xs rounded-full px-2`
+| Element | Styling |
+|---------|---------|
+| Bubble (shared) | `rounded-xl border p-4 min-w-0 max-w-[85%] wrap-break-word` |
+| Customer message | `bg-base-300 border-base-300` |
+| Agent reply | `bg-base-100 border-base-300` |
+| Internal note | `bg-amber-50 border-amber-200`, dark: `bg-amber-950/40 border-amber-900/70` |
+| Avatar | `size-7 rounded-full bg-primary text-primary-content` (initials) |
 
-### Internal Note
-```
-╔══════════════════════════════════════════════════╗
-║  🔒 Internal Note                                ║  ← lock icon + label in stone
-║  John Smith  ·  55 minutes ago                   ║
-║                                                  ║
-║  Customer's account has a duplicate email        ║
-║  issue. Flagged to @sarah to check the DB.       ║
-║                                                  ║
-╚══════════════════════════════════════════════════╝
-```
-- Card: `bg-cream border-l-4 border-sand rounded-xl p-4`
-- Note header: `text-xs font-medium text-stone flex items-center gap-1.5`
-- Content: `text-sm text-bark mt-2`
-- Visual distinction: cream bg + thicker left border — unmistakable "internal" feel
+Internal notes are the one place a non-token colour is deliberate: the amber
+wash must read as "not the brand, not a status" at a glance, and it is paired
+with a `LockSimpleIcon` and an explicit label so colour is never the only signal.
 
----
+### Reply Form
 
-## Reply Form (Agent)
-
-Reply composer is a **Tiptap rich text editor** (`components/common/rich-text-editor.tsx`), not a plain textarea — a formatting toolbar sits above the input. Same component for customer and agent. See the **Rich Text (Replies)** convention in `CLAUDE.md`.
+The composer is a **Tiptap rich text editor**
+(`components/common/rich-text-editor.tsx`), not a `Textarea`. Same component for
+customer and agent; pass `tone="warning"` for internal notes.
 
 ```
 ┌──────────────────────────────────────────────────┐
-│  [Reply] [Internal Note]                         │  ← tab toggle
-├──────────────────────────────────────────────────┤
 │  B  I  U  S  <>  •≡  1≡  ▢  ❝                    │  ← Tiptap toolbar
 ├──────────────────────────────────────────────────┤
-│                                                  │
-│  [   Type your reply...                       ]  │  ← Tiptap editor, min-h-[96px]
-│                                                  │
+│  [   Type your reply...                       ]  │
 ├──────────────────────────────────────────────────┤
-│  📎 Attach file          [Send Reply →]          │  ← footer row
+│  📎 Attach file          [Send Reply →]          │  ← action bar
 └──────────────────────────────────────────────────┘
 ```
-- Container: `border border-sand rounded-xl overflow-hidden`
-- Tab bar: `bg-cream border-b border-sand`
-- Active tab: `bg-white border-b-2 border-bark text-bark`
-- Inactive tab: `text-stone hover:text-bark`
-- Footer: `bg-cream px-3 py-2 flex justify-between items-center`
+
+- Container: `overflow-hidden rounded-xl border bg-base-100 focus-within:ring-2`
+- Rest: `border-base-300 focus-within:border-primary focus-within:ring-primary/20`
+- Rendered rich text uses the scoped `.tiptap-content` styles in
+  `app/globals.css` — there is no `@tailwindcss/typography` plugin
 
 ---
 
 ## Confirmation Dialogs
 
-Never use `window.confirm()`. Use shadcn `Dialog`.
+Never use `window.confirm()`. Use `Dialog` from `components/ui/dialog.tsx`.
 
 ```
 ┌─────────────────────────────────┐
-│                                 │
 │    ┌──────────┐                 │
-│    │  🗑  ◉   │   ← icon in rounded-full
-│    └──────────┘    bg-red-100 for delete
-│                    bg-amber-100 for warning
-│                                 │
-│    Delete Ticket #1042          │  ← text-lg font-semibold text-bark
-│    This will permanently delete │  ← text-sm text-stone
-│    all comments and attachments.│
-│    This cannot be undone.       │
-│                                 │
+│    │  🗑  ◉   │  ← icon in rounded-full, bg-error/10 (destructive)
+│    └──────────┘                 │
+│    Delete Ticket #1042          │  ← <DialogTitle>
+│    This cannot be undone.       │  ← <DialogDescription>
 │  ┌──────────┐  ┌──────────────┐ │
-│  │  Cancel  │  │  Delete      │ │  ← Cancel: outline, Delete: destructive
+│  │  Cancel  │  │  Delete      │ │  ← outline + destructive
 │  └──────────┘  └──────────────┘ │
-│                                 │
 └─────────────────────────────────┘
 ```
 
-- Loading state on action button: spinner + text like "Deleting..." — disable both buttons.
-- For non-destructive confirms (close ticket): icon in `bg-bark/10`, action button uses primary (bark) not destructive (red).
+- Loading state on the action button: spinner + "Deleting…", both buttons
+  disabled
+- Non-destructive confirms (close ticket): icon in `bg-primary/10`, action
+  button uses `default`, not `destructive`
 
 ---
 
@@ -476,195 +582,17 @@ Never use `window.confirm()`. Use shadcn `Dialog`.
 
 ```
 ┌──────────────────────────────┐
-│  [icon]              254     │  ← number: text-3xl font-bold text-bark
-│                              │
-│  Total Tickets               │  ← text-sm font-medium text-bark
-│  All time                    │  ← text-xs text-stone
+│  [icon]              254     │  ← number: text-3xl font-bold
+│  Total Tickets               │  ← text-sm font-medium
+│  All time                    │  ← text-xs text-base-content-muted
 └──────────────────────────────┘
 ```
 
-- Card: `bg-white border border-sand rounded-xl p-6`
-- Icon: in a `rounded-lg bg-sand/30` container, `text-bark` color, `size-5`
-- Grid: 4 cards in `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`
-
-**Open Tickets card** (special — shows avg wait):
-```
-┌──────────────────────────────┐
-│  [icon]               42     │
-│                              │
-│  Open Tickets                │
-│  Avg. wait: 2h 14m   ← amber │  ← text-xs text-amber-600 font-medium
-└──────────────────────────────┘
-```
-
----
-
-## Customer Portal — Landing Page
-
-```
-cream background — full viewport height
-
-┌─────────────────────────────────────────────┐
-│  ◈ Docket            [Find My Tickets] │  ← white header, sand border
-└─────────────────────────────────────────────┘
-
-                    [company logo / icon]
-
-          How can we help you today?             ← text-3xl font-semibold text-bark
-     Get support from our team — we'll get       ← text-base text-stone
-           back to you as soon as possible.
-
-         ┌──────────────────────────────┐
-         │   Submit a Support Ticket    │         ← primary bark button, px-8 py-3
-         └──────────────────────────────┘
-
-           Already submitted a ticket?
-              Find My Tickets →                  ← text-stone underline hover:text-bark
-```
-
----
-
-## Customer Portal — Submit Form
-
-```
-cream background
-
-       Submit a Support Ticket                   ← text-2xl font-semibold text-bark
-  Describe your issue and we'll get              ← text-sm text-stone
-      back to you as soon as possible.
-
-┌─────────────────────────────────────────────┐
-│                                             │  ← white card, rounded-xl, shadow-sm, border-sand
-│  Full Name *                                │
-│  [                                       ]  │
-│                                             │
-│  Email Address *                            │
-│  [                                       ]  │
-│                                             │
-│  Subject *                                  │
-│  [                                       ]  │
-│                                             │
-│  Category *                                 │
-│  [ Select a category                    ▼]  │
-│                                             │
-│  Description *                              │
-│  [                                       ]  │
-│  [                                       ]  │
-│  [                                       ]  │
-│                                             │
-│  Attachments (optional)                     │
-│  ┌──────────────────────────────────────┐   │
-│  │  📎 Choose files  or drag & drop    │   │  ← dashed border-sand, bg-cream/50
-│  └──────────────────────────────────────┘   │
-│  JPG, PNG, PDF, ZIP, TXT · Max 10 MB each   │  ← text-xs text-stone
-│  Up to 5 files per ticket                   │
-│                                             │
-│  ┌──────────────────────────────────────┐   │
-│  │          Submit Ticket               │   │  ← bg-bark text-white, full width
-│  └──────────────────────────────────────┘   │
-│                                             │
-└─────────────────────────────────────────────┘
-```
-
----
-
-## Customer Portal — Ticket Detail
-
-```
-cream background
-
-← Back to My Tickets    ← text-stone hover:text-bark, CaretLeftIcon
-
-#1042 — Login page broken on Chrome              ← text-2xl font-semibold text-bark
-[Bug]  [Open]  · Submitted 2 hours ago           ← badges + text-xs text-stone
-
-─────────────────────────────────────────────────────────────────────
-
-[customer message card]
-[agent reply card]
-[customer reply card]
-
-─────────────────────────────────────────────────────────────────────
-
-┌─────────────────────────────────────────────┐
-│ Add a reply                                 │  ← white card, rounded-xl, border-sand
-│                                             │
-│ [                                        ]  │
-│ [   Describe any updates or questions... ]  │
-│ [                                        ]  │
-│                                             │
-│ 📎 Attach files (optional)                 │
-│                                             │
-│ [Cancel]            [Send Reply →]          │  ← outline + primary
-└─────────────────────────────────────────────┘
-
-[Close Ticket]                                   ← ghost/outline button, text-stone
-```
-
-The "Close Ticket" is understated (not primary) because it's a less common action.
-
----
-
-## Agent Portal — Ticket List
-
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│  All Tickets                                      [42 open tickets]  │  ← page header
-├──────────────────────────────────────────────────────────────────────┤
-│                                                                      │
-│  [🔍 Search tickets...        ]  [Status ▼]  [Category ▼]  [Agent ▼]│
-│                                                                      │
-│  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  #    Subject                     Category  Status  Assigned │   │
-│  ├──────────────────────────────────────────────────────────────┤   │
-│  │  1042  Login page broken on…      Bug       Open    Jane S.  │   │  ← hover: bg-cream/60
-│  │  1041  Payment not processing     Billing   In Prog Unassign.│   │
-│  │  1040  Feature: dark mode         Feature   Open    John S.  │   │
-│  └──────────────────────────────────────────────────────────────┘   │
-│                                                                      │
-│                       ← 1  2  3  →                                  │  ← pagination
-└──────────────────────────────────────────────────────────────────────┘
-```
-
-- Table container: `bg-white rounded-xl border border-sand overflow-hidden`
-- Table header: `bg-sand/20 text-xs font-medium text-stone uppercase`
-- Row hover: `hover:bg-cream/60 cursor-pointer`
-- Row border: `border-b border-sand/50`
-
----
-
-## Agent Portal — Login Page
-
-```
-cream background — full viewport height
-
-          center of screen
-
-          ◈  Docket                        ← bark color, text-2xl font-bold
-
-     Sign in to your account                     ← text-xl font-semibold text-bark
-  Enter your email to receive a secure           ← text-sm text-stone, max-w-sm
-  sign-in link — no password needed.
-
-
-┌──────────────────────────────────────┐
-│       Sign in with Google  G         │  ← outline button, border-sand, text-bark
-└──────────────────────────────────────┘
-
-──────────────── or ────────────────
-
-Email address
-[                                    ]     ← white input, sand border
-
-┌──────────────────────────────────────┐
-│         Send Sign-In Link →          │  ← bg-bark text-white
-└──────────────────────────────────────┘
-```
-
-- Container: `max-w-sm mx-auto px-6 py-10`
-- White card: `bg-white rounded-xl border border-sand shadow-sm p-8`
-- Or: no card — form floats on cream background (cleaner look)
-- Google button only shown if Google OAuth is configured (`GOOGLE_CLIENT_ID` env is set)
+- Card: `bg-base-100 rounded-xl border border-base-300 shadow-soft p-5`
+- Hover: `hover:shadow-md hover:-translate-y-0.5 hover:border-primary/40`
+- Icon: in a `rounded-lg` tinted container, `size-5`, `weight="duotone"`
+- Grid: `grid grid-cols-2 lg:grid-cols-4 gap-4`
+- Each card is a `<Link>` that opens the ticket list with its filter applied
 
 ---
 
@@ -673,10 +601,10 @@ Email address
 Layout: `flex flex-col items-center justify-center text-center py-20 gap-3`
 
 ```
-          [Icon — size-10 text-sand]
+       [Icon — size-10 text-base-content-muted]
 
-         No open tickets                          ← text-base font-medium text-bark
-  All caught up! Open tickets will appear here.  ← text-sm text-stone
+         No open tickets                          ← text-base font-medium
+  All caught up! Open tickets will appear here.   ← text-sm text-base-content-muted
 
          [CTA button if applicable]
 ```
@@ -693,24 +621,26 @@ Layout: `flex flex-col items-center justify-center text-center py-20 gap-3`
 
 ## Loading States
 
-- **Page load:** Skeleton screens — use `animate-pulse` with `bg-sand/40` skeleton blocks matching the layout shape.
-- **Button actions:** Spinner (`CircleNotchIcon weight="bold" className="animate-spin"`) + disabled state.
+- **Page load:** `<Skeleton>` blocks matching the layout shape. The daisyUI
+  `skeleton` class supplies the `base-300` fill, `--radius-box` rounding and a
+  sweep animation correctly gated behind `prefers-reduced-motion`. The daisyUI
+  default is already rounded; pass `rounded-full` only for avatar placeholders.
+- **Button actions:** spinner (`CircleNotchIcon weight="bold" className="animate-spin"`)
+  plus the disabled state.
 - **Ticket list:** 5 skeleton rows matching table row height.
-- **Ticket detail:** Skeleton for thread area, real sidebar loads first.
+- **Ticket detail:** skeleton for the thread area; the real sidebar loads first.
 
 ---
 
-## Toasts / Notifications
+## Toasts
 
-Use shadcn `Sonner` (or `useToast`). Position: bottom-right.
+Use `Toaster` / `toast()` from `components/ui/sonner.tsx`. Sonner is themed
+through CSS variables wired to the daisyUI tokens (`--normal-bg` →
+`--base-100`, `--normal-text` → `--base-content`, `--normal-border` →
+`--base-300`), so toasts follow appearance mode automatically.
 
-| Event | Style |
-|-------|-------|
-| Success | `bg-white border-l-4 border-bark text-bark` |
-| Error | `bg-white border-l-4 border-red-500 text-red-700` |
-| Info | `bg-white border-l-4 border-sand text-stone` |
+Keep messages short and action-confirming:
 
-Keep toast messages short and action-confirming:
 - "Reply sent" (not "Your reply was successfully submitted")
 - "Ticket closed"
 - "Agent assigned"
@@ -726,7 +656,7 @@ Keep toast messages short and action-confirming:
 | Tablet | 768–1024px | Sidebar + content, info sidebar collapses |
 | Desktop | > 1024px | Full 3-column layout |
 
-- Customer submit form: fully usable on 375px width
+- Customer submit form: fully usable at 375px
 - Agent ticket table: columns collapse (hide Category, Assigned) on tablet
 - Info sidebar: collapsible accordion on mobile/tablet
 
@@ -734,28 +664,35 @@ Keep toast messages short and action-confirming:
 
 ## Shadows
 
-Warm shadows tinted toward the bark palette:
-```css
-/* Small card shadow */
-box-shadow: 0 1px 3px rgba(87, 74, 36, 0.08), 0 1px 2px rgba(87, 74, 36, 0.04);
+Elevation is mostly carried by borders, not shadows — `--depth` is `0` on the
+daisyUI theme, so components ship flat by design.
 
-/* Modal / popover shadow */
-box-shadow: 0 10px 40px rgba(87, 74, 36, 0.12);
-```
-
-Use sparingly. Most surfaces use borders instead of shadows.
+| Token | Use |
+|-------|-----|
+| `shadow-soft` | Bordered cards and tables — dark-mode aware, defined in `:root`/`.dark` |
+| `shadow-md` | Popovers and dropdowns, hover lift on stat cards |
+| — | Inputs, textareas and dialogs ship daisyUI's own elevation (`input`/`textarea` are flat at `--depth: 0`; `modal-box` carries its own drop shadow) |
 
 ---
 
 ## Component Checklist (before shipping any UI)
 
-- [ ] Every card/container has `rounded-xl`
-- [ ] Every button/input has `rounded-md`
-- [ ] No `window.confirm()` — all confirms use shadcn Dialog
-- [ ] No native `<select>`, `<input type="checkbox">`, `<input type="date">`
-- [ ] No `stone` text at small size without a white/light background (contrast)
-- [ ] Loading state on all submit buttons
-- [ ] Empty state on all list views
+- [ ] Built from `components/ui/*` — no one-off control that duplicates one
+- [ ] A daisyUI component class was considered first; any Tailwind override on
+      top of one is justified in a comment
+- [ ] No shadcn, Radix, or `class-variance-authority` imports
+- [ ] Agent/admin surfaces use daisyUI tokens (`base-*`, `primary`, `sidebar-*`),
+      not `bg-white`/`text-bark`/`border-sand`
+- [ ] No redundant `rounded-md`/`rounded-xl` on `Button`, `Badge`, `Input`,
+      `Select`, `Textarea`, `Card`, `Skeleton` or `DialogContent` — they carry
+      their own radius
+- [ ] Containers that are *not* primitives get `rounded-box`
+- [ ] No `window.confirm()` — confirms use `Dialog`
+- [ ] Phosphor icons only
+- [ ] `base-content-muted` never used for body text or labels
+- [ ] Loading state on every submit button
+- [ ] Empty state on every list view
+- [ ] Checked in both light and dark mode, and on a non-default preset
 - [ ] Mobile viewport tested at 375px
 - [ ] Internal notes visually distinct from public replies
 - [ ] `customerToken` never appears in any agent-facing API response

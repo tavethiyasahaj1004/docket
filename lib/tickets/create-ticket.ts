@@ -87,18 +87,10 @@ type ValidationResult =
   | { ok: true; fields: ValidatedFields }
   | { ok: false; error: string; httpStatus: number };
 
-/**
- * Field-format + slug validation only (no DB writes). Exposed separately so
- * a caller that does its own I/O before creation (the portal route uploads
- * attachments to storage first) can validate *before* that I/O, instead of
- * discovering "invalid category" only after files are already uploaded.
- *
- * `description` is expected to already be a Tiptap JSON string by the time
- * it reaches here (the portal's editor produces it client-side; the public
- * API converts its text/html input to it at the route level, see
- * app/api/v1/tickets/route.ts) — length is validated against the flattened
- * plain text, not the raw JSON string's length.
- */
+/** Field-format and slug validation only, no DB writes — exposed separately so a
+ * caller doing I/O first (the portal uploads attachments before creating) isn't
+ * left discovering "invalid category" with files already in storage.
+ * `description` must already be Tiptap JSON; its length is checked flattened. */
 export async function validateTicketSubmission(input: {
   name: string;
   email: string;
@@ -170,11 +162,9 @@ export async function validateTicketSubmission(input: {
     priority = input.priority;
   }
 
-  // `partial: true` when the caller never touched customFields at all (e.g.
-  // the customer portal, which has no UI for them) — required custom fields
-  // are only enforced when a caller actually sends a `customFields` object,
-  // so adding one later can't retroactively break the portal or existing
-  // API integrations that don't know about it.
+  // `partial: true` when the caller never sent customFields at all (the portal
+  // has no UI for them). Required fields are enforced only when a `customFields`
+  // object arrives, so adding one can't retroactively break existing callers.
   const validatedCustomFields = validateCustomFieldInput(
     customFields,
     input.customFields,
@@ -199,13 +189,9 @@ export async function validateTicketSubmission(input: {
   };
 }
 
-/**
- * Validates and creates a ticket, plus every side effect a new ticket
- * triggers (confirmation email, agent notifications, realtime refresh).
- * Shared by the customer portal (app/api/tickets/route.ts) and the public
- * API (app/api/v1/tickets/route.ts) so validation rules and notification
- * behavior can never drift between the two entry points.
- */
+/** Validates and creates a ticket plus every side effect (confirmation email,
+ * agent notifications, realtime refresh). Shared by the customer portal and the
+ * public API so rules and notifications can't drift between the two. */
 export async function createTicketFromSubmission(
   input: TicketSubmission
 ): Promise<CreateTicketResult> {
@@ -334,7 +320,8 @@ export async function createTicketFromSubmission(
     await publishPushToUsers(recipientIds, {
       title: notifTitle,
       body: subject,
-      deepLink: `${env.NEXT_PUBLIC_APP_URL}/tickets/${ticketId}`,
+      deepLink: `${env.NEXT_PUBLIC_APP_URL}/tickets/${inserted.ticketNumber}`,
+      tag: `ticket-${inserted.ticketNumber}`,
     }).catch((err) => console.error("[push.ticket_created]", err));
 
     // Live-refresh any agent currently viewing the ticket list (no-op unless

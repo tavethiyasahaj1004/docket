@@ -189,11 +189,9 @@ function AuthFormInner({
                   </Button>
 
                   {!noEmailBasedMethod && (
-                    <div className="flex items-center gap-3">
-                      <Separator className="flex-1 bg-sand" />
-                      <span className="text-xs text-stone">or</span>
-                      <Separator className="flex-1 bg-sand" />
-                    </div>
+                    <Separator className="my-0 text-xs text-stone">
+                      or
+                    </Separator>
                   )}
                 </>
               )}
@@ -215,7 +213,7 @@ function AuthFormInner({
                     </label>
                     <Input
                       autoComplete="email"
-                      className="text-foreground"
+                      className="text-base-content"
                       id="email"
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"
@@ -241,7 +239,7 @@ function AuthFormInner({
                     </div>
                     <Input
                       autoComplete="current-password"
-                      className="text-foreground"
+                      className="text-base-content"
                       id="password"
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••"
@@ -296,7 +294,7 @@ function AuthFormInner({
                     </label>
                     <Input
                       autoComplete="email"
-                      className="text-foreground"
+                      className="text-base-content"
                       id="email"
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="you@example.com"

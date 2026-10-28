@@ -10,13 +10,14 @@ export async function resetPasswordTemplate({
   email: string;
   resetUrl: string;
 }) {
-  const { productName, logoUrl } = await getEmailBranding();
+  const { productName, logoUrl, accentColor } = await getEmailBranding();
   const html = await renderEmailTemplate(
     createElement(ResetPasswordEmail, {
       email,
       resetUrl,
       productName,
       logoUrl,
+      accentColor,
     })
   );
 

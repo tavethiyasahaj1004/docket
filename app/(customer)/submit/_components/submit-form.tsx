@@ -26,6 +26,11 @@ import {
 } from "@/components/ui/select";
 import { fileKey } from "@/lib/file-keys";
 import { richTextToPlainText } from "@/lib/rich-text";
+import {
+  type AttachmentLimits,
+  checkTicketStorage,
+  ticketStorageError,
+} from "@/lib/tickets/attachment-limits";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
@@ -43,8 +48,6 @@ const ALLOWED_TYPES = [
   "application/zip",
   "text/plain",
 ];
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-const MAX_FILES = 5;
 
 interface FormErrors {
   attachments?: string;
@@ -66,11 +69,21 @@ const FIELD_ORDER: (keyof FormErrors)[] = [
 ];
 
 interface Props {
+  // Admin-configured attachment caps (Admin → Ticket Config).
+  attachmentLimits: Pick<
+    AttachmentLimits,
+    | "maxFileSizeBytes"
+    | "maxFileSizeMb"
+    | "maxPerMessage"
+    | "maxPerTicketSizeBytes"
+  >;
   brandName: string;
   logoUrl: string | null;
 }
 
-export function SubmitForm({ brandName, logoUrl }: Props) {
+export function SubmitForm({ attachmentLimits, brandName, logoUrl }: Props) {
+  const MAX_FILES = attachmentLimits.maxPerMessage;
+  const MAX_FILE_SIZE = attachmentLimits.maxFileSizeBytes;
   const router = useRouter();
 
   const [name, setName] = useState("");
@@ -146,7 +159,7 @@ export function SubmitForm({ brandName, logoUrl }: Props) {
     if (oversized) {
       setErrors((prev) => ({
         ...prev,
-        attachments: `${oversized.name} exceeds 10 MB.`,
+        attachments: `${oversized.name} exceeds ${attachmentLimits.maxFileSizeMb} MB.`,
       }));
       return;
     }
@@ -155,6 +168,24 @@ export function SubmitForm({ brandName, logoUrl }: Props) {
       setErrors((prev) => ({
         ...prev,
         attachments: `${badType.name} is not an allowed file type.`,
+      }));
+      return;
+    }
+    // A new ticket has no existing attachments: just this submission's total.
+    const incomingBytes = combined.reduce((n, f) => n + f.size, 0);
+    const storage = checkTicketStorage({
+      usedBytes: 0,
+      incomingBytes,
+      limitBytes: attachmentLimits.maxPerTicketSizeBytes,
+    });
+    if (!storage.ok) {
+      setErrors((prev) => ({
+        ...prev,
+        attachments: ticketStorageError(
+          storage,
+          incomingBytes,
+          attachmentLimits.maxPerTicketSizeBytes
+        ),
       }));
       return;
     }
@@ -489,7 +520,8 @@ export function SubmitForm({ brandName, logoUrl }: Props) {
                     or drag and drop
                   </p>
                   <p className="text-xs text-stone">
-                    JPG, PNG, PDF, ZIP, TXT — max 10 MB each, up to {MAX_FILES}{" "}
+                    JPG, PNG, PDF, ZIP, TXT — max{" "}
+                    {attachmentLimits.maxFileSizeMb} MB each, up to {MAX_FILES}{" "}
                     files
                   </p>
                   <input

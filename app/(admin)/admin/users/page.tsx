@@ -101,64 +101,67 @@ async function UsersResults({
 
   return (
     <>
-      <p className="text-xs text-muted-foreground mb-3">
+      <p className="text-xs text-base-content-muted mb-3">
         {total} registered user{total === 1 ? "" : "s"}
       </p>
 
       {/* Table */}
-      <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft overflow-clip">
         {users.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <UsersIcon className="size-8 text-muted-foreground mb-3" />
-            <p className="text-sm font-medium text-foreground">
+            <UsersIcon className="size-8 text-base-content-muted mb-3" />
+            <p className="text-sm font-medium text-base-content">
               No users found
             </p>
             {search && (
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-base-content-muted mt-1">
                 Try a different search term
               </p>
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          // overflow-y-clip, not "auto" — a plain scroll container here
+          // would intercept the sticky header's positioning before it
+          // reaches the page's real scrolling ancestor.
+          <div className="overflow-x-auto overflow-y-clip">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-accent/50">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <tr className="sticky top-0 z-10 border-b border-base-300 bg-base-300">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     User
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     Role
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     Status
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     Joined
                   </th>
                   <th className="w-px px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/50">
+              <tbody className="divide-y divide-base-300/50">
                 {users.map((u) => (
                   <tr
-                    className="hover:bg-accent/30 transition-colors"
+                    className="hover:bg-base-300/30 transition-colors"
                     key={u.id}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="size-8 rounded-full bg-primary/10 border border-border flex items-center justify-center text-xs font-semibold text-foreground shrink-0">
+                        <div className="size-8 rounded-full bg-primary/10 border border-base-300 flex items-center justify-center text-xs font-semibold text-base-content shrink-0">
                           {(u.name ?? u.email).slice(0, 2).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
+                          <p className="text-sm font-medium text-base-content truncate">
                             {u.name}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">
+                          <p className="text-xs text-base-content-muted truncate">
                             {u.email}
                           </p>
                           {u.banReason && (
-                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            <p className="text-xs text-base-content-muted truncate mt-0.5">
                               Reason: {u.banReason}
                             </p>
                           )}
@@ -169,8 +172,8 @@ async function UsersResults({
                       <span
                         className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${
                           u.role === ADMIN_ROLE
-                            ? "bg-primary/10 border-primary/20 text-foreground"
-                            : "bg-muted/20 border-border text-muted-foreground"
+                            ? "bg-primary/10 border-primary/20 text-base-content"
+                            : "bg-base-300/20 border-base-300 text-base-content-muted"
                         }`}
                       >
                         {u.role === ADMIN_ROLE ? "Admin" : "Agent"}
@@ -180,14 +183,14 @@ async function UsersResults({
                       <span
                         className={`inline-flex items-center rounded border px-2 py-0.5 text-xs font-medium ${
                           u.banned
-                            ? "bg-muted/20 border-border text-muted-foreground"
+                            ? "bg-base-300/20 border-base-300 text-base-content-muted"
                             : "bg-green-50 border-green-200 text-green-700"
                         }`}
                       >
                         {u.banned ? "Deactivated" : "Active"}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                    <td className="px-4 py-3 text-xs text-base-content-muted whitespace-nowrap">
                       <LocalDateTime date={u.createdAt} mode="date" />
                     </td>
                     <td className="w-px px-4 py-3 text-right">
@@ -211,7 +214,7 @@ async function UsersResults({
 
       {/* Pagination */}
       {pageCount > 1 && (
-        <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between mt-4 text-xs text-base-content-muted">
           <span>
             Page {page} of {pageCount} · {total} users
           </span>
@@ -219,7 +222,7 @@ async function UsersResults({
             {page > 1 && (
               <Link href={buildPageUrl(page - 1)}>
                 <Button
-                  className="h-8 gap-1 border-border text-foreground hover:bg-accent"
+                  className="h-8 gap-1 border-base-300 text-base-content hover:bg-base-300"
                   size="sm"
                   variant="outline"
                 >
@@ -231,7 +234,7 @@ async function UsersResults({
             {page < pageCount && (
               <Link href={buildPageUrl(page + 1)}>
                 <Button
-                  className="h-8 gap-1 border-border text-foreground hover:bg-accent"
+                  className="h-8 gap-1 border-base-300 text-base-content hover:bg-base-300"
                   size="sm"
                   variant="outline"
                 >
@@ -251,11 +254,11 @@ function UsersTableSkeleton() {
   return (
     <>
       <Skeleton className="h-3 w-32 mb-3" />
-      <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-        <div className="border-b border-border bg-accent/50 px-4 py-3">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft overflow-hidden">
+        <div className="border-b border-base-300 bg-base-300/50 px-4 py-3">
           <Skeleton className="h-3 w-16" />
         </div>
-        <div className="divide-y divide-border/50">
+        <div className="divide-y divide-base-300/50">
           {skeletonKeys(6).map((k) => (
             <div className="flex items-center gap-4 px-4 py-3.5" key={k}>
               <div className="flex items-center gap-3 flex-1 min-w-0">

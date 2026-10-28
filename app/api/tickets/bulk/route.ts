@@ -1,21 +1,15 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { ADMIN_ROLE } from "@/config/platform";
-import {
-  ticketActivity,
-  ticketAttachments,
-  tickets,
-  ticketTags,
-  user,
-} from "@/db/schema";
+import { ticketActivity, tickets, ticketTags, user } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { storage } from "@/lib/storage";
 import { getOrCreateTagId, normalizeTagName } from "@/lib/tags";
 import { getTicketPriorities, getTicketStatuses } from "@/lib/ticket-config";
+import { deleteTicketsWithMergedShells } from "@/lib/tickets/merge";
 
 const MAX_BULK_IDS = 200;
 const MAX_TAG_LENGTH = 50;
@@ -58,19 +52,42 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  const ids = Array.isArray(body.ids)
+  const requestedIds = Array.isArray(body.ids)
     ? body.ids.filter((id) => typeof id === "string")
     : [];
-  if (ids.length === 0) {
+  if (requestedIds.length === 0) {
     return NextResponse.json(
       { error: "No tickets selected." },
       { status: 400 }
     );
   }
-  if (ids.length > MAX_BULK_IDS) {
+  if (requestedIds.length > MAX_BULK_IDS) {
     return NextResponse.json(
       { error: `Cannot update more than ${MAX_BULK_IDS} tickets at once.` },
       { status: 400 }
+    );
+  }
+
+  // Merged tickets are skipped, not forwarded — a stale list page must not
+  // reopen or reassign the hidden shell (see MERGED_TICKET_CHANGE_MESSAGE).
+  const ids = (
+    await db
+      .select({ id: tickets.id })
+      .from(tickets)
+      .where(
+        and(
+          inArray(tickets.id, requestedIds),
+          isNull(tickets.mergedIntoTicketId)
+        )
+      )
+  ).map((t) => t.id);
+  if (ids.length === 0) {
+    return NextResponse.json(
+      {
+        error:
+          "The selected tickets were merged or deleted. Refresh the page and try again.",
+      },
+      { status: 409 }
     );
   }
 
@@ -295,22 +312,8 @@ export async function DELETE(request: NextRequest) {
     );
   }
 
-  // Delete storage files before DB records
-  const attachments = await db
-    .select({ storageKey: ticketAttachments.storageKey })
-    .from(ticketAttachments)
-    .where(inArray(ticketAttachments.ticketId, ids));
-
-  for (const att of attachments) {
-    try {
-      await storage.delete(att.storageKey);
-    } catch {
-      // Non-fatal — proceed even if storage delete fails
-    }
-  }
-
-  // Delete tickets (cascade removes comments, activity, attachments)
-  await db.delete(tickets).where(inArray(tickets.id, ids));
+  // Storage files first, then the tickets and every ticket merged into them.
+  await deleteTicketsWithMergedShells(ids);
 
   await audit({
     action: "ticket.bulk_delete",

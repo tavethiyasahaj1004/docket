@@ -25,15 +25,15 @@ export function AdminSidebar({ email }: { email: string }) {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+    <aside className="flex h-screen w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-content">
       {/* Brand */}
       <div className="flex items-center gap-3 border-b border-sidebar-border px-5 py-5">
-        <span className="grid size-9 shrink-0 place-items-center bg-sidebar-primary font-black text-sidebar-primary-foreground text-xs">
+        <span className="grid size-9 shrink-0 place-items-center bg-sidebar-primary font-black text-sidebar-primary-content text-xs">
           KR
         </span>
         <div className="min-w-0">
           <p className="font-black text-sm leading-none">{PRODUCT_NAME}</p>
-          <p className="mt-1 text-2xs font-semibold uppercase tracking-ui text-sidebar-foreground/40">
+          <p className="mt-1 text-2xs font-semibold uppercase tracking-ui text-sidebar-content/40">
             Admin Panel
           </p>
         </div>
@@ -41,7 +41,7 @@ export function AdminSidebar({ email }: { email: string }) {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-5">
-        <p className="mb-2 px-3 text-2xs font-semibold uppercase tracking-ui text-sidebar-foreground/30">
+        <p className="mb-2 px-3 text-2xs font-semibold uppercase tracking-ui text-sidebar-content/30">
           Navigation
         </p>
         <div className="space-y-0.5">
@@ -53,8 +53,8 @@ export function AdminSidebar({ email }: { email: string }) {
               <Link
                 className={`flex items-center gap-3 border-l-2 px-3 py-2.5 text-xs font-semibold uppercase tracking-ui transition-colors ${
                   isActive
-                    ? "border-sidebar-foreground bg-sidebar-accent text-sidebar-foreground"
-                    : "border-transparent text-sidebar-foreground/50 hover:border-sidebar-foreground/20 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    ? "border-sidebar-content bg-sidebar-accent text-sidebar-content"
+                    : "border-transparent text-sidebar-content/50 hover:border-sidebar-content/20 hover:bg-sidebar-accent hover:text-sidebar-content"
                 }`}
                 href={href}
                 key={href}
@@ -69,7 +69,7 @@ export function AdminSidebar({ email }: { email: string }) {
 
       {/* Footer */}
       <div className="space-y-2 border-t border-sidebar-border p-4">
-        <p className="truncate px-1 text-2xs font-semibold uppercase tracking-ui text-sidebar-foreground/30">
+        <p className="truncate px-1 text-2xs font-semibold uppercase tracking-ui text-sidebar-content/30">
           {email}
         </p>
         <Button

@@ -1,17 +1,17 @@
 {
-  "name": "docket",
-  "version": "0.1.0",
+  "name": "@stack256org/docket",
+  "version": "0.8.0",
   "description": "Open-source, self-hosted customer support ticketing system.",
   "type": "module",
   "license": "MIT",
   "author": "Stack256 <bhadanirohit1@gmail.com>",
-  "homepage": "https://github.com/stack256/docket#readme",
+  "homepage": "https://github.com/stack256org/docket#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stack256/docket.git"
+    "url": "git+https://github.com/stack256org/docket.git"
   },
   "bugs": {
-    "url": "https://github.com/stack256/docket/issues"
+    "url": "https://github.com/stack256org/docket/issues"
   },
   "keywords": [
     "support",
@@ -42,6 +42,8 @@
     "lint:fix": "biome check --write",
     "format": "biome format --write",
     "typecheck": "tsc --noEmit",
+    "docs:sync": "node scripts/sync-readme.mjs",
+    "docs:check": "node scripts/sync-readme.mjs --check",
     "worker": "tsx --watch scripts/worker.ts",
     "worker:start": "tsx scripts/worker.ts",
     "db:local": "tsx scripts/dev-db.ts",
@@ -52,17 +54,23 @@
     "make:admin": "tsx scripts/make-admin.ts",
     "create:admin": "tsx scripts/create-admin.ts",
     "migrate:zammad": "tsx --env-file-if-exists=.env scripts/migrate-zammad.ts",
+    "migrate:zammad:sync": "tsx --env-file-if-exists=.env scripts/migrate-zammad.ts --sync",
     "migrate:zammad:users": "tsx --env-file-if-exists=.env scripts/migrate-zammad-users.ts",
     "seed": "tsx --env-file=.env scripts/seed-defaults.ts",
     "db:seed": "tsx scripts/seed-defaults.ts",
     "setup": "tsx scripts/setup.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:db:start": "tsx scripts/test-db.ts",
+    "test:db:setup": "tsx scripts/test-db-setup.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1086.0",
     "@aws-sdk/s3-presigned-post": "^3.1086.0",
     "@aws-sdk/s3-request-presigner": "^3.1086.0",
+    "@floating-ui/react": "^0.27.20",
+    "@headlessui/react": "^2.2.10",
     "@paralleldrive/cuid2": "^3.3.0",
     "@phosphor-icons/react": "^2.1.10",
     "@pusher/push-notifications-server": "^1.2.7",
@@ -78,8 +86,8 @@
     "@tiptap/starter-kit": "^3.27.1",
     "@tiptap/suggestion": "^3.27.1",
     "better-auth": "^1.6.18",
-    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "daisyui": "^5.7.16",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.2",
     "files-sdk": "^2.1.0",
@@ -90,18 +98,16 @@
     "postgres": "^3.4.9",
     "pusher": "^5.3.4",
     "pusher-js": "^8.5.0",
-    "radix-ui": "^1.5.0",
     "react": "^19.2.7",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.7",
     "react-email": "^6.6.0",
     "recharts": "^3.8.0",
-    "shadcn": "^4.11.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "tippy.js": "^6.3.7",
     "tsx": "^4.22.4",
-    "tw-animate-css": "^1.4.0",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -111,6 +117,7 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
+    "@types/web-push": "^3.6.4",
     "concurrently": "^10.0.3",
     "drizzle-kit": "^0.31.10",
     "embedded-postgres": "18.4.0-beta.17",

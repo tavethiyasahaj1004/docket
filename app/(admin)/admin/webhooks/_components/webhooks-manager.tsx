@@ -278,8 +278,10 @@ export function WebhooksManager({ initialWebhooks }: Props) {
     <section className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h2 className="text-base font-semibold text-foreground">Webhooks</h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <h2 className="text-base font-semibold text-base-content">
+            Webhooks
+          </h2>
+          <p className="text-xs text-base-content-muted mt-0.5">
             Send a signed HTTP POST to your own server when ticket events
             happen.
           </p>
@@ -287,7 +289,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
         <div className="flex items-center gap-2 shrink-0 flex-wrap">
           <Button
             asChild
-            className="border-border text-foreground hover:bg-accent rounded-md gap-1.5"
+            className="border-base-300 text-base-content hover:bg-base-300 rounded-md gap-1.5"
             size="sm"
             variant="outline"
           >
@@ -297,7 +299,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
             </Link>
           </Button>
           <Button
-            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-md gap-1.5"
+            className="bg-primary hover:bg-primary/90 text-primary-content rounded-md gap-1.5"
             onClick={openAdd}
             size="sm"
           >
@@ -307,14 +309,14 @@ export function WebhooksManager({ initialWebhooks }: Props) {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft overflow-hidden">
         {initialWebhooks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <WebhooksLogoIcon className="size-8 text-muted-foreground mb-3" />
-            <p className="text-sm font-medium text-foreground">
+            <WebhooksLogoIcon className="size-8 text-base-content-muted mb-3" />
+            <p className="text-sm font-medium text-base-content">
               No webhooks yet
             </p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-base-content-muted mt-1">
               Add one to notify your own server of ticket events.
             </p>
           </div>
@@ -322,47 +324,41 @@ export function WebhooksManager({ initialWebhooks }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-border bg-accent/50">
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                <tr className="border-b border-base-300 bg-base-300/50">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     Name
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     URL
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide hidden lg:table-cell">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide hidden lg:table-cell">
                     Events
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide hidden md:table-cell">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide hidden md:table-cell">
                     Last delivery
                   </th>
-                  <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                  <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                     Active
                   </th>
                   <th className="px-4 py-3" />
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border/50">
+              <tbody className="divide-y divide-base-300/50">
                 {initialWebhooks.map((w) => (
                   <tr
-                    className="hover:bg-accent/30 transition-colors"
+                    className="hover:bg-base-300/30 transition-colors"
                     key={w.id}
                   >
-                    <td className="px-4 py-3 font-medium text-foreground">
-                      {w.name}
+                    <td className="px-4 py-3 font-medium text-base-content max-w-0 w-1/5">
+                      <TruncatedText text={w.name} />
                     </td>
-                    <td
-                      className="px-4 py-3 font-mono text-xs text-muted-foreground max-w-56 truncate"
-                      title={w.url}
-                    >
-                      {w.url}
+                    <td className="px-4 py-3 font-mono text-xs text-base-content-muted max-w-0 w-1/4">
+                      <TruncatedText text={w.url} />
                     </td>
-                    <td
-                      className="px-4 py-3 text-xs text-muted-foreground hidden lg:table-cell max-w-64 truncate"
-                      title={w.events.join(", ")}
-                    >
-                      {w.events.join(", ")}
+                    <td className="px-4 py-3 text-xs text-base-content-muted hidden lg:table-cell max-w-0 w-1/4">
+                      <TruncatedText text={w.events.join(", ")} />
                     </td>
-                    <td className="px-4 py-3 text-xs hidden md:table-cell">
+                    <td className="px-4 py-3 text-xs hidden md:table-cell w-px whitespace-nowrap">
                       {w.lastDeliveryAt ? (
                         <span
                           className={
@@ -377,19 +373,19 @@ export function WebhooksManager({ initialWebhooks }: Props) {
                           {formatDateTime(w.lastDeliveryAt)}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground">Never</span>
+                        <span className="text-base-content-muted">Never</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 w-px">
                       <Switch
                         checked={w.isActive}
                         onCheckedChange={() => handleToggleActive(w)}
                       />
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1.5 flex-wrap justify-end">
+                    <td className="px-4 py-3 w-px">
+                      <div className="flex gap-1.5 justify-end">
                         <Button
-                          className="h-8 border-border text-foreground hover:bg-accent rounded-md"
+                          className="h-8 border-base-300 text-base-content hover:bg-base-300 rounded-md"
                           onClick={() => handleTest(w)}
                           size="sm"
                           title="Send test event"
@@ -398,7 +394,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
                           <PaperPlaneTiltIcon className="size-3.5" />
                         </Button>
                         <Button
-                          className="h-8 border-border text-foreground hover:bg-accent rounded-md"
+                          className="h-8 border-base-300 text-base-content hover:bg-base-300 rounded-md"
                           onClick={() => openDeliveries(w)}
                           size="sm"
                           title="Delivery history"
@@ -407,7 +403,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
                           <ClockCounterClockwiseIcon className="size-3.5" />
                         </Button>
                         <Button
-                          className="h-8 border-border text-foreground hover:bg-accent rounded-md"
+                          className="h-8 border-base-300 text-base-content hover:bg-base-300 rounded-md"
                           onClick={() => handleRotateSecret(w)}
                           size="sm"
                           title="Rotate secret"
@@ -416,7 +412,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
                           <ArrowsClockwiseIcon className="size-3.5" />
                         </Button>
                         <Button
-                          className="h-8 border-border text-foreground hover:bg-accent rounded-md"
+                          className="h-8 border-base-300 text-base-content hover:bg-base-300 rounded-md"
                           onClick={() => openEdit(w)}
                           size="sm"
                           title="Edit"
@@ -447,25 +443,25 @@ export function WebhooksManager({ initialWebhooks }: Props) {
       <Dialog onOpenChange={setAddOpen} open={addOpen}>
         <DialogContent className="rounded-xl max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Add Webhook</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogTitle className="text-base-content">Add Webhook</DialogTitle>
+            <DialogDescription className="text-base-content-muted">
               We'll POST a signed JSON payload to this URL for every event you
               select.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-base-content-muted">
               Name
             </Label>
             <Input
               className="rounded-md"
               onChange={(e) => setForm({ ...form, name: e.target.value })}
-              placeholder="e.g. Zapier"
+              placeholder="e.g. Order Sync"
               value={form.name}
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-base-content-muted">
               URL
             </Label>
             <Input
@@ -488,7 +484,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
           {error && <p className="text-xs text-red-600">{error}</p>}
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={saving}
               onClick={() => setAddOpen(false)}
               variant="outline"
@@ -496,7 +492,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
               Cancel
             </Button>
             <Button
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-content rounded-md"
               disabled={
                 saving ||
                 !form.name.trim() ||
@@ -518,19 +514,19 @@ export function WebhooksManager({ initialWebhooks }: Props) {
       >
         <DialogContent className="rounded-xl max-w-sm">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               {revealSecret?.title}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogDescription className="text-base-content-muted">
               Copy this signing secret now — it won't be shown again.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex items-center gap-2 rounded-md border border-border bg-accent px-3 py-2">
-            <code className="text-xs text-foreground break-all flex-1">
+          <div className="flex items-center gap-2 rounded-md border border-base-300 bg-base-300 px-3 py-2">
+            <code className="text-xs text-base-content break-all flex-1">
               {revealSecret?.secret}
             </code>
             <button
-              className="shrink-0 text-muted-foreground hover:text-foreground"
+              className="shrink-0 text-base-content-muted hover:text-base-content"
               onClick={handleCopy}
               type="button"
             >
@@ -543,7 +539,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
           </div>
           <DialogFooter>
             <Button
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-content rounded-md"
               onClick={closeReveal}
             >
               Done
@@ -559,14 +555,16 @@ export function WebhooksManager({ initialWebhooks }: Props) {
       >
         <DialogContent className="rounded-xl max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Edit Webhook</DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogTitle className="text-base-content">
+              Edit Webhook
+            </DialogTitle>
+            <DialogDescription className="text-base-content-muted">
               The signing secret never changes here — use "Rotate secret" for
               that.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-base-content-muted">
               Name
             </Label>
             <Input
@@ -578,7 +576,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
             />
           </div>
           <div className="space-y-1.5">
-            <Label className="text-xs font-medium text-muted-foreground">
+            <Label className="text-xs font-medium text-base-content-muted">
               URL
             </Label>
             <Input
@@ -602,7 +600,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
           {editError && <p className="text-xs text-red-600">{editError}</p>}
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={editSaving}
               onClick={() => setEditTarget(null)}
               variant="outline"
@@ -610,7 +608,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
               Cancel
             </Button>
             <Button
-              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground rounded-md"
+              className="flex-1 bg-primary hover:bg-primary/90 text-primary-content rounded-md"
               disabled={
                 editSaving ||
                 !editForm.name.trim() ||
@@ -635,17 +633,17 @@ export function WebhooksManager({ initialWebhooks }: Props) {
             <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-full bg-red-100">
               <WarningCircleIcon className="size-5 text-red-600" />
             </div>
-            <DialogTitle className="text-foreground text-center">
+            <DialogTitle className="text-base-content text-center">
               Delete &ldquo;{deleteTarget?.name}&rdquo;?
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-center">
+            <DialogDescription className="text-base-content-muted text-center">
               This deletes the endpoint and its delivery history. This cannot be
               undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
             <Button
-              className="flex-1 border-border text-foreground rounded-md"
+              className="flex-1 border-base-300 text-base-content rounded-md"
               disabled={deleting}
               onClick={() => setDeleteTarget(null)}
               variant="outline"
@@ -670,28 +668,30 @@ export function WebhooksManager({ initialWebhooks }: Props) {
       >
         <DialogContent className="rounded-xl max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-foreground">
+            <DialogTitle className="text-base-content">
               Deliveries — {deliveriesTarget?.name}
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
+            <DialogDescription className="text-base-content-muted">
               Most recent 50 attempts.
             </DialogDescription>
           </DialogHeader>
           {deliveriesLoading && (
-            <p className="text-xs text-muted-foreground">Loading…</p>
+            <p className="text-xs text-base-content-muted">Loading…</p>
           )}
           {!deliveriesLoading && deliveries?.length === 0 && (
-            <p className="text-xs text-muted-foreground">No deliveries yet.</p>
+            <p className="text-xs text-base-content-muted">
+              No deliveries yet.
+            </p>
           )}
           {deliveries && deliveries.length > 0 && (
             <div className="space-y-2">
               {deliveries.map((d) => (
                 <div
-                  className="rounded-md border border-border p-3 text-xs"
+                  className="rounded-md border border-base-300 p-3 text-xs"
                   key={d.id}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-foreground">
+                    <span className="font-medium text-base-content">
                       {d.event}
                     </span>
                     <span
@@ -700,13 +700,13 @@ export function WebhooksManager({ initialWebhooks }: Props) {
                           ? "bg-green-50 border-green-200 text-green-700"
                           : d.status === "failed"
                             ? "bg-red-50 border-red-200 text-red-600"
-                            : "bg-accent border-border text-muted-foreground"
+                            : "bg-base-300 border-base-300 text-base-content-muted"
                       }`}
                     >
                       {d.status}
                     </span>
                   </div>
-                  <p className="text-muted-foreground mt-1">
+                  <p className="text-base-content-muted mt-1">
                     {formatDateTime(d.createdAt)} · attempt {d.attemptCount}
                     {d.responseStatus ? ` · HTTP ${d.responseStatus}` : ""}
                   </p>
@@ -715,7 +715,7 @@ export function WebhooksManager({ initialWebhooks }: Props) {
                   )}
                   {d.status === "failed" && (
                     <Button
-                      className="mt-2 h-7 border-border text-foreground hover:bg-accent rounded-md"
+                      className="mt-2 h-7 border-base-300 text-base-content hover:bg-base-300 rounded-md"
                       onClick={() => handleRedeliver(d.id)}
                       size="sm"
                       variant="outline"
@@ -742,15 +742,14 @@ function EventCheckboxes({
 }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium text-muted-foreground">
+      <Label className="text-xs font-medium text-base-content-muted">
         Events
       </Label>
-      <div className="space-y-2 rounded-md border border-border p-3 max-h-48 overflow-y-auto">
+      <div className="space-y-2 rounded-md border border-base-300 p-3 max-h-48 overflow-y-auto">
         {WEBHOOK_EVENTS.map((e) => (
-          // Explicit htmlFor/id rather than wrapping the control: implicit
-          // label association only works for native form controls, and this
-          // Checkbox is Radix's button[role="checkbox"]. Wrapping it left the
-          // label unassociated for screen readers.
+          // Explicit htmlFor/id in addition to wrapping the control, for
+          // screen readers that don't reliably compute the accessible
+          // name from a wrapping label's other children.
           <label
             className="flex items-start gap-2 cursor-pointer"
             htmlFor={`webhook-event-${e.value}`}
@@ -763,8 +762,8 @@ function EventCheckboxes({
               onCheckedChange={() => onToggle(e.value)}
             />
             <span>
-              <span className="block text-sm text-foreground">{e.label}</span>
-              <span className="block text-xs text-muted-foreground">
+              <span className="block text-sm text-base-content">{e.label}</span>
+              <span className="block text-xs text-base-content-muted">
                 {e.description}
               </span>
             </span>
@@ -772,5 +771,14 @@ function EventCheckboxes({
         ))}
       </div>
     </div>
+  );
+}
+
+// Truncates to one line with an ellipsis; the full text shows on hover.
+function TruncatedText({ text }: { text: string }) {
+  return (
+    <span className="block truncate" title={text}>
+      {text}
+    </span>
   );
 }

@@ -1,18 +1,21 @@
 import { Button, Link, Section, Text } from "react-email";
 import { PRODUCT_NAME } from "@/config/platform";
-import { EmailLayout, emailStyles } from "@/lib/email/components/layout";
+import { createEmailStyles, EmailLayout } from "@/lib/email/components/layout";
 
 export function MagicLinkEmail({
   email,
   magicLinkUrl,
   productName = PRODUCT_NAME,
   logoUrl,
+  accentColor,
 }: {
   email: string;
   magicLinkUrl: string;
   productName?: string;
   logoUrl?: string | null;
+  accentColor?: string;
 }) {
+  const emailStyles = createEmailStyles(accentColor);
   return (
     <EmailLayout
       logoUrl={logoUrl}
@@ -22,7 +25,7 @@ export function MagicLinkEmail({
       <Text style={emailStyles.heading}>Sign in to {productName}</Text>
       <Text style={emailStyles.paragraph}>
         Use the button below to sign in as{" "}
-        <strong style={{ color: "#384959" }}>{email}</strong>.
+        <strong style={emailStyles.highlight}>{email}</strong>.
       </Text>
       <Section style={{ margin: "24px 0" }}>
         <Button href={magicLinkUrl} style={emailStyles.button}>

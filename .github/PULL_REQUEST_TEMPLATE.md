@@ -24,7 +24,7 @@ agree on the approach before you spend time on it.
 - [ ] `pnpm build` passes
 - [ ] Schema changed? Ran `pnpm db:generate` and committed the migration in `db/migrations/`
 - [ ] New env var? Added to **both** `.env.example` and `.env.docker.example`, and to `lib/env.ts`
-- [ ] UI change? Used shadcn/ui components, Phosphor icons, and semantic colour tokens (`bg-card`, `text-foreground`, …) rather than hardcoded hex or raw brand utilities — see [CONTRIBUTING.md](../CONTRIBUTING.md)
+- [ ] UI change? Used the `components/ui/*` primitives, Phosphor icons, and semantic colour tokens (`bg-card`, `text-foreground`, …) rather than hardcoded hex or raw brand utilities — see [CONTRIBUTING.md](../CONTRIBUTING.md)
 - [ ] Dark mode still looks right (agent/admin portals)
 - [ ] Docs in `docs/` updated if behaviour changed
 

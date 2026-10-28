@@ -1,6 +1,6 @@
 # Docket built from your local source, with PostgreSQL included.
 #
-#   git clone https://github.com/stack256/docket && cd docket
+#   git clone https://github.com/stack256org/docket && cd docket
 #   cp .env.docker.example .env      # set APP_SECRET and NEXT_PUBLIC_APP_URL
 #   docker compose -f docker-compose.build.yml up -d
 #
@@ -8,11 +8,12 @@
 # which on a small server is slow and memory-hungry. Use plain docker-compose.yml
 # instead, which pulls a published image.
 #
-# Two reasons to build:
-#   - you changed the code
-#   - you need the optional Pusher features, whose NEXT_PUBLIC_* values are
-#     compiled into the browser code and therefore cannot come from a shared
-#     published image
+# The main reason to build is that you changed the code. Pusher no longer
+# requires it: set the Beams/Channels values from Admin → Integrations (or
+# scripts/setup.ts's wizard) and the plain published image picks them up at
+# runtime with just a page refresh — see lib/integration-settings.ts and
+# app/api/config/client/route.ts. The build-arg path below still exists for
+# anyone who prefers setting NEXT_PUBLIC_PUSHER_* via .env instead.
 #
 # The one-shot `migrate` service runs DB migrations + seeds before app/worker start.
 #
@@ -31,7 +32,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: support
-      POSTGRES_DB: support_tool
+      POSTGRES_DB: docket
       # Pinned explicitly, NOT left to the image default. The official image's
       # default data directory changed in Postgres 18 (to /var/lib/postgresql).
       # If that default ever moves under us, the volume below would mount at the
@@ -43,7 +44,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d support_tool"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d docket"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -153,7 +154,7 @@ services:
 
 volumes:
   pgdata:
-    name: support_tool_pgdata
+    name: docket_pgdata
   # Pinned to a literal name (not just "uploads") on purpose: Docker Compose
   # namespaces unnamed volumes as "<compose-project-name>_<volume-name>". Some
   # deploy tools (observed with Dokploy) don't keep the compose project name
@@ -162,4 +163,4 @@ volumes:
   # invisible to the new container. Pinning the name guarantees every deploy
   # reattaches to the exact same volume regardless of project-name quirks.
   uploads:
-    name: support_tool_uploads
+    name: docket_uploads

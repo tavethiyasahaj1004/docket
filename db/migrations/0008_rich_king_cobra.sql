@@ -1,0 +1,1 @@
+ALTER TABLE "user_ticket_table_prefs" ADD COLUMN "show_sla_and_overdue" boolean DEFAULT true NOT NULL;

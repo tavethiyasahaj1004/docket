@@ -65,7 +65,7 @@ Agents and admins authenticate via Better Auth with three supported methods:
 |--------|-------------|
 | Email & Password | Agent enters email + password → session created immediately. Works with **zero external dependencies** — no SMTP, no OAuth provider — which is why it's the recommended bootstrap path for a fresh self-hosted install. |
 | Magic Link | Agent enters email → receives a one-time sign-in link → clicks it → session created. Requires SMTP to be configured (`lib/email`). |
-| Google OAuth | Agent clicks "Sign in with Google" → OAuth flow → session created. Requires `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` to be set. |
+| Google OAuth | Agent clicks "Sign in with Google" → OAuth flow → session created. Requires a Client ID / Secret, set from **Admin → Integrations** or `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` (see `lib/integration-settings.ts`). |
 
 There is **no public self-registration** for any method — a user account only ever comes into existence via the first-run setup wizard (`/setup`, see below), `pnpm create:admin` (script), an admin promoting an existing magic-link/Google sign-up (`pnpm make:admin` or the admin panel), or an admin adding them from `/admin/users` (see "Adding a New Agent/Admin" below). Password accounts are never created by an open sign-up form.
 
@@ -76,7 +76,7 @@ On a brand-new install (no admin user exists yet), the operator does **not** nee
 1. Any visit to `/` or `/login` redirects to `/setup` while no admin exists (see the `isSetupComplete()` guard in `lib/setup.ts` — "setup is complete" ≡ "at least one `admin` user exists").
 2. The wizard (`app/(setup)/setup`) collects a color theme + appearance in step 1 (live preview via `ThemeProvider`) and the admin's name / email / password in step 2.
 3. `POST /api/setup` creates the admin (via `createAdminUser` in `lib/bootstrap-admin.ts`, the same path as `pnpm create:admin`), seeds default statuses/categories/priorities (`lib/seed-defaults.ts`), and persists the chosen theme to `platform_settings`.
-4. The wizard then auto-signs-in with the just-created credentials and lands on `/dashboard`.
+4. The wizard auto-signs-in with the just-created credentials, then step 3 offers optional SMTP / Google OAuth / Pusher Channels / push notifications (Pusher Beams or Web Push) / storage setup (same forms as **Admin → Integrations**, skippable and revisitable any time — see `lib/integration-settings.ts`) before landing on `/dashboard`.
 
 **Security:** `POST /api/setup` and the `/setup` page are intentionally unauthenticated (there's no admin to authenticate as yet) but **self-disabling** — both check `isSetupComplete()` and return `403` / redirect to `/login` the moment an admin exists, so the bootstrap path can never be replayed to mint a second admin on a live install. `pnpm create:admin` remains available as a CLI alternative.
 
@@ -84,7 +84,9 @@ On a brand-new install (no admin user exists yet), the operator does **not** nee
 
 An admin can enable/disable each method at runtime from **`/admin/appearance`** (stored in `platform_settings`: `passwordLoginEnabled`, `magicLinkEnabled`, `googleLoginEnabled`). Fresh install default: only `passwordLoginEnabled` is `true` — matches `pnpm create:admin` being the zero-dependency bootstrap path (no SMTP/OAuth required to get in the door). An admin opts into magic link and/or Google afterward once SMTP/OAuth credentials are actually configured. This is enforced **server-side**, not just hidden in the UI: `lib/auth.ts` registers a `hooks.before` middleware that rejects `/sign-in/email`, `/sign-in/magic-link`, and `/sign-in/social` requests when the corresponding toggle is off, so a disabled method can't be used by calling the API directly. The settings UI (and the API route backing it) refuses to let all three be disabled at once — at least one method must always remain reachable.
 
-Google's toggle only controls whether the *configured* provider is offered — turning it on without `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` set does nothing (the switch is disabled in the UI in that case).
+Google's toggle only controls whether the *configured* provider is offered — turning it on without a Client ID/Secret set (via Integrations or env) does nothing (the switch is disabled in the UI in that case). Google credentials are resolved once, at process startup (`lib/auth.ts` reads `getGoogleOAuthSettings()` via a top-level `await`, since Better Auth builds `socialProviders` synchronously) — unlike every other integration, saving new Google credentials from Admin → Integrations needs an app restart (`docker compose restart app`) before sign-in picks them up, even though the UI reflects the saved value immediately.
+
+**Credential verification:** the SMTP and Google Sign-in cards on Admin → Integrations don't just check that the fields are non-empty. A "Test connection" button runs a real check on demand (SMTP: `nodemailer`'s `transporter.verify()` — a full connect + auth handshake with no mail sent; Google: an OAuth token exchange with a deliberately invalid code, whose error tells apart a bad client ID/secret pair from a bad code — see `lib/integration-test.ts`), and the same check runs automatically on every Save. The result (`{host,google}LastTestedAt/Ok/Error` on `integration_settings`) drives the badge: "Not configured" → "Configured" (saved, never tested) → "Verified `<relative time>`" or "Needs attention" (saved but the last check failed, with the server's error shown inline). For Google, "Verified" only means the credentials themselves are valid — the running server still needs a restart to pick them up, per the note above.
 
 ### Sign-In Flow
 

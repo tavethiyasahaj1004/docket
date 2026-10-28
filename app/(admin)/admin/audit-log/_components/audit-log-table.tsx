@@ -22,10 +22,10 @@ function actionBadgeClass(action: string) {
     return "bg-blue-50 border-blue-200 text-blue-700";
   }
   if (action.startsWith("profile.")) {
-    return "bg-muted/20 border-border text-muted-foreground";
+    return "bg-base-300/20 border-base-300 text-base-content-muted";
   }
   if (action.startsWith("orbit.")) {
-    return "bg-primary/10 border-primary/20 text-foreground";
+    return "bg-primary/10 border-primary/20 text-base-content";
   }
   if (action.startsWith("user.")) {
     return "bg-green-50 border-green-200 text-green-700";
@@ -48,7 +48,7 @@ function actionBadgeClass(action: string) {
   if (action.startsWith("api_key.")) {
     return "bg-red-50 border-red-200 text-red-700";
   }
-  return "bg-muted/20 border-border text-muted-foreground";
+  return "bg-base-300/20 border-base-300 text-base-content-muted";
 }
 
 export function AuditLogTable({ rows }: { rows: AuditLogRow[] }) {
@@ -70,26 +70,26 @@ export function AuditLogTable({ rows }: { rows: AuditLogRow[] }) {
     <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border bg-accent/50">
+          <tr className="sticky top-0 z-10 border-b border-base-300 bg-base-300">
             <th className="w-8 px-2 py-3" />
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
               When
             </th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
               Actor
             </th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
               Action
             </th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
               Description
             </th>
-            <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <th className="text-left px-4 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
               Entity
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-border/50">
+        <tbody className="divide-y divide-base-300/50">
           {rows.map((row) => {
             const isOpen = expanded.has(row.id);
             const hasMetadata =
@@ -99,11 +99,11 @@ export function AuditLogTable({ rows }: { rows: AuditLogRow[] }) {
                 <tr
                   className={cn(
                     "transition-colors",
-                    hasMetadata && "cursor-pointer hover:bg-accent/30"
+                    hasMetadata && "cursor-pointer hover:bg-base-300/30"
                   )}
                   onClick={hasMetadata ? () => toggle(row.id) : undefined}
                 >
-                  <td className="px-2 py-3 text-muted-foreground">
+                  <td className="px-2 py-3 text-base-content-muted">
                     {hasMetadata &&
                       (isOpen ? (
                         <CaretDownIcon className="size-3.5" />
@@ -111,10 +111,10 @@ export function AuditLogTable({ rows }: { rows: AuditLogRow[] }) {
                         <CaretRightIcon className="size-3.5" />
                       ))}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                  <td className="px-4 py-3 text-xs text-base-content-muted whitespace-nowrap">
                     <LocalDateTime date={row.createdAt} />
                   </td>
-                  <td className="px-4 py-3 text-xs text-foreground truncate max-w-48">
+                  <td className="px-4 py-3 text-xs text-base-content truncate max-w-48">
                     {row.actorEmail ?? "System"}
                   </td>
                   <td className="px-4 py-3">
@@ -128,19 +128,19 @@ export function AuditLogTable({ rows }: { rows: AuditLogRow[] }) {
                       {getAuditActionLabel(row.action)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-foreground max-w-96">
+                  <td className="px-4 py-3 text-sm text-base-content max-w-96">
                     {row.description}
                   </td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                  <td className="px-4 py-3 text-xs text-base-content-muted whitespace-nowrap">
                     {row.entityType}
                     {row.entityId ? ` · ${row.entityId}` : ""}
                   </td>
                 </tr>
                 {isOpen && hasMetadata && (
-                  <tr className="bg-accent/20">
+                  <tr className="bg-base-300/20">
                     <td className="px-2 py-3" />
                     <td className="px-4 py-3" colSpan={5}>
-                      <pre className="rounded-md border border-border bg-card p-3 text-xs text-muted-foreground overflow-x-auto">
+                      <pre className="rounded-md border border-base-300 bg-base-100 p-3 text-xs text-base-content-muted overflow-x-auto">
                         {JSON.stringify(row.metadata, null, 2)}
                       </pre>
                     </td>

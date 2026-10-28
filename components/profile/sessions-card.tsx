@@ -20,13 +20,13 @@ export function SessionsCard({ sessions }: { sessions: SessionRow[] }) {
   ).length;
 
   return (
-    <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
+    <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft overflow-hidden">
       <div className="p-6 pb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="text-base font-semibold text-foreground">
+          <h2 className="text-base font-semibold text-base-content">
             Active Sessions
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-base-content-muted mt-0.5">
             Review signed-in devices and revoke anything you don&apos;t
             recognize.
           </p>
@@ -42,32 +42,32 @@ export function SessionsCard({ sessions }: { sessions: SessionRow[] }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-t border-b border-border bg-accent/50">
-              <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            <tr className="border-t border-b border-base-300 bg-base-300/50">
+              <th className="text-left px-6 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                 Session
               </th>
-              <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="text-left px-6 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                 IP
               </th>
-              <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="text-left px-6 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                 Created
               </th>
-              <th className="text-left px-6 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              <th className="text-left px-6 py-3 text-xs font-medium text-base-content-muted uppercase tracking-wide">
                 Expires
               </th>
               <th className="px-6 py-3" />
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/50">
+          <tbody className="divide-y divide-base-300/50">
             {sessions.map((session) => (
               <tr
-                className="hover:bg-accent/30 transition-colors"
+                className="hover:bg-base-300/30 transition-colors"
                 key={session.id}
               >
                 <td className="px-6 py-3">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">
+                      <span className="font-medium text-base-content">
                         {session.userAgent
                           ? describeUserAgent(session.userAgent)
                           : "Unknown device"}
@@ -80,18 +80,18 @@ export function SessionsCard({ sessions }: { sessions: SessionRow[] }) {
                     </div>
                   </div>
                 </td>
-                <td className="px-6 py-3 font-mono text-xs text-muted-foreground">
+                <td className="px-6 py-3 font-mono text-xs text-base-content-muted">
                   {session.ipAddress ?? "—"}
                 </td>
-                <td className="px-6 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                <td className="px-6 py-3 text-xs text-base-content-muted whitespace-nowrap">
                   <LocalDateTime date={session.createdAt} />
                 </td>
-                <td className="px-6 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                <td className="px-6 py-3 text-xs text-base-content-muted whitespace-nowrap">
                   <LocalDateTime date={session.expiresAt} />
                 </td>
                 <td className="px-6 py-3 text-right">
                   {session.isCurrent ? (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-base-content-muted">
                       Protected
                     </span>
                   ) : (

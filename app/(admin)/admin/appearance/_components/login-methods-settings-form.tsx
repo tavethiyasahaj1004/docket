@@ -84,7 +84,7 @@ export function LoginMethodsSettingsForm({
       label: "Google",
       description: googleConfigured
         ? "Sign in with a Google account."
-        : "Not available — GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET aren't set.",
+        : "Not available — add a Client ID and Secret under Integrations first.",
       disabled: !googleConfigured,
     },
   ];
@@ -92,21 +92,25 @@ export function LoginMethodsSettingsForm({
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-medium text-foreground">Sign-in Methods</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <h3 className="text-sm font-medium text-base-content">
+          Sign-in Methods
+        </h3>
+        <p className="text-xs text-base-content-muted mt-0.5">
           Choose which methods agents and admins can use to sign in. At least
           one must stay enabled.
         </p>
       </div>
-      <div className="divide-y divide-border rounded-lg border border-border">
+      <div className="divide-y divide-base-300 rounded-lg border border-base-300">
         {rows.map((row) => (
           <div
             className="flex items-center justify-between gap-4 p-4"
             key={row.key}
           >
             <div className="min-w-0">
-              <p className="text-sm font-medium text-foreground">{row.label}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-sm font-medium text-base-content">
+                {row.label}
+              </p>
+              <p className="text-xs text-base-content-muted mt-0.5">
                 {row.description}
               </p>
             </div>

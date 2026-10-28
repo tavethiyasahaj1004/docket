@@ -1,33 +1,42 @@
-"use client"
+import type * as React from "react";
 
-import * as React from "react"
-import { Switch as SwitchPrimitive } from "radix-ui"
+import { cn } from "@/lib/utils";
 
-import { cn } from "@/lib/utils"
+// daisyUI's size ramp: `--size-selector × 4/5/6`.
+const switchSizeClasses = {
+  xs: "toggle-xs",
+  sm: "toggle-sm",
+  default: "",
+} as const;
+
+type SwitchSize = keyof typeof switchSizeClasses;
 
 function Switch({
   className,
-  size = "default",
+  size = "sm",
+  onCheckedChange,
   ...props
-}: React.ComponentProps<typeof SwitchPrimitive.Root> & {
-  size?: "sm" | "default"
+}: Omit<React.ComponentProps<"input">, "onChange" | "size" | "type"> & {
+  onCheckedChange?: (checked: boolean) => void;
+  size?: SwitchSize;
 }) {
   return (
-    <SwitchPrimitive.Root
-      data-slot="switch"
-      data-size={size}
+    <input
       className={cn(
-        "peer group/switch relative inline-flex shrink-0 items-center rounded-full border transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 data-[size=default]:h-4.5 data-[size=default]:w-8.25 data-[size=sm]:h-3.5 data-[size=sm]:w-6.25 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40 data-checked:border-primary data-checked:bg-primary data-unchecked:border-input/50 data-unchecked:bg-input data-disabled:cursor-not-allowed data-disabled:opacity-50",
+        // Stock daisyUI. `toggle` is an *outlined* switch by design — the track
+        // stays unfilled and the knob carries the state, by position and
+        // `--input-color`. Tailwind keeps only the invalid state.
+        "toggle toggle-primary aria-invalid:outline-2 aria-invalid:outline-error/20",
+        switchSizeClasses[size],
         className
       )}
+      data-size={size}
+      data-slot="switch"
+      onChange={(event) => onCheckedChange?.(event.target.checked)}
+      type="checkbox"
       {...props}
-    >
-      <SwitchPrimitive.Thumb
-        data-slot="switch-thumb"
-        className="pointer-events-none block rounded-full bg-background ring-0 transition-transform group-data-[size=default]/switch:size-3.5 group-data-[size=sm]/switch:size-2.5 data-checked:translate-x-[calc(100%+2px)] dark:data-checked:bg-primary-foreground data-unchecked:translate-x-0.25 dark:data-unchecked:bg-foreground"
-      />
-    </SwitchPrimitive.Root>
-  )
+    />
+  );
 }
 
-export { Switch }
+export { Switch };

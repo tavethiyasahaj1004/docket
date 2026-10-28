@@ -35,14 +35,10 @@ export function ticketPayloadData(ticket: TicketEventTicket) {
   };
 }
 
-/**
- * Fans a ticket event out to every active endpoint subscribed to it — one
- * `webhook_deliveries` row + one queued job per matching endpoint. Fire and
- * forget from the caller's side (same convention as `enqueueEmail()` /
- * `publishTicketCreated()`): callers should `await dispatchWebhookEvent(...).catch(...)`
- * right next to those existing calls, never let it block the request.
- * No-ops cleanly when no endpoints are configured or subscribed.
- */
+/** Fans a ticket event out to every subscribed active endpoint — one
+ * `webhook_deliveries` row and one queued job each. Fire-and-forget like
+ * `enqueueEmail()`: callers should `.catch(...)` beside those calls and never
+ * block the request on it. No-ops when nothing is configured or subscribed. */
 export async function dispatchWebhookEvent(
   event: WebhookEvent,
   entityType: string,

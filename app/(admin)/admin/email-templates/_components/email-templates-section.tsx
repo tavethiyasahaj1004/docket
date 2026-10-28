@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { EmailBrandingSettingsForm } from "./email-branding-settings-form";
 import { EmailSendingSettingsForm } from "./email-sending-settings-form";
 import {
   EmailTemplatesManager,
@@ -8,11 +9,13 @@ import {
 } from "./email-templates-manager";
 
 interface Props {
+  initialAccentColor: string | null;
   initialTemplates: TemplateItem[];
   initialTicketEmailNotificationsEnabled: boolean;
 }
 
 export function EmailTemplatesSection({
+  initialAccentColor,
   initialTemplates,
   initialTicketEmailNotificationsEnabled,
 }: Props) {
@@ -21,6 +24,7 @@ export function EmailTemplatesSection({
 
   return (
     <>
+      <EmailBrandingSettingsForm initialAccentColor={initialAccentColor} />
       <EmailSendingSettingsForm
         enabled={ticketEmailNotificationsEnabled}
         onChange={setTicketEmailNotificationsEnabled}

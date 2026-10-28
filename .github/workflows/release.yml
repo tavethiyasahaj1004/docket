@@ -37,6 +37,14 @@ name: Release
 # private, even in a public repository. Repository -> Packages -> docket ->
 # Package settings -> Change visibility -> Public. Until then `docker pull`
 # fails for anyone who is not signed in.
+#
+# This is no longer a note you have to remember: the `verify-public` job below
+# asks the registry, anonymously, whether a customer could actually pull what
+# was just published, and turns the run red if not. It went unnoticed for
+# 0.1.0 precisely because every signal a maintainer sees -- green build, tags
+# present, release published -- looks identical whether the package is public
+# or private. Only a signed-out client can tell the difference, so that is what
+# the job is.
 
 on:
   workflow_run:
@@ -205,6 +213,54 @@ jobs:
           # NEXT_PUBLIC_PUSHER_* are deliberately NOT passed. Those get compiled
           # into the browser code at build time, so baking one operator's keys
           # into a public image would hand them to everyone who downloads it.
+
+  # ── Could a customer actually pull it? ────────────────────────────────────
+  #
+  # Anonymous on purpose: no `docker/login-action`, no GITHUB_TOKEN, no
+  # credentials of any kind. It asks ghcr.io exactly what a customer's Docker
+  # daemon asks, because that is the only vantage point from which a private
+  # package looks different from a public one.
+  #
+  # It deliberately does NOT gate `release` below. The image is already pushed
+  # by the time this runs, so blocking the tag would leave published images
+  # with no release pointing at them. A red run is the signal; the fix is one
+  # click in Package settings and is never needed again for this package.
+  verify-public:
+    name: Anyone can pull it
+    needs: [check, image]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve it signed out, the way a customer does
+        env:
+          # The version ladder only exists on a release; an ordinary push
+          # publishes `main`, so that is what there is to check.
+          TAG: ${{ needs.check.outputs.is_release == 'true' && needs.check.outputs.version || 'main' }}
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY,,}"
+
+          # `|| true` so a network failure reaches the explicit message below
+          # rather than dying inside the pipeline under `set -e` with no
+          # explanation of what was being tested.
+          token=$(curl -sS "https://ghcr.io/token?scope=repository:${repo}:pull&service=ghcr.io" \
+                  | jq -r '.token // empty' || true)
+
+          if [ -z "$token" ]; then
+            echo "::error::ghcr.io/${repo} refused an anonymous pull token, so the package is PRIVATE. Every 'docker pull' by anyone not signed in fails with 403, including every command in the README. Fix: https://github.com/orgs/${GITHUB_REPOSITORY%%/*}/packages/container/${GITHUB_REPOSITORY##*/}/settings -> Danger Zone -> Change visibility -> Public."
+            exit 1
+          fi
+
+          code=$(curl -sS -o /dev/null -w '%{http_code}' \
+            -H "Authorization: Bearer $token" \
+            -H 'Accept: application/vnd.oci.image.index.v1+json,application/vnd.docker.distribution.manifest.list.v2+json' \
+            "https://ghcr.io/v2/${repo}/manifests/${TAG}")
+
+          if [ "$code" != "200" ]; then
+            echo "::error::ghcr.io/${repo}:${TAG} answered HTTP ${code} to a signed-out request. The package is readable but this tag is not, so 'docker pull ghcr.io/${repo}:${TAG}' fails for customers."
+            exit 1
+          fi
+
+          echo "ghcr.io/${repo}:${TAG} is publicly pullable."
 
   # ── Tag it and write the release ──────────────────────────────────────────
   release:

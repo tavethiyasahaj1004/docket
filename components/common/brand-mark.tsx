@@ -13,12 +13,9 @@ interface BrandMarkProps {
   textClassName?: string;
 }
 
-/**
- * A logo image when one's configured, replacing the icon-badge + name text
- * entirely (mirrors lib/email/components/layout.tsx's EmailLayout, which
- * makes the same swap for emails) — an uploaded logo usually already
- * contains a wordmark, so showing the text name alongside it would double up.
- */
+/** A configured logo replaces the icon-badge and name text entirely, since an
+ * uploaded logo usually contains its own wordmark. EmailLayout makes the same
+ * swap for emails. */
 export function BrandMark({
   name,
   logoUrl,
@@ -27,13 +24,9 @@ export function BrandMark({
   imgClassName,
 }: BrandMarkProps) {
   if (logoUrl) {
-    // next/image is the wrong tool here. logoUrl is admin-uploaded and served
-    // through our own /api/files/[...key] route (or a user-set S3/R2 CDN
-    // domain), so it would need remotePatterns reconfigured per deployment to
-    // pass the optimizer — and next/image additionally requires intrinsic
-    // width/height or `fill`, neither of which is knowable for an arbitrary
-    // uploaded logo. A plain <img> sized by the caller's classes is correct for
-    // a single small chrome asset.
+    // next/image is wrong here: logoUrl is admin-uploaded and served from our own
+    // route or a user-set CDN, so it would need per-deployment remotePatterns,
+    // and it demands intrinsic dimensions no arbitrary uploaded logo can supply.
     // biome-ignore lint/performance/noImgElement: admin-uploaded logo of unknown intrinsic size, served via our own route
     return <img alt={name} className={imgClassName} src={logoUrl} />;
   }

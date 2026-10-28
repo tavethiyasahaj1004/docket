@@ -6,12 +6,9 @@ import { enqueueJob } from "@/lib/worker/enqueue";
 import { JOB_NAMES } from "@/lib/worker/job-types";
 
 export interface SendEmailOptions {
-  /**
-   * "ticket" = lifecycle notification about a ticket (created/replied/
-   * closed/status-changed) — mirrors an outbound webhook event, so it's
-   * skipped when ticketEmailNotificationsEnabled is off. "account" (default)
-   * = agent/admin auth or invite email, always sent.
-   */
+  /** "ticket" = a lifecycle notification mirroring an outbound webhook event, so
+   * it's skipped when ticketEmailNotificationsEnabled is off. "account" (the
+   * default) = an agent auth or invite email, always sent. */
   category?: "account" | "ticket";
   html: string;
   subject: string;

@@ -1,16 +1,9 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, count, eq, or, sql } from "drizzle-orm";
+import { and, eq, isNull, or, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
-import {
-  customers,
-  ticketActivity,
-  ticketAttachments,
-  ticketComments,
-  tickets,
-  user,
-} from "@/db/schema";
+import { customers, ticketActivity, tickets, user } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { enqueueEmail } from "@/lib/email";
@@ -21,10 +14,22 @@ import { publishPushToUsers } from "@/lib/push";
 import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 import { publishTicketCommentCreated } from "@/lib/realtime";
 import { isRichTextEmpty, richTextToPlainText } from "@/lib/rich-text";
+import { getAttachmentLimits } from "@/lib/settings";
 import { computeSlaTransition } from "@/lib/sla";
 import { storage } from "@/lib/storage";
 import { isClosedStatusSlug } from "@/lib/ticket-config";
+import {
+  checkTicketStorage,
+  ticketStorageError,
+} from "@/lib/tickets/attachment-limits";
+import { getTicketAttachmentBytes } from "@/lib/tickets/attachment-usage";
+import {
+  forwardMergedTicket,
+  insertReplyUnlessMerged,
+  MERGED_DURING_REPLY_MESSAGE,
+} from "@/lib/tickets/merge";
 import { resolveTicketPortalUrl } from "@/lib/tickets/portal-url";
+import { deleteReplyDraft } from "@/lib/tickets/reply-drafts";
 import {
   dispatchWebhookEvent,
   ticketPayloadData,
@@ -37,14 +42,12 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/zip",
   "text/plain",
 ]);
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
-const MAX_ATTACHMENTS_PER_TICKET = 5;
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id: ticketId } = await params;
+  const { id: requestedTicketId } = await params;
 
   let formData: FormData;
   try {
@@ -54,7 +57,14 @@ export async function POST(
   }
 
   const content = String(formData.get("content") ?? "").trim();
-  const token = String(formData.get("token") ?? "").trim();
+  const rawToken = String(formData.get("token") ?? "").trim();
+  // A merged ticket forwards to the ticket it was merged into (lib/tickets/merge.ts).
+  const forwarded = await forwardMergedTicket(
+    requestedTicketId,
+    rawToken || undefined
+  );
+  const ticketId = forwarded.ticketId;
+  const token = forwarded.token ?? "";
   const attachmentFiles = formData
     .getAll("attachments")
     .filter((v): v is File => v instanceof File && v.size > 0);
@@ -98,13 +108,10 @@ export async function POST(
       }
     | undefined;
 
-  // The two reply forms are mutually exclusive by construction: only the
-  // customer form ever sends `token`, only the agent form relies on a
-  // session. Check `token` FIRST and treat it as authoritative — otherwise a
-  // customer submitting from a browser that also happens to carry a valid
-  // agent session cookie (e.g. an agent testing their own portal in another
-  // tab of the same browser profile) would have their reply silently
-  // misattributed to that agent, since the session would otherwise win.
+  // Only the customer form sends `token`, only the agent form uses a session, so
+  // check `token` FIRST and treat it as authoritative. Otherwise a customer
+  // replying from a browser that also holds an agent session cookie — an agent
+  // testing the portal in another tab — is silently attributed to that agent.
   if (token) {
     const { allowed } = await checkRateLimit({
       action: "ticket_comment",
@@ -201,26 +208,25 @@ export async function POST(
     ticketData = ticket;
   }
 
-  // Check attachment count
-  if (attachmentFiles.length > 0) {
-    const [{ value: existingCount }] = await db
-      .select({ value: count() })
-      .from(ticketAttachments)
-      .where(eq(ticketAttachments.ticketId, ticketId));
+  const limits = await getAttachmentLimits();
 
-    const remaining = MAX_ATTACHMENTS_PER_TICKET - existingCount;
-    if (attachmentFiles.length > remaining) {
+  // Per-message count + per-file size. There is no per-ticket cap, however
+  // many files the ticket already holds.
+  if (attachmentFiles.length > 0) {
+    if (attachmentFiles.length > limits.maxPerMessage) {
       return NextResponse.json(
         {
-          error: `Only ${remaining} more attachment(s) allowed on this ticket.`,
+          error: `You can attach up to ${limits.maxPerMessage} file(s) per reply.`,
         },
         { status: 400 }
       );
     }
     for (const file of attachmentFiles) {
-      if (file.size > MAX_FILE_SIZE) {
+      if (file.size > limits.maxFileSizeBytes) {
         return NextResponse.json(
-          { error: `"${file.name}" exceeds the 10 MB limit.` },
+          {
+            error: `"${file.name}" exceeds the ${limits.maxFileSizeMb} MB limit.`,
+          },
           { status: 400 }
         );
       }
@@ -230,6 +236,28 @@ export async function POST(
           { status: 400 }
         );
       }
+    }
+
+    // Fast pre-check of the ticket's combined attachment size so an over-limit
+    // reply is rejected before anything is uploaded. The reply transaction
+    // re-checks atomically (insertReplyUnlessMerged) — that one is authoritative.
+    const incomingBytes = attachmentFiles.reduce((n, f) => n + f.size, 0);
+    const storageCheck = checkTicketStorage({
+      usedBytes: await getTicketAttachmentBytes(db, ticketId),
+      incomingBytes,
+      limitBytes: limits.maxPerTicketSizeBytes,
+    });
+    if (!storageCheck.ok) {
+      return NextResponse.json(
+        {
+          error: ticketStorageError(
+            storageCheck,
+            incomingBytes,
+            limits.maxPerTicketSizeBytes
+          ),
+        },
+        { status: 400 }
+      );
     }
   }
 
@@ -260,33 +288,64 @@ export async function POST(
   }
 
   try {
-    await db.insert(ticketComments).values({
-      id: commentId,
+    const inserted = await insertReplyUnlessMerged(
       ticketId,
-      authorId: authorId ?? null,
-      authorName,
-      authorRole,
-      content,
-      isInternal,
-      createdAt: now,
-      updatedAt: now,
-    });
+      {
+        id: commentId,
+        ticketId,
+        authorId: authorId ?? null,
+        authorName,
+        authorRole,
+        content,
+        isInternal,
+        createdAt: now,
+        updatedAt: now,
+      },
+      uploadedAttachments.map((a) => ({
+        id: a.id,
+        ticketId,
+        commentId,
+        filename: a.filename,
+        storageKey: a.storageKey,
+        fileSize: a.fileSize,
+        mimeType: a.mimeType,
+        uploadedById: authorId ?? null,
+        uploadedByName: authorName,
+        uploadedByRole: authorRole,
+        createdAt: now,
+      })),
+      limits.maxPerTicketSizeBytes
+    );
+    if (inserted.status !== "ok") {
+      for (const a of uploadedAttachments) {
+        await storage.delete(a.storageKey).catch(() => undefined);
+      }
+      if (inserted.status === "storage") {
+        return NextResponse.json(
+          {
+            error: ticketStorageError(
+              inserted.check,
+              uploadedAttachments.reduce((n, a) => n + a.fileSize, 0),
+              limits.maxPerTicketSizeBytes
+            ),
+          },
+          { status: 400 }
+        );
+      }
+      return NextResponse.json(
+        { error: MERGED_DURING_REPLY_MESSAGE },
+        { status: 409 }
+      );
+    }
 
-    if (uploadedAttachments.length > 0) {
-      await db.insert(ticketAttachments).values(
-        uploadedAttachments.map((a) => ({
-          id: a.id,
-          ticketId,
-          commentId,
-          filename: a.filename,
-          storageKey: a.storageKey,
-          fileSize: a.fileSize,
-          mimeType: a.mimeType,
-          uploadedById: authorId ?? null,
-          uploadedByName: authorName,
-          uploadedByRole: authorRole,
-          createdAt: now,
-        }))
+    // The reply is out — drop the agent's saved draft for this ticket so the
+    // composer and the /tickets "Draft" marker don't resurrect it. Best
+    // effort: the comment row is already written, so a failure here must not
+    // fall into the catch below and report the reply as failed (the agent
+    // would resend it, duplicating the reply).
+    if (authorId && authorRole !== "customer") {
+      await deleteReplyDraft(ticketId, authorId).catch((err) =>
+        console.error("[reply-draft.delete]", err)
       );
     }
 
@@ -326,7 +385,7 @@ export async function POST(
         ...slaUpdate,
         ...firstResponseUpdate,
       })
-      .where(eq(tickets.id, ticketId));
+      .where(and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId)));
 
     await db.insert(ticketActivity).values({
       id: createId(),
@@ -436,11 +495,12 @@ export async function POST(
         ticketNumber: ticketData.ticketNumber,
       }).catch((err) => console.error("[notification.customer_replied]", err));
 
-      // OS-level push (no-op unless Pusher Beams is configured).
+      // OS-level push (Pusher Beams or Web Push, whichever is selected; no-op unless configured).
       await publishPushToUsers(recipientIds, {
         title: notifTitle,
         body: contentText.slice(0, 120),
-        deepLink: `${env.NEXT_PUBLIC_APP_URL}/tickets/${ticketId}`,
+        deepLink: `${env.NEXT_PUBLIC_APP_URL}/tickets/${ticketData.ticketNumber}`,
+        tag: `ticket-${ticketData.ticketNumber}`,
       }).catch((err) => console.error("[push.customer_replied]", err));
     }
 

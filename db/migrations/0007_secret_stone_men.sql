@@ -1,0 +1,2 @@
+ALTER TABLE "user_ticket_table_prefs" ALTER COLUMN "columns" SET DEFAULT '[]'::jsonb;--> statement-breakpoint
+ALTER TABLE "user_ticket_table_prefs" ADD COLUMN "send_reply_on_enter" boolean DEFAULT true NOT NULL;

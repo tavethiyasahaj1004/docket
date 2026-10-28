@@ -4,12 +4,9 @@ import { eq } from "drizzle-orm";
 import { user, verification } from "@/db/schema";
 import { db } from "@/lib/db";
 
-/**
- * Looks up the email a reset/password-setup token belongs to, without
- * consuming it — Better Auth's own `/reset-password` endpoint does the
- * actual (single-use) consumption. Used to auto sign-in right after a
- * successful reset, so accepting an invite is one step instead of two.
- */
+/** Looks up the email a reset token belongs to without consuming it — Better
+ * Auth's `/reset-password` does the single-use consumption. Enables auto
+ * sign-in after a reset, making an invite one step instead of two. */
 export async function getResetTokenEmail(
   token: string
 ): Promise<string | null> {

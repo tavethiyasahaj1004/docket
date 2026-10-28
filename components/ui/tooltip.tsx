@@ -1,57 +1,197 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Tooltip as TooltipPrimitive } from "radix-ui"
+import {
+  arrow,
+  autoUpdate,
+  FloatingArrow,
+  FloatingDelayGroup,
+  FloatingPortal,
+  flip,
+  offset,
+  type Placement,
+  shift,
+  useDelayGroup,
+  useDismiss,
+  useFloating,
+  useFocus,
+  useHover,
+  useInteractions,
+  useRole,
+  useTransitionStyles,
+} from "@floating-ui/react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 
-import { cn } from "@/lib/utils"
+import { Slot } from "@/lib/slot";
+import { cn } from "@/lib/utils";
+
+// Floating UI for behaviour, daisyUI's tooltip *appearance* for the bubble. The
+// `tooltip` class is unusable here — positioned inside a `.tooltip` ancestor and
+// revealed on `:hover`, it can't be portalled, can't flip, has no controlled
+// state. So its look is reproduced below through the same theme tokens.
+type Side = "bottom" | "left" | "right" | "top";
 
 function TooltipProvider({
+  children,
   delayDuration = 0,
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
+}: {
+  children: ReactNode;
+  delayDuration?: number;
+}) {
   return (
-    <TooltipPrimitive.Provider
-      data-slot="tooltip-provider"
-      delayDuration={delayDuration}
-      {...props}
-    />
-  )
+    <FloatingDelayGroup delay={{ close: 150, open: delayDuration }}>
+      {children}
+    </FloatingDelayGroup>
+  );
 }
 
-function Tooltip({
-  ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
+interface TooltipContextValue {
+  arrowRef: React.RefObject<SVGSVGElement | null>;
+  context: ReturnType<typeof useFloating>["context"];
+  getFloatingProps: ReturnType<typeof useInteractions>["getFloatingProps"];
+  getReferenceProps: ReturnType<typeof useInteractions>["getReferenceProps"];
+  isMounted: boolean;
+  refs: ReturnType<typeof useFloating>["refs"];
+  setPlacement: (placement: Placement) => void;
+  styles: React.CSSProperties;
+  transitionStyles: React.CSSProperties;
+}
+
+const TooltipContext = createContext<TooltipContextValue | null>(null);
+
+function useTooltipContext(name: string) {
+  const context = useContext(TooltipContext);
+  if (!context) {
+    throw new Error(`<${name}> must be rendered inside <Tooltip>`);
+  }
+  return context;
+}
+
+function Tooltip({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [placement, setPlacement] = useState<Placement>("top");
+  const arrowRef = useRef<SVGSVGElement>(null);
+
+  const { context, floatingStyles, refs } = useFloating({
+    middleware: [
+      offset(8),
+      flip(),
+      shift({ padding: 8 }),
+      arrow({ element: arrowRef }),
+    ],
+    onOpenChange: setOpen,
+    open,
+    placement,
+    // Position via left/top, not `transform: translate(...)` — the scale-in
+    // below (useTransitionStyles) also writes `transform` and, spread after
+    // these styles on TooltipContent, would wipe the translate and pin every
+    // tooltip to the viewport's top-left corner.
+    transform: false,
+    whileElementsMounted: autoUpdate,
+  });
+
+  const { delay, isInstantPhase } = useDelayGroup(context);
+  const hover = useHover(context, { delay, move: false });
+  const focus = useFocus(context);
+  const dismiss = useDismiss(context);
+  const role = useRole(context, { role: "tooltip" });
+  const { getFloatingProps, getReferenceProps } = useInteractions([
+    hover,
+    focus,
+    dismiss,
+    role,
+  ]);
+  const { isMounted, styles: transitionStyles } = useTransitionStyles(context, {
+    duration: isInstantPhase ? 0 : 100,
+    initial: { opacity: 0, transform: "scale(0.95)" },
+  });
+
+  return (
+    <TooltipContext.Provider
+      value={{
+        arrowRef,
+        context,
+        getFloatingProps,
+        getReferenceProps,
+        isMounted,
+        refs,
+        setPlacement,
+        styles: floatingStyles,
+        transitionStyles,
+      }}
+    >
+      {children}
+    </TooltipContext.Provider>
+  );
 }
 
 function TooltipTrigger({
+  asChild,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
-  return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
+}: React.ComponentProps<"button"> & { asChild?: boolean }) {
+  const { getReferenceProps, refs } = useTooltipContext("TooltipTrigger");
+  const Comp = asChild ? Slot : "button";
+  return (
+    <Comp
+      data-slot="tooltip-trigger"
+      ref={refs.setReference}
+      {...getReferenceProps(props)}
+    />
+  );
 }
 
 function TooltipContent({
   className,
-  sideOffset = 0,
+  side = "top",
   children,
   ...props
-}: React.ComponentProps<typeof TooltipPrimitive.Content>) {
+}: React.ComponentProps<"div"> & { side?: Side }) {
+  const {
+    arrowRef,
+    context,
+    getFloatingProps,
+    isMounted,
+    refs,
+    setPlacement,
+    styles,
+    transitionStyles,
+  } = useTooltipContext("TooltipContent");
+
+  useLayoutEffect(() => {
+    setPlacement(side);
+  }, [side, setPlacement]);
+
+  if (!isMounted) {
+    return null;
+  }
+
   return (
-    <TooltipPrimitive.Portal>
-      <TooltipPrimitive.Content
-        data-slot="tooltip-content"
-        sideOffset={sideOffset}
+    <FloatingPortal>
+      <div
         className={cn(
-          "z-50 inline-flex w-fit max-w-xs origin-(--radix-tooltip-content-transform-origin) items-center gap-1.5 rounded-none bg-foreground px-3 py-1.5 text-xs text-background has-data-[slot=kbd]:pr-1.5 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 **:data-[slot=kbd]:relative **:data-[slot=kbd]:isolate **:data-[slot=kbd]:z-50 **:data-[slot=kbd]:rounded-none data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 data-[state=delayed-open]:zoom-in-95 data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          "z-50 inline-flex w-fit max-w-80 items-center gap-1.5 rounded-field bg-sidebar px-2 py-1 text-sm text-sidebar-content",
           className
         )}
-        {...props}
+        data-slot="tooltip-content"
+        ref={refs.setFloating}
+        style={{ ...styles, ...transitionStyles }}
+        {...getFloatingProps(props)}
       >
         {children}
-        <TooltipPrimitive.Arrow className="z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-none bg-foreground fill-foreground" />
-      </TooltipPrimitive.Content>
-    </TooltipPrimitive.Portal>
-  )
+        <FloatingArrow
+          className="fill-sidebar"
+          context={context}
+          ref={arrowRef}
+        />
+      </div>
+    </FloatingPortal>
+  );
 }
 
-export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger }
+export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger };

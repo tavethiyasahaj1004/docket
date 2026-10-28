@@ -12,7 +12,7 @@ export default function AppearanceLoading() {
         </div>
       </div>
 
-      <div className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-8">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-8">
         {/* Appearance mode */}
         <div className="space-y-3">
           <Skeleton className="h-4 w-24" />
@@ -34,19 +34,19 @@ export default function AppearanceLoading() {
         </div>
 
         {/* Action bar */}
-        <div className="flex justify-end gap-2 border-t border-border pt-4">
+        <div className="flex justify-end gap-2 border-t border-base-300 pt-4">
           <Skeleton className="h-8 w-20 rounded-md" />
           <Skeleton className="h-8 w-28 rounded-md" />
         </div>
       </div>
 
       {/* Sign-in methods */}
-      <div className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-4 mt-6">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-4 mt-6">
         <div className="space-y-1">
           <Skeleton className="h-4 w-28" />
           <Skeleton className="h-3 w-72" />
         </div>
-        <div className="divide-y divide-border rounded-lg border border-border">
+        <div className="divide-y divide-base-300 rounded-lg border border-base-300">
           {skeletonKeys(3).map((k) => (
             <div
               className="flex items-center justify-between gap-4 p-4"

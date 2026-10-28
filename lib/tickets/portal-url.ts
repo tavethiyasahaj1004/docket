@@ -3,17 +3,10 @@ import { apiKeys } from "@/db/schema";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 
-/**
- * The customer-facing ticket link for emails and the create-ticket API
- * response. Tickets created through an API key with a `portalUrlTemplate`
- * link to the integrator's own support page instead of Docket's
- * built-in `/ticket/:id` portal — every place that builds this link
- * (ticket creation, an agent's reply, closing a ticket) should call this
- * instead of re-deriving the template logic per call site.
- *
- * Server-only (queries the DB) — deliberately kept out of lib/tickets.ts,
- * which client components import for its pure formatting helpers.
- */
+/** The customer-facing ticket link for emails and the create-ticket response.
+ * A key carrying `portalUrlTemplate` points at the integrator's own page rather
+ * than the built-in portal, so every caller should use this instead of
+ * re-deriving it. Server-only, hence kept out of client-imported lib/tickets.ts. */
 export async function resolveTicketPortalUrl(
   ticketId: string,
   customerToken: string,

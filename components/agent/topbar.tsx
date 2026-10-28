@@ -6,10 +6,12 @@ import {
   ChatTextIcon,
   ClockCounterClockwiseIcon,
   EnvelopeSimpleIcon,
+  GearSixIcon,
   type Icon,
   KeyIcon,
   ListChecksIcon,
   PaintBrushIcon,
+  PlugsIcon,
   SquaresFourIcon,
   TagIcon,
   TicketIcon,
@@ -52,6 +54,11 @@ const ROUTE_META: Record<string, RouteMeta> = {
     title: "Your Profile",
     description: "Manage your account, password, active sessions, and data.",
     icon: UserCircleIcon,
+  },
+  "/settings": {
+    title: "Settings",
+    description: "Personal preferences for how you work in Docket.",
+    icon: GearSixIcon,
   },
   "/admin/users": {
     title: "Users",
@@ -108,6 +115,12 @@ const ROUTE_META: Record<string, RouteMeta> = {
     description: "Payload shapes, signing, and retry behavior.",
     icon: BookOpenIcon,
   },
+  "/admin/integrations": {
+    title: "Integrations",
+    description:
+      "Configure SMTP, Google Sign-in, Pusher, and file storage without editing .env.",
+    icon: PlugsIcon,
+  },
 };
 
 function getMeta(pathname: string): RouteMeta {
@@ -129,15 +142,15 @@ export function TopBar({ userId }: { userId: string }) {
   const { title, description, icon: Icon } = getMeta(pathname);
 
   return (
-    <div className="h-14 shrink-0 border-b border-border bg-card flex items-center justify-between px-6">
+    <div className="h-14 shrink-0 border-b border-base-300 bg-base-100 flex items-center justify-between px-6">
       <div className="flex items-center gap-3 min-w-0">
-        {Icon && <Icon className="size-5 text-foreground shrink-0" />}
+        {Icon && <Icon className="size-5 text-base-content shrink-0" />}
         <div className="min-w-0">
-          <h1 className="text-sm font-semibold text-foreground leading-tight truncate">
+          <h1 className="text-sm font-semibold text-base-content leading-tight truncate">
             {title}
           </h1>
           {description && (
-            <p className="text-xs text-muted-foreground leading-tight truncate">
+            <p className="text-xs text-base-content-muted leading-tight truncate">
               {description}
             </p>
           )}

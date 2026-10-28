@@ -111,14 +111,14 @@ export function ColumnSettingsDialog({ columns }: { columns: ColumnPref[] }) {
           <div className="space-y-1">
             {draft.map((c, i) => (
               <div
-                className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-accent/50"
+                className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-base-300/50"
                 key={c.id}
               >
                 <Checkbox
                   checked={c.visible}
                   onCheckedChange={() => toggleVisible(c.id)}
                 />
-                <span className="flex-1 text-sm text-foreground">
+                <span className="flex-1 text-sm text-base-content">
                   {LABELS[c.id]}
                 </span>
                 <Button
@@ -147,7 +147,7 @@ export function ColumnSettingsDialog({ columns }: { columns: ColumnPref[] }) {
 
           <DialogFooter className="flex-row items-center gap-2 sm:justify-between">
             <Button
-              className="text-muted-foreground"
+              className="text-base-content-muted"
               disabled={busy}
               onClick={() => setDraft(DEFAULT_COLUMN_PREFS)}
               size="sm"

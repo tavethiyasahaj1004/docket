@@ -5,7 +5,7 @@ import {
   CheckIcon,
   MagnifyingGlassIcon,
 } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -19,32 +19,25 @@ export interface SelectOption {
 }
 
 interface Props {
-  /**
-   * Tighter trigger chrome (smaller padding/gap/caret) for dense contexts
-   * like table cells, where the default caret + padding can crowd out the
-   * selected value in a fixed-width column.
-   */
+  /** Tighter trigger chrome for dense contexts like table cells, where the
+   * default caret and padding can crowd out the value in a fixed-width column. */
   compact?: boolean;
   disabled?: boolean;
   onValueChange: (value: string) => void;
   options: SelectOption[];
   placeholder?: string;
-  /**
-   * Set false for short, fixed lists (e.g. page sizes) — hides the search
-   * box and lets the menu hug the trigger width instead of reserving room
-   * for an input. Keyboard navigation still works.
-   */
+  /** Set false for short fixed lists (e.g. page sizes): hides the search box and
+   * lets the menu hug the trigger width instead of reserving room for an input,
+   * growing to its longest option if the trigger is narrower. */
   search?: boolean;
   searchPlaceholder?: string;
   triggerClassName?: string;
   value: string;
 }
 
-/**
- * A searchable single-select (Popover + filterable list). Opens cleanly below
- * the trigger — unlike a native Radix Select, it never re-centers/scrolls to the
- * selected option. Keyboard: type to filter, ↑/↓ to move, Enter to pick, Esc to close.
- */
+/** A searchable single-select (Popover + filterable list). Always opens directly
+ * below the trigger, never re-centering on the selected option the way a native
+ * select does. Type to filter, ↑/↓ to move, Enter to pick, Esc to close. */
 export function SearchableSelect({
   value,
   onValueChange,
@@ -59,6 +52,19 @@ export function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [active, setActive] = useState(0);
+  const [triggerEl, setTriggerEl] = useState<HTMLButtonElement | null>(null);
+  const [triggerWidth, setTriggerWidth] = useState<number>();
+
+  useEffect(() => {
+    if (!triggerEl) {
+      return;
+    }
+    const observer = new ResizeObserver(([entry]) => {
+      setTriggerWidth(entry.contentRect.width);
+    });
+    observer.observe(triggerEl);
+    return () => observer.disconnect();
+  }, [triggerEl]);
 
   const selected = options.find((o) => o.value === value);
 
@@ -108,24 +114,28 @@ export function SearchableSelect({
       <PopoverTrigger asChild>
         <button
           aria-expanded={open}
+          // daisyUI `select` owns the trigger box, keeping it dimensionally
+          // identical to `<SelectTrigger>` and `<Input>`. `bg-none` drops its
+          // CSS caret (a Phosphor one renders below) and padding is re-evened.
           className={cn(
-            "flex h-10 items-center justify-between rounded-md border border-border bg-transparent text-sm text-foreground transition-colors hover:border-stone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20 disabled:cursor-not-allowed disabled:opacity-50",
+            "select flex items-center justify-between bg-none",
             compact ? "gap-1 px-2" : "gap-2 px-3",
             triggerClassName
           )}
           disabled={disabled}
+          ref={setTriggerEl}
           role="combobox"
           title={selected?.label}
           type="button"
         >
           <span
-            className={cn("truncate", !selected && "text-muted-foreground")}
+            className={cn("truncate", !selected && "text-base-content-muted")}
           >
             {selected?.label ?? placeholder}
           </span>
           <CaretUpDownIcon
             className={cn(
-              "shrink-0 text-muted-foreground",
+              "shrink-0 text-base-content-muted",
               compact ? "size-3" : "size-4"
             )}
           />
@@ -134,19 +144,17 @@ export function SearchableSelect({
 
       <PopoverContent
         align="start"
-        className={cn(
-          "w-(--radix-popover-trigger-width) p-0",
-          search && "min-w-48"
-        )}
+        className={cn("p-0", search ? "min-w-48" : "w-max")}
         onKeyDown={search ? undefined : handleListKeys}
+        style={triggerWidth ? { minWidth: triggerWidth } : undefined}
       >
         {search && (
-          <div className="flex items-center gap-2 border-b border-border px-2.5">
-            <MagnifyingGlassIcon className="size-4 shrink-0 text-muted-foreground" />
+          <div className="flex items-center gap-2 border-b border-base-300 px-2.5">
+            <MagnifyingGlassIcon className="size-4 shrink-0 text-base-content-muted" />
             <input
               // focus the search when the popover opens
               autoFocus
-              className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              className="h-9 w-full bg-transparent text-sm outline-none placeholder:text-base-content-muted"
               onChange={(e) => {
                 setQuery(e.target.value);
                 setActive(0);
@@ -157,31 +165,45 @@ export function SearchableSelect({
             />
           </div>
         )}
-        <div className="max-h-60 overflow-y-auto p-1">
+        {/* daisyUI `menu` — the same treatment `<SelectContent>` uses, which
+            is why the list is a real `<ul><li>` tree. daisyUI styles real
+            `:hover` itself; the keyboard cursor is mapped onto its own
+            `menu-focus` class and the current value onto `menu-active`. The
+            selected row always stays active so it doesn't flip colour as the
+            cursor moves on and off it. */}
+        <ul className="menu max-h-60 w-full flex-nowrap overflow-y-auto p-1">
           {filtered.length === 0 ? (
-            <p className="px-2 py-4 text-center text-xs text-muted-foreground">
+            <li className="px-2 py-4 text-center text-xs text-base-content-muted">
               No results
-            </p>
+            </li>
           ) : (
             filtered.map((o, i) => (
-              <button
-                className={cn(
-                  "flex w-full items-center justify-between gap-2 rounded-md px-2 py-1.5 text-left text-sm text-foreground transition-colors",
-                  i === active ? "bg-accent" : "hover:bg-accent/60"
-                )}
-                key={o.value}
-                onClick={() => pick(o.value)}
-                onMouseEnter={() => setActive(i)}
-                type="button"
-              >
-                <span className="truncate">{o.label}</span>
-                {o.value === value && (
-                  <CheckIcon className="size-4 shrink-0 text-foreground" />
-                )}
-              </button>
+              <li key={o.value}>
+                <button
+                  className={cn(
+                    o.value === value
+                      ? "menu-active"
+                      : i === active && "menu-focus",
+                    // daisyUI paints a pressed row with the same dark fill as
+                    // `menu-active`, so press-and-hold on another option made
+                    // it look selected too. Keep the dark fill for the
+                    // selected row only; a pressed row stays hover-light.
+                    o.value !== value &&
+                      "active:bg-base-content/10 active:text-base-content"
+                  )}
+                  onClick={() => pick(o.value)}
+                  onMouseEnter={() => setActive(i)}
+                  type="button"
+                >
+                  <span className="truncate">{o.label}</span>
+                  {o.value === value && (
+                    <CheckIcon className="size-4 shrink-0 justify-self-end" />
+                  )}
+                </button>
+              </li>
             ))
           )}
-        </div>
+        </ul>
       </PopoverContent>
     </Popover>
   );

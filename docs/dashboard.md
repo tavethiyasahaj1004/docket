@@ -43,7 +43,7 @@ A bar chart showing ticket volume over time.
 - Toggle: **Last 7 days** / **Last 30 days**
 - Default: Last 7 days
 
-Chart is rendered with a simple shadcn-compatible charting library (e.g. recharts or a minimal SVG chart). Keep it lightweight — no heavy charting dependencies.
+Chart is rendered with a simple charting library (e.g. recharts or a minimal SVG chart) via `components/ui/chart.tsx`. Keep it lightweight — no heavy charting dependencies.
 
 ---
 
@@ -59,7 +59,7 @@ A table of the 10 most recently updated open tickets, for quick access:
 | Assigned To | Agent name or "Unassigned" |
 | Waiting | Time since `createdAt` (e.g. "2h", "3 days") |
 
-Each row is clickable → `/tickets/{ticketId}`.
+Each row is clickable → `/tickets/{ticketNumber}`.
 
 ---
 
@@ -79,7 +79,7 @@ Below the main stats, agents see a section: **"My Tickets"** — open and in-pro
 - Stats cards use the standard card component (`rounded-xl`, `p-6`).
 - Each stat card has: a large number, a label, and a subtitle/trend.
 - Use Phosphor icons on each card: `TicketIcon`, `HourglassIcon`, `SpinnerIcon`, `CheckCircleIcon`.
-- The volume chart section has a tab toggle for 7d / 30d — implemented with shadcn `Tabs`.
+- The volume chart section has a tab toggle for 7d / 30d — implemented with Headless UI's `Tabs`.
 - Dashboard is responsive — cards stack to 2-column on tablet, 1-column on mobile.
 
 ---

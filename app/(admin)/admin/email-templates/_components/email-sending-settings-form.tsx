@@ -40,19 +40,19 @@ export function EmailSendingSettingsForm({ enabled, onChange }: Props) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-medium text-foreground">Sending</h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
+        <h3 className="text-sm font-medium text-base-content">Sending</h3>
+        <p className="text-xs text-base-content-muted mt-0.5">
           Control whether Docket emails customers directly, or whether your own
           backend handles it via outbound webhooks.
         </p>
       </div>
-      <div className="rounded-lg border border-border">
+      <div className="rounded-lg border border-base-300">
         <div className="flex items-center justify-between gap-4 p-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">
+            <p className="text-sm font-medium text-base-content">
               Docket sends email
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-base-content-muted mt-0.5">
               Send ticket notification emails (created, replied, closed, status
               changed) to customers using the templates below. Turn this off if
               you'd rather send these yourself from your backend using the

@@ -5,7 +5,7 @@ import {
   encryptSecret,
   generateWebhookSecret,
   signWebhookPayload,
-} from "@/lib/webhooks/crypto";
+} from "@/lib/crypto";
 
 // Two separate jobs live in this module:
 //   - the signature receivers verify (a public contract we must not break)

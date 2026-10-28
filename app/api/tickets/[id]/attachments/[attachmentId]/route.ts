@@ -6,6 +6,8 @@ import { ticketActivity, ticketAttachments } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { storage } from "@/lib/storage";
+import { canDeleteAttachment } from "@/lib/tickets/attachment-permissions";
+import { resolveMergedTicketId } from "@/lib/tickets/merge";
 
 // DELETE /api/tickets/[id]/attachments/[attachmentId] — agent/admin only.
 // Per docs/file-uploads.md: delete the storage file first (log-and-proceed on
@@ -23,7 +25,9 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
 
-  const { id: ticketId, attachmentId } = await params;
+  const { id: requestedTicketId, attachmentId } = await params;
+  // A merged ticket forwards to the ticket it was merged into (lib/tickets/merge.ts).
+  const ticketId = await resolveMergedTicketId(requestedTicketId);
 
   const [attachment] = await db
     .select()
@@ -39,6 +43,13 @@ export async function DELETE(
     return NextResponse.json(
       { error: "Attachment not found." },
       { status: 404 }
+    );
+  }
+
+  if (!canDeleteAttachment(attachment.uploadedByRole)) {
+    return NextResponse.json(
+      { error: "Customer attachments cannot be deleted." },
+      { status: 403 }
     );
   }
 

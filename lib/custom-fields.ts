@@ -62,15 +62,10 @@ export type CustomFieldValidationResult =
   | { ok: true; values: Array<{ fieldId: string; value: string | null }> }
   | { ok: false; error: string; httpStatus: number };
 
-/**
- * Hand-rolled validation (this codebase doesn't use zod) for a
- * `{ [field.key]: rawValue }` payload against the admin-defined fields.
- *
- * `partial: true` (agent PATCH) only validates keys present in `input` —
- * omitted keys are left untouched, matching every other PATCH route's
- * partial-update semantics. `partial: false` (ticket creation) validates
- * every field, so a required field with no key at all is still caught.
- */
+/** Hand-rolled validation (no zod here) of a `{ [field.key]: rawValue }` payload
+ * against the admin-defined fields. `partial: true` (agent PATCH) checks only
+ * keys present, matching every other PATCH route; `partial: false` (creation)
+ * checks all, so a required field that's absent entirely is still caught. */
 export function validateCustomFieldInput(
   fields: TicketCustomField[],
   input: Record<string, unknown> | undefined,

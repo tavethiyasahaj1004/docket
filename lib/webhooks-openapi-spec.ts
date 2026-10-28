@@ -1,15 +1,7 @@
-// OpenAPI 3.1 specification for OUTBOUND webhooks (lib/webhooks/*, delivered
-// by lib/worker/handlers/webhook-send.ts) — rendered by the Scalar reference
-// at /admin/webhooks/docs and downloadable from GET /api/admin/webhooks/openapi.
-//
-// This uses OpenAPI 3.1's top-level `webhooks` keyword (structurally the
-// same as `paths`, but describing requests *we* send to *your* server rather
-// than requests you send to us) — the correct construct for this direction,
-// as opposed to the public API's `paths` in lib/openapi-spec.ts. Must be kept
-// in sync with docs/webhooks.md and the event catalog in lib/webhooks/events.ts.
-//
-// Hand-authored on purpose, same reasoning as lib/openapi-spec.ts: eight
-// events is well within hand-maintained territory.
+// OpenAPI 3.1 spec for OUTBOUND webhooks, rendered by Scalar at
+// /admin/webhooks/docs. Uses the top-level `webhooks` keyword — like `paths`,
+// but for requests *we* send to *your* server. Hand-authored; keep in sync with
+// docs/webhooks.md and the event catalog in lib/webhooks/events.ts.
 
 import { WEBHOOK_EVENTS } from "@/lib/webhooks/events";
 
@@ -103,7 +95,7 @@ const HEADER_PARAMS = [
     in: "header",
     required: true,
     description:
-      "The event name, e.g. `ticket.created` — matches the body's `event` field. Also sent as the deprecated `X-Support-Tool-Event`.",
+      "The event name, e.g. `ticket.created` — matches the body's `event` field.",
     schema: { type: "string" },
   },
   {
@@ -204,9 +196,8 @@ export function buildWebhooksOpenApiSpec(
         "function verify(rawBody, timestampHeader, signatureHeader, secret) {",
         "  const expected = crypto",
         '    .createHmac("sha256", secret)',
-        // A JavaScript code sample rendered verbatim in the webhook API docs.
-        // The ${...} must reach the reader literally — it is their template
-        // literal, not one we intend to interpolate here.
+        // A JavaScript sample rendered verbatim in the webhook docs: the ${...}
+        // must reach the reader literally, being their template literal not ours.
         // biome-ignore lint/suspicious/noTemplateCurlyInString: literal code sample shown to API consumers
         "    .update(`${timestampHeader}.${rawBody}`)",
         "    .digest('hex');",
@@ -350,6 +341,45 @@ export function buildWebhooksOpenApiSpec(
           data: { ticket: EXAMPLE_TICKET, assignedAgentId: null },
         },
       }),
+      "ticket.merged": webhookOperation({
+        summary: "Ticket Merged",
+        description:
+          "A duplicate ticket (`mergedTicket`) was merged into `ticket`. Its replies and attachments moved to `ticket`; the merged ticket is closed but kept, and its id/portal link forward to `ticket`. `ticket.closed` is **not** fired for the merged ticket — merges are silent toward the customer.",
+        requestSchemaName: "TicketMergedPayload",
+        example: {
+          id: "evt_l0j1k2l3m4n5",
+          event: "ticket.merged",
+          createdAt: "2026-07-23T12:45:00.000Z",
+          data: {
+            ticket: EXAMPLE_TICKET,
+            mergedTicket: {
+              ...EXAMPLE_TICKET,
+              id: "ckm9n8b7v6c5x",
+              ticketNumber: 1043,
+              status: "closed",
+            },
+          },
+        },
+      }),
+      "ticket.split": webhookOperation({
+        summary: "Ticket Split",
+        description:
+          "An agent split one customer reply out of `ticket` into the new ticket `newTicket`. `ticket.created` also fires for `newTicket`.",
+        requestSchemaName: "TicketSplitPayload",
+        example: {
+          id: "evt_m1k2l3m4n5o6",
+          event: "ticket.split",
+          createdAt: "2026-07-23T12:50:00.000Z",
+          data: {
+            ticket: EXAMPLE_TICKET,
+            newTicket: {
+              ...EXAMPLE_TICKET,
+              id: "ckq1w2e3r4t5y",
+              ticketNumber: 1044,
+            },
+          },
+        },
+      }),
     },
     components: {
       schemas: {
@@ -415,6 +445,22 @@ export function buildWebhooksOpenApiSpec(
           },
           ["ticket", "assignedAgentId"]
         ),
+        TicketMergedPayload: envelope(
+          "ticket.merged",
+          {
+            ticket: { $ref: "#/components/schemas/Ticket" },
+            mergedTicket: { $ref: "#/components/schemas/Ticket" },
+          },
+          ["ticket", "mergedTicket"]
+        ),
+        TicketSplitPayload: envelope(
+          "ticket.split",
+          {
+            ticket: { $ref: "#/components/schemas/Ticket" },
+            newTicket: { $ref: "#/components/schemas/Ticket" },
+          },
+          ["ticket", "newTicket"]
+        ),
       },
     },
   };
@@ -433,6 +479,8 @@ const specEventNames = new Set([
   "ticket.priority_changed",
   "ticket.assigned",
   "ticket.unassigned",
+  "ticket.merged",
+  "ticket.split",
 ]);
 const catalogEventNames = new Set(WEBHOOK_EVENTS.map((e) => e.value));
 if (

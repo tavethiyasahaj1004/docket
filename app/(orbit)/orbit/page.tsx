@@ -47,19 +47,19 @@ export default async function OrbitPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-base-300">
             {recentUsers.map((item) => (
               <div
                 className="flex items-center gap-3 px-(--card-spacing) py-3"
                 key={item.id}
               >
-                <span className="grid size-8 shrink-0 place-items-center bg-muted font-black text-xs text-muted-foreground">
+                <span className="grid size-8 shrink-0 place-items-center bg-base-300 font-black text-xs text-base-content-muted">
                   {(item.name ?? item.email).slice(0, 2).toUpperCase()}
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold">{item.email}</p>
                   {item.name && (
-                    <p className="truncate text-muted-foreground text-xs">
+                    <p className="truncate text-base-content-muted text-xs">
                       {item.name}
                     </p>
                   )}
@@ -72,7 +72,7 @@ export default async function OrbitPage() {
                 >
                   {item.role}
                 </Badge>
-                <span className="hidden font-mono text-muted-foreground text-xs sm:block">
+                <span className="hidden font-mono text-base-content-muted text-xs sm:block">
                   {item.id.slice(0, 8)}
                 </span>
               </div>
@@ -86,8 +86,8 @@ export default async function OrbitPage() {
 
 function StatBlock({ label, value }: { label: string; value: number }) {
   return (
-    <div className="border border-border bg-card p-6">
-      <p className="text-2xs font-semibold uppercase tracking-ui text-muted-foreground">
+    <div className="border border-base-300 bg-base-100 p-6">
+      <p className="text-2xs font-semibold uppercase tracking-ui text-base-content-muted">
         {label}
       </p>
       <p className="mt-2 font-black text-4xl tracking-normal">{value}</p>

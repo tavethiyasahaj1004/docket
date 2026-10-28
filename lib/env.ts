@@ -23,6 +23,16 @@ const envSchema = z.object({
   EMAIL_WEBHOOK_SECRET: optionalString,
   GOOGLE_CLIENT_ID: optionalString,
   GOOGLE_CLIENT_SECRET: optionalString,
+  // Push provider for browser/OS notifications: "pusher" (Beams, below) or
+  // "webpush" (standard Web Push, VAPID keys below). Defaults to "pusher".
+  PUSH_PROVIDER: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.enum(["pusher", "webpush"]).optional()
+  ),
+  // Web Push / VAPID (optional) — generate a pair with `npx web-push
+  // generate-vapid-keys` or from Admin → Integrations.
+  WEB_PUSH_VAPID_PUBLIC_KEY: optionalString,
+  WEB_PUSH_VAPID_PRIVATE_KEY: optionalString,
   // Pusher Beams (optional) — browser/OS push for agent notifications.
   NEXT_PUBLIC_PUSHER_BEAMS_INSTANCE_ID: optionalString,
   PUSHER_BEAMS_SECRET_KEY: optionalString,
@@ -32,12 +42,10 @@ const envSchema = z.object({
   NEXT_PUBLIC_PUSHER_KEY: optionalString,
   PUSHER_SECRET: optionalString,
   NEXT_PUBLIC_PUSHER_CLUSTER: optionalString,
-  // File storage driver — see lib/storage.ts and docs/file-uploads.md.
-  // "local" (default) needs no other vars: files go to ./uploads, which MUST
-  // be a persistent volume in Docker (see docker-compose.yml). Preprocessed
-  // like optionalString above — an empty-string value (e.g. a blank
-  // `STORAGE_DRIVER=` line) must fall back to the default, not fail
-  // validation, same as every other optional var in this file.
+  // File storage driver — see lib/storage.ts and docs/file-uploads.md. "local"
+  // (default) needs no other vars; files go to ./uploads, which MUST be a
+  // persistent volume in Docker. Preprocessed like optionalString above, so a
+  // blank `STORAGE_DRIVER=` falls back to the default rather than failing.
   STORAGE_DRIVER: z.preprocess(
     (value) => (value === "" ? undefined : value),
     z.enum(["local", "s3", "r2"]).default("local")
@@ -53,11 +61,9 @@ const envSchema = z.object({
   R2_ACCOUNT_ID: optionalString,
   R2_ACCESS_KEY_ID: optionalString,
   R2_SECRET_ACCESS_KEY: optionalString,
-  // Optional for either cloud driver: a CDN/public domain bound to the
-  // bucket. When set, served URLs skip signing. Unset is fine — Support
-  // Tool always proxies file reads through /api/files/[...key] rather than
-  // handing out cloud URLs directly, so this only matters if you also want
-  // to point external tooling at the bucket yourself.
+  // Optional for either cloud driver: a CDN/public domain bound to the bucket,
+  // letting served URLs skip signing. Unset is fine — Docket always proxies file
+  // reads through /api/files/[...key] rather than handing out cloud URLs.
   STORAGE_PUBLIC_BASE_URL: optionalString,
 });
 
@@ -68,16 +74,8 @@ if (!parsed.success) {
   throw new Error("Invalid environment variables");
 }
 
-if (parsed.data.STORAGE_DRIVER === "s3" && !parsed.data.S3_BUCKET) {
-  throw new Error("STORAGE_DRIVER=s3 requires S3_BUCKET to be set.");
-}
-if (
-  parsed.data.STORAGE_DRIVER === "r2" &&
-  !(parsed.data.R2_BUCKET && parsed.data.R2_ACCOUNT_ID)
-) {
-  throw new Error(
-    "STORAGE_DRIVER=r2 requires R2_BUCKET and R2_ACCOUNT_ID to be set."
-  );
-}
+// s3/r2's required bucket/account fields are NOT validated here: the driver and
+// its credentials can also come from the DB, which this eager env-only parse
+// can't see. lib/storage.ts checks lazily against the resolved DB+env config.
 
 export const env = parsed.data;

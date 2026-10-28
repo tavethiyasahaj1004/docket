@@ -22,23 +22,15 @@ export function formatDateTime(value: Date | string | null | undefined) {
   }).format(date)
 }
 
-/**
- * Stable keys for fixed-length placeholder loops (loading skeletons).
- *
- * `Array.from({ length: n }).map((_, i) => <Row key={i} />)` trips
- * `noArrayIndexKey`, and rightly so as a blanket rule — but a skeleton has no
- * data, never reorders, and is replaced wholesale when the real content lands,
- * so there is no identity to get wrong. Mapping over real strings gives React
- * keys that are stable across renders and keeps the rule meaningful for the
- * lists where it actually matters.
- *
- * Do NOT use this for data-driven lists. Key those on the record's own id.
- */
+/** Stable keys for fixed-length placeholder loops (loading skeletons), which trip
+ * `noArrayIndexKey` even though a skeleton has no data, never reorders, and is
+ * replaced wholesale — so mapping real strings keeps the rule meaningful where it
+ * matters. Do NOT use for data-driven lists; key those on the record's own id. */
 export function skeletonKeys(count: number, prefix = "sk"): string[] {
   return Array.from({ length: count }, (_, i) => `${prefix}-${i}`)
 }
 
-/** First letters of the first two words, e.g. "Sahaj Tavethiya" → "ST". */
+/** First letters of the first two words, e.g. "John Doe" → "JD". */
 export function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   if (parts.length >= 2) {

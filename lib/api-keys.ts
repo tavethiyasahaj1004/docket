@@ -10,22 +10,10 @@ function hashKey(raw: string): string {
   return createHash("sha256").update(raw).digest("hex");
 }
 
-/**
- * Generates a new API key. `raw` is returned to the caller exactly once —
- * only `hash` is persisted (lib/api-keys.ts never stores the raw secret).
- * Built from cuid2 (a CSPRNG-backed generator) rather than
- * crypto.randomUUID()/Math.random(), matching this project's ID convention.
- *
- * Prefix is `dk_live_` (Docket Key), deliberately not `sk_live_` —
- * that's Stripe's own secret-key format, and reusing it makes every
- * placeholder example in these docs trip GitHub's push-protection secret
- * scanner as a false-positive "Stripe API key" match.
- *
- * Keys issued before the rename start `dk_live_` and remain valid: the
- * prefix is stored for display only, and verifyApiKey() below matches on the
- * SHA-256 hash of the whole secret, never on the prefix. Nothing needs
- * reissuing.
- */
+/** Generates a new API key from cuid2 (CSPRNG-backed, per this project's ID
+ * convention). `raw` is returned once; only `hash` persists. The `dk_live_`
+ * prefix avoids Stripe's `sk_live_`, which trips GitHub push protection on doc
+ * examples. Older `sk_live_` keys stay valid — verifyApiKey() matches the hash. */
 export function generateApiKey(): {
   raw: string;
   prefix: string;

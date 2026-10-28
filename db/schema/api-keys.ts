@@ -1,10 +1,9 @@
 import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "@/db/schema/auth";
 
-// A caller identity for the public API (app/api/v1/*) — a third auth mode
-// alongside agent/admin sessions and customer ticket tokens. The raw key is
-// shown to the admin once at creation and never stored; only a sha256 hash
-// (for lookup) and a short prefix (for display in the admin UI) persist.
+// Caller identity for the public API — a third auth mode beside agent sessions
+// and customer ticket tokens. The raw key is shown once at creation and never
+// stored; only a sha256 hash (lookup) and a short prefix (display) persist.
 export const apiKeys = pgTable("api_keys", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
@@ -15,10 +14,8 @@ export const apiKeys = pgTable("api_keys", {
   }),
   createdByName: text("created_by_name").notNull(),
   // Optional URL template for tickets created through this key, e.g.
-  // "https://myapp.com/support/{{ticketId}}?token={{token}}" — lets an
-  // integrator's own support page replace Docket's default customer
-  // portal link in emails and the create-ticket API response. Null = use
-  // the default /ticket/:id portal link.
+  // "https://myapp.com/support/{{ticketId}}?token={{token}}", pointing emails and
+  // API responses at the integrator's own page. Null = the default /ticket/:id.
   portalUrlTemplate: text("portal_url_template"),
   lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
   // Soft revoke — the row stays for audit history (tickets.apiKeyId keeps

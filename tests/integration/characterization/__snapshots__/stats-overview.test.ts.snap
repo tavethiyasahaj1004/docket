@@ -1,0 +1,53 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`GET /api/stats/overview (characterization) > counts a mix of default / in-progress / closed / merged / unknown-status tickets 1`] = `
+{
+  "body": {
+    "avgWaitMs": "<masked: DB NOW() minus mean createdAt>",
+    "closed": 3,
+    "inProgress": 3,
+    "open": 3,
+    "total": 9,
+  },
+  "status": 200,
+}
+`;
+
+exports[`GET /api/stats/overview (characterization) > has a null average wait when statuses exist but no ticket is open 1`] = `
+{
+  "body": {
+    "avgWaitMs": null,
+    "closed": 1,
+    "inProgress": 0,
+    "open": 0,
+    "total": 1,
+  },
+  "status": 200,
+}
+`;
+
+exports[`GET /api/stats/overview (characterization) > has a null average wait when the config has no non-closed statuses 1`] = `
+{
+  "body": {
+    "avgWaitMs": null,
+    "closed": 2,
+    "inProgress": 1,
+    "open": 0,
+    "total": 3,
+  },
+  "status": 200,
+}
+`;
+
+exports[`GET /api/stats/overview (characterization) > returns zeros and a null average with no tickets at all 1`] = `
+{
+  "body": {
+    "avgWaitMs": null,
+    "closed": 0,
+    "inProgress": 0,
+    "open": 0,
+    "total": 0,
+  },
+  "status": 200,
+}
+`;

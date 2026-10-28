@@ -1,9 +1,8 @@
 "use client";
 
-// Scalar's stylesheet, imported explicitly: the package's own internal CSS
-// side-effect import is dropped when the component is loaded via
-// next/dynamic under Turbopack, which leaves the reference rendering
-// unstyled. Importing it from app code guarantees Next bundles it.
+// Scalar's stylesheet, imported explicitly: its own internal CSS side-effect
+// import is dropped when the component loads via next/dynamic under Turbopack,
+// leaving the reference unstyled. Importing here guarantees Next bundles it.
 import "@scalar/api-reference-react/style.css";
 
 import dynamic from "next/dynamic";
@@ -25,10 +24,9 @@ interface Props {
   spec: Record<string, unknown>;
 }
 
-// Renders the interactive API reference from an OpenAPI spec. Dark mode
-// follows the admin ThemeProvider (Scalar's own toggle is hidden so the two
-// can't disagree). Shared by every admin docs page — pass a different `spec`
-// per feature, nothing here is specific to any one of them.
+// Renders the interactive API reference from an OpenAPI spec. Dark mode follows
+// the admin ThemeProvider, with Scalar's own toggle hidden so the two can't
+// disagree. Shared by every admin docs page — pass a different `spec` per one.
 export function ScalarReference({ spec, preferredSecurityScheme }: Props) {
   const { appearanceMode } = useTheme();
   const [systemDark, setSystemDark] = React.useState(false);

@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { customers, ticketActivity, tickets } from "@/db/schema";
@@ -17,14 +17,10 @@ import {
 import { notifyTicketStatusChange } from "@/lib/tickets/notify-status-change";
 import { resolveTicketPortalUrl } from "@/lib/tickets/portal-url";
 
-// PATCH /api/v1/tickets/:id/status — public API, authenticated with an API
-// key. Lets the ticket owner close or reopen their ticket. Bound to the
-// owner's email the same way the reply endpoint is: `email` must match the
-// ticket's customerEmail. `action` is "close" or "reopen".
-//
-// Mirrors the customer branch of the portal's own close/reopen routes
-// (app/api/tickets/[id]/close and .../reopen) — same awaiting-reply
-// bookkeeping and close email — but authenticated by API key + email.
+// PATCH /api/v1/tickets/:id/status — lets the ticket owner close or reopen
+// (`action`), bound to their email exactly as the reply endpoint is. Mirrors the
+// customer branch of the portal's close/reopen routes, same awaiting-reply
+// bookkeeping and close email, but authenticated by API key + email.
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -98,6 +94,16 @@ export async function PATCH(
       { status: 403 }
     );
   }
+  // Not forwarded: an integrator's stored id must not close or reopen the
+  // ticket it was merged into (see lib/tickets/merge.ts).
+  if (ticket.mergedIntoTicketId) {
+    return NextResponse.json(
+      {
+        error: `This ticket was merged into ticket ${ticket.mergedIntoTicketId}, so its status can't be changed. Apply the change to that ticket instead.`,
+      },
+      { status: 409 }
+    );
+  }
 
   const now = new Date();
   const alreadyClosed = await isClosedStatusSlug(ticket.status);
@@ -137,7 +143,7 @@ export async function PATCH(
         pendingReplies: 0,
         ...slaUpdate,
       })
-      .where(eq(tickets.id, ticketId));
+      .where(and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId)));
 
     await db.insert(ticketActivity).values({
       id: createId(),
@@ -226,7 +232,7 @@ export async function PATCH(
       pendingReplies: 1,
       ...slaUpdate,
     })
-    .where(eq(tickets.id, ticketId));
+    .where(and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId)));
 
   await db.insert(ticketActivity).values({
     id: createId(),

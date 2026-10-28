@@ -8,11 +8,9 @@ import { buildWebhooksOpenApiSpec } from "@/lib/webhooks-openapi-spec";
 
 export const metadata = { title: "Webhooks Docs" };
 
-// Interactive webhooks reference rendered by Scalar from the OpenAPI spec in
-// lib/webhooks-openapi-spec.ts — the single source of truth for the payload
-// contract. Mirrors /admin/api-keys/docs's pattern exactly, but documents
-// requests Docket SENDS rather than ones it receives (no "Test
-// Request" client makes sense here, so no preferredSecurityScheme).
+// Interactive webhooks reference rendered by Scalar from
+// lib/webhooks-openapi-spec.ts. Mirrors /admin/api-keys/docs, but documents
+// requests Docket SENDS — so no "Test Request" client, no security scheme.
 export default async function WebhooksDocsPage() {
   await requireAdmin();
 
@@ -20,9 +18,9 @@ export default async function WebhooksDocsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <div className="p-6 pb-4 space-y-4 border-b border-border">
+      <div className="p-6 pb-4 space-y-4 border-b border-base-300">
         <Link
-          className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="flex w-fit items-center gap-1.5 text-sm text-base-content-muted hover:text-base-content transition-colors"
           href="/admin/webhooks"
         >
           <ArrowLeftIcon className="size-3.5" />
@@ -31,10 +29,10 @@ export default async function WebhooksDocsPage() {
 
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-xl font-semibold text-foreground">
+            <h1 className="text-xl font-semibold text-base-content">
               Webhooks Reference
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-base-content-muted mt-1">
               Every event your endpoint can subscribe to, its payload shape, and
               how to verify a delivery's signature.
             </p>

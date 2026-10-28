@@ -11,11 +11,11 @@ export default function AuditLogLoading() {
 
       <div>
         <Skeleton className="h-3 w-24 mb-3" />
-        <div className="bg-card rounded-xl border border-border shadow-soft overflow-hidden">
-          <div className="border-b border-border bg-accent/50 px-4 py-3">
+        <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft overflow-hidden">
+          <div className="border-b border-base-300 bg-base-300/50 px-4 py-3">
             <Skeleton className="h-3 w-16" />
           </div>
-          <div className="divide-y divide-border/50">
+          <div className="divide-y divide-base-300/50">
             {skeletonKeys(8).map((k) => (
               <div className="flex items-center gap-4 px-4 py-3.5" key={k}>
                 <Skeleton className="h-3 w-24 shrink-0" />

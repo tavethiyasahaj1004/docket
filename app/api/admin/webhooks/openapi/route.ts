@@ -4,11 +4,9 @@ import { requireAdminFromRequest } from "@/lib/authz";
 import { env } from "@/lib/env";
 import { buildWebhooksOpenApiSpec } from "@/lib/webhooks-openapi-spec";
 
-// GET /api/admin/webhooks/openapi — downloads the OpenAPI 3.1 spec for
-// OUTBOUND webhooks, pre-filled with this instance's own base URL. The
-// Scalar reference at /admin/webhooks/docs renders it; most API tooling that
-// understands OpenAPI 3.1's `webhooks` keyword accepts it directly. No
-// secrets in the file — signing secrets are never included.
+// GET /api/admin/webhooks/openapi — downloads the OUTBOUND webhooks OpenAPI 3.1
+// spec, pre-filled with this instance's base URL. Rendered by Scalar at
+// /admin/webhooks/docs. Signing secrets are never included.
 export async function GET(request: NextRequest) {
   try {
     requireAdminFromRequest(request);

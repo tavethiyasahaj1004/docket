@@ -8,13 +8,9 @@ export async function getSlaPolicies(): Promise<SlaPolicy[]> {
   return db.select().from(slaPolicies).orderBy(asc(slaPolicies.sortOrder));
 }
 
-/**
- * Most-specific-wins match against a ticket's (priority, category):
- * exact scope > priority-only > category-only > the global default.
- * Resolved live against the current policy list — not snapshotted per
- * ticket — so editing a policy immediately re-targets its matching open
- * tickets (see docs/plans/12-sla.md for the trade-off).
- */
+/** Most-specific-wins match on a ticket's (priority, category): exact scope >
+ * priority-only > category-only > global default. Resolved live rather than
+ * snapshotted, so editing a policy immediately re-targets its open tickets. */
 export function resolveSlaPolicy(
   policies: SlaPolicy[],
   category: string,

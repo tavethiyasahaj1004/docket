@@ -19,21 +19,21 @@ export function CodeBlock({ code, label }: Props) {
   }
 
   return (
-    <div className="rounded-lg border border-border bg-secondary overflow-hidden">
+    <div className="rounded-lg border border-base-300 bg-secondary overflow-hidden">
       {label && (
-        <div className="flex items-center justify-between border-b border-border/60 px-3 py-1.5">
-          <span className="text-2xs font-medium text-muted-foreground uppercase tracking-wide">
+        <div className="flex items-center justify-between border-b border-base-300/60 px-3 py-1.5">
+          <span className="text-2xs font-medium text-base-content-muted uppercase tracking-wide">
             {label}
           </span>
         </div>
       )}
       <div className="relative">
-        <pre className="overflow-x-auto p-3.5 pr-10 text-xs leading-relaxed text-foreground">
+        <pre className="overflow-x-auto p-3.5 pr-10 text-xs leading-relaxed text-base-content">
           <code>{code}</code>
         </pre>
         <button
           className={cn(
-            "absolute top-2.5 right-2.5 flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+            "absolute top-2.5 right-2.5 flex size-6 items-center justify-center rounded-md text-base-content-muted transition-colors hover:bg-base-300 hover:text-base-content",
             copied && "text-green-600"
           )}
           onClick={handleCopy}

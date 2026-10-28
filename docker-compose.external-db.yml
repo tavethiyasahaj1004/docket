@@ -4,8 +4,8 @@
 #
 # Use this file INSTEAD OF docker-compose.yml, not alongside it:
 #
-#   curl -O https://raw.githubusercontent.com/stack256/docket/main/docker-compose.external-db.yml
-#   curl -o .env https://raw.githubusercontent.com/stack256/docket/main/.env.docker.example
+#   curl -O https://raw.githubusercontent.com/stack256org/docket/main/docker-compose.external-db.yml
+#   curl -o .env https://raw.githubusercontent.com/stack256org/docket/main/.env.docker.example
 #   # edit .env: DATABASE_URL (your connection string), APP_SECRET, NEXT_PUBLIC_APP_URL
 #   docker compose -f docker-compose.external-db.yml up -d
 #
@@ -21,7 +21,7 @@
 # code at build time, so they cannot come from a published image. Build from
 # source with docker-compose.build.yml instead.
 
-x-image: &image ${DOCKET_IMAGE:-ghcr.io/stack256/docket}:${IMAGE_TAG:-latest}
+x-image: &image ${DOCKET_IMAGE:-ghcr.io/stack256org/docket}:${IMAGE_TAG:-latest}
 
 services:
   # Runs as root for a fraction of a second, purely to hand the uploads volume to
@@ -113,4 +113,4 @@ volumes:
   # docker-compose.yml so switching between bundled/external Postgres keeps
   # the same uploads.
   uploads:
-    name: support_tool_uploads
+    name: docket_uploads

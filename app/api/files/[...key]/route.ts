@@ -19,6 +19,7 @@ export async function GET(
       png: "image/png",
       svg: "image/svg+xml",
       webp: "image/webp",
+      ico: "image/x-icon",
       pdf: "application/pdf",
       zip: "application/zip",
       txt: "text/plain",

@@ -158,8 +158,8 @@ export function NotificationBell({ userId }: { userId: string }) {
         body: JSON.stringify({ id: n.id }),
       }).catch(() => {});
     }
-    if (n.ticketId) {
-      router.push(`/tickets/${n.ticketId}`);
+    if (n.ticketNumber) {
+      router.push(`/tickets/${n.ticketNumber}`);
     }
   }
 
@@ -175,7 +175,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       <PopoverTrigger asChild>
         <button
           aria-label="Notifications"
-          className="relative flex size-9 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+          className="relative flex size-9 items-center justify-center rounded-md text-base-content-muted hover:text-base-content hover:bg-base-300 transition-colors"
           type="button"
         >
           <BellIcon
@@ -190,13 +190,13 @@ export function NotificationBell({ userId }: { userId: string }) {
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-80 p-0">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-          <span className="text-sm font-semibold text-foreground">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-base-300">
+          <span className="text-sm font-semibold text-base-content">
             Notifications
           </span>
           {unread > 0 && (
             <button
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs text-base-content-muted hover:text-base-content transition-colors cursor-pointer"
               onClick={markAllRead}
               type="button"
             >
@@ -206,14 +206,14 @@ export function NotificationBell({ userId }: { userId: string }) {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 border-b border-border p-1.5">
+        <div className="flex items-center gap-1 border-b border-base-300 p-1.5">
           {TABS.map((t) => (
             <button
               className={cn(
-                "flex-1 rounded-md px-2 py-1.5 text-xs font-medium capitalize transition-colors",
+                "flex-1 rounded-md px-2 py-1.5 text-xs font-medium capitalize transition-colors cursor-pointer",
                 tab === t
-                  ? "bg-accent text-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  ? "bg-base-300 text-base-content"
+                  : "text-base-content-muted hover:text-base-content hover:bg-base-300/50"
               )}
               key={t}
               onClick={() => setTab(t)}
@@ -227,8 +227,8 @@ export function NotificationBell({ userId }: { userId: string }) {
 
         {filtered.length === 0 ? (
           <div className="px-4 py-10 text-center">
-            <BellIcon className="size-7 text-muted-foreground mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">
+            <BellIcon className="size-7 text-base-content-muted mx-auto mb-2" />
+            <p className="text-sm text-base-content-muted">
               {tab === "unread"
                 ? "No unread notifications."
                 : tab === "read"
@@ -237,12 +237,12 @@ export function NotificationBell({ userId }: { userId: string }) {
             </p>
           </div>
         ) : (
-          <ul className="max-h-96 overflow-y-auto divide-y divide-border/60">
+          <ul className="max-h-96 overflow-y-auto divide-y divide-base-300/60">
             {filtered.map((n) => (
               <li key={n.id}>
                 <button
-                  className={`w-full text-left px-4 py-3 flex gap-3 hover:bg-accent/50 transition-colors ${
-                    n.isRead ? "" : "bg-accent/30"
+                  className={`w-full text-left px-4 py-3 flex gap-3 cursor-pointer hover:bg-base-300/50 transition-colors ${
+                    n.isRead ? "" : "bg-base-300/30"
                   }`}
                   onClick={() => openNotification(n)}
                   type="button"
@@ -250,21 +250,21 @@ export function NotificationBell({ userId }: { userId: string }) {
                   <div className="mt-0.5 shrink-0">
                     <div className="size-7 rounded-full bg-primary/10 flex items-center justify-center">
                       <TicketIcon
-                        className="size-3.5 text-foreground"
+                        className="size-3.5 text-base-content"
                         weight="fill"
                       />
                     </div>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm text-foreground leading-snug">
+                    <p className="text-sm text-base-content leading-snug wrap-break-word">
                       {n.title}
                     </p>
                     {n.body && (
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                      <p className="text-xs text-base-content-muted mt-0.5 line-clamp-2 wrap-break-word">
                         {n.body}
                       </p>
                     )}
-                    <p className="text-2xs text-muted-foreground/70 mt-1">
+                    <p className="text-2xs text-base-content-muted/70 mt-1">
                       {relativeTime(n.createdAt)}
                     </p>
                   </div>

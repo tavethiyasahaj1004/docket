@@ -4,11 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { getPusherClient } from "@/lib/pusher-browser";
 
-/**
- * Subscribes to the `private-tickets` channel while mounted and soft-refreshes
- * the current route on `ticket.created`. No-op (subscribes to nothing) when
- * Pusher Channels isn't configured. Renders nothing.
- */
+/** Subscribes to `private-tickets` while mounted and soft-refreshes the route on
+ * `ticket.created`. Renders nothing; subscribes to nothing when unconfigured. */
 export function TicketsListRealtime() {
   const router = useRouter();
 

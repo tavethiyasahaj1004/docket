@@ -97,13 +97,9 @@ export async function changeEmailAction(
   return { success: "Email updated. Use the new email for future sign-ins." };
 }
 
-/**
- * For a user with no `credential` account yet (signed up via magic link or
- * Google only) — mints a password-setup token and sends them to Better
- * Auth's own reset-password flow to set an initial password. No email
- * round-trip needed: they're already authenticated, proving who they are,
- * so we can redirect them directly.
- */
+/** For a user with no `credential` account yet (magic link or Google only):
+ * mints a password-setup token and sends them into Better Auth's reset-password
+ * flow. No email round-trip — they're already authenticated, so redirect. */
 export async function requestPasswordSetupAction(): Promise<never> {
   const session = await requireSession();
   const token = await createPasswordSetupToken(session.user.id);

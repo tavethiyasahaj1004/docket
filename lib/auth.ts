@@ -11,7 +11,22 @@ import { enqueueEmail } from "@/lib/email";
 import { magicLinkTemplate } from "@/lib/email/templates/magic-link";
 import { resetPasswordTemplate } from "@/lib/email/templates/reset-password";
 import { env } from "@/lib/env";
+import { getGoogleOAuthSettings } from "@/lib/integration-settings";
 import { getEmailBranding, getPlatformSettings } from "@/lib/settings";
+
+// Resolved once per process into the betterAuth() singleton, since Better Auth
+// builds `socialProviders` synchronously — so Google credentials changed via
+// /admin/integrations need a restart. Must never throw: `next build` imports
+// this against a placeholder DATABASE_URL.
+let googleOAuth: Awaited<ReturnType<typeof getGoogleOAuthSettings>> = null;
+try {
+  googleOAuth = await getGoogleOAuthSettings();
+} catch (error) {
+  console.warn(
+    "[auth] Could not resolve Google OAuth settings at startup — Google sign-in disabled until next restart.",
+    error
+  );
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -55,11 +70,11 @@ export const auth = betterAuth({
     },
   },
   socialProviders: {
-    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
+    ...(googleOAuth
       ? {
           google: {
-            clientId: env.GOOGLE_CLIENT_ID,
-            clientSecret: env.GOOGLE_CLIENT_SECRET,
+            clientId: googleOAuth.clientId,
+            clientSecret: googleOAuth.clientSecret,
           },
         }
       : {}),
@@ -93,14 +108,10 @@ export const auth = betterAuth({
         });
       },
     }),
-    // Must be last: patches auth.api.* calls made directly from Server
-    // Actions/Route Handlers (e.g. app/actions/auth.ts's logoutAction) to
-    // actually forward Set-Cookie headers via next/headers' cookies() —
-    // without it, those calls compute the right cookie changes internally
-    // but never apply them to the response, so the browser keeps stale,
-    // still-valid session cookies (session_token AND the cookieCache
-    // session_data blob below) after "signing out" until they expire on
-    // their own.
+    // Must be last: patches auth.api.* calls from Server Actions and Route
+    // Handlers to actually forward Set-Cookie via next/headers. Without it they
+    // compute the right cookie changes but never apply them, so the browser
+    // keeps still-valid session cookies after "signing out" until they expire.
     nextCookies(),
   ],
   session: {

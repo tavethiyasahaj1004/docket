@@ -14,7 +14,7 @@ export default function DashboardLoading() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {skeletonKeys(4).map((k) => (
           <div
-            className="bg-card rounded-xl border border-border shadow-soft p-5 space-y-3"
+            className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-5 space-y-3"
             key={k}
           >
             <Skeleton className="h-9 w-9 rounded-lg" />
@@ -26,7 +26,7 @@ export default function DashboardLoading() {
       </div>
 
       {/* Volume chart */}
-      <div className="bg-card rounded-xl border border-border shadow-soft p-6 space-y-4">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft p-6 space-y-4">
         <div className="flex items-center justify-between">
           <div className="space-y-1">
             <Skeleton className="h-5 w-28" />
@@ -54,12 +54,12 @@ export default function DashboardLoading() {
       </div>
 
       {/* Recent tickets table */}
-      <div className="bg-card rounded-xl border border-border shadow-soft">
-        <div className="px-6 py-4 border-b border-border space-y-1">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft">
+        <div className="px-6 py-4 border-b border-base-300 space-y-1">
           <Skeleton className="h-5 w-44" />
           <Skeleton className="h-3 w-56" />
         </div>
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-base-300">
           {skeletonKeys(6).map((k) => (
             <div className="px-6 py-3 flex items-center gap-6" key={k}>
               <Skeleton className="h-4 w-10 shrink-0" />
@@ -73,12 +73,12 @@ export default function DashboardLoading() {
       </div>
 
       {/* My tickets table */}
-      <div className="bg-card rounded-xl border border-border shadow-soft">
-        <div className="px-6 py-4 border-b border-border space-y-1">
+      <div className="bg-base-100 rounded-xl border border-base-300 shadow-soft">
+        <div className="px-6 py-4 border-b border-base-300 space-y-1">
           <Skeleton className="h-5 w-24" />
           <Skeleton className="h-3 w-64" />
         </div>
-        <div className="divide-y divide-border">
+        <div className="divide-y divide-base-300">
           {skeletonKeys(4).map((k) => (
             <div className="px-6 py-3 flex items-center gap-6" key={k}>
               <Skeleton className="h-4 w-10 shrink-0" />

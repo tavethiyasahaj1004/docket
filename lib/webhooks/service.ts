@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import { desc, eq } from "drizzle-orm";
 import { webhookDeliveries, webhookEndpoints } from "@/db/schema";
+import { encryptSecret, generateWebhookSecret } from "@/lib/crypto";
 import { db } from "@/lib/db";
-import { encryptSecret, generateWebhookSecret } from "@/lib/webhooks/crypto";
 import { isValidWebhookEvent } from "@/lib/webhooks/events";
 import { enqueueJob } from "@/lib/worker/enqueue";
 import { JOB_NAMES } from "@/lib/worker/job-types";

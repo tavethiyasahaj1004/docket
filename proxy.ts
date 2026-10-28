@@ -3,13 +3,10 @@ import { NextResponse } from "next/server";
 import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
 import { auth } from "@/lib/auth";
 
-// Note for anyone tempted to special-case RSC requests here: you can't. Next
-// deletes the whole FLIGHT_HEADERS set (`rsc`, `next-router-state-tree`,
-// `next-router-prefetch`, …) and the `_rsc` search param before invoking
-// middleware, so a client-side navigation and a plain document request look
-// byte-for-byte identical from inside this function. A redirect is the only
-// tool available; the client-side half of the expired-session handling lives in
-// components/agent/session-guard.tsx.
+// You cannot special-case RSC requests here: Next strips the whole
+// FLIGHT_HEADERS set and the `_rsc` param before invoking middleware, so a
+// client navigation and a document request are byte-identical from inside this
+// function. A redirect is the only tool; see session-guard.tsx for the rest.
 function redirectTo(request: NextRequest, pathname: string) {
   const url = request.nextUrl.clone();
   url.pathname = pathname;
@@ -77,6 +74,7 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     "/dashboard/:path*",
+    "/settings/:path*",
     "/tickets/:path*",
     "/admin/:path*",
     "/canned-responses/:path*",

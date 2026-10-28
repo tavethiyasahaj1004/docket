@@ -127,12 +127,12 @@ Create a ticket.
 
 > **Attachments.** Send an array of `{ filename, mimeType, data }`, where
 > `data` is the raw file content base64-encoded (no `data:` URL prefix —
-> just the base64 string). Up to 5 files per ticket, 10 MB each. Allowed
+> just the base64 string). Up to 5 files per request and 10 MB each by default (admin-configurable under Ticket Config → Attachment Limits). Allowed
 > `mimeType`s: `image/jpeg`, `image/png`, `application/pdf`,
 > `application/zip`, `text/plain` — the same limits the customer portal
 > itself enforces. More files can be added later via
-> `POST /api/v1/tickets/:id/comments`, up to the same 5-per-ticket cap
-> (existing attachments count against it).
+> `POST /api/v1/tickets/:id/comments`, with the same per-request limits.
+> The number of attachments per ticket is not limited, but their combined size is capped (default 250 MB, admin-configurable); a request that would exceed it is rejected with `400`.
 >
 > ```json
 > "attachments": [
@@ -238,6 +238,19 @@ admin-configurable, so don't hardcode it.
 > points at your own site instead of Docket's built-in `/ticket/:id`
 > portal. No response shape change, just a different value.
 
+## Merged tickets
+
+When an agent merges a duplicate ticket into another, the merged ticket's id keeps
+working for reads and replies: they transparently act on the ticket it was merged into.
+Reads return that ticket — compare the response's `id` with the one you requested to
+detect a merge — and replies land on it. **Status changes are not forwarded:**
+`PATCH /api/v1/tickets/:id/status` on a merged ticket returns `409` with the id of the
+ticket it was merged into, so a stored id can never close or reopen a different
+conversation by accident. Merged tickets
+are left out of `GET /api/v1/tickets?email=`. A reply that races a merge gets a
+`409`; retrying it is safe and applies it to the merged ticket. Attachment URLs keep
+working after a merge or a split (see below).
+
 ## `GET /api/v1/tickets/:id`
 
 Look up a ticket's current status — e.g. to show "In Progress" on your own
@@ -275,7 +288,8 @@ deployment belongs to one owner.
 
 Download a single attachment's bytes — e.g. to proxy a file the customer or
 an agent uploaded through to your own users, without exposing storage keys.
-The attachment must belong to the ticket in the path. This is the endpoint
+The attachment is matched by its id alone, so a stored URL keeps working after an
+agent merges or splits the ticket and the file moves to another ticket. This is the endpoint
 every `url` field elsewhere in the API (on `GET /tickets/:id` and
 `GET /tickets/:id/comments`) points to.
 
@@ -288,8 +302,7 @@ curl https://support.example.com/api/v1/tickets/cku1a2b3c4d5e6f/attachments/ckw3
 **Response** — `200 OK`: the raw file bytes, with `Content-Type` set to the
 attachment's stored MIME type and `Content-Disposition: attachment` (so a
 browser hitting this URL directly downloads rather than navigates). `404`
-if the attachment doesn't exist, doesn't belong to that ticket, or the
-underlying file is missing from storage.
+if the attachment doesn't exist or the underlying file is missing from storage.
 
 ## `GET /api/v1/tickets/:id/comments`
 
@@ -347,7 +360,7 @@ which ticket is your job, not ours).
 | `email` | Yes | Must match the ticket's customer email |
 | `content` | Yes | The reply body |
 | `contentFormat` | No | `"html"` (default) or `"text"` — note the *opposite* default from ticket creation's `descriptionFormat` |
-| `attachments` | No | Same base64 array format as ticket creation, capped at 5 files *total* per ticket (existing attachments count against the cap) |
+| `attachments` | No | Same base64 array format as ticket creation, capped per request at the configured per-message count (default 5) and per-file size (default 10 MB); the ticket's combined attachment size is also capped (default 250 MB, existing attachments count); over-limit requests get `400` |
 
 ```bash
 curl -X POST https://support.example.com/api/v1/tickets/cku1a2b3c4d5e6f/comments \

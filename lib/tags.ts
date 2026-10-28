@@ -41,13 +41,9 @@ export async function getOrCreateTagId(rawName: string): Promise<string> {
   }
 }
 
-/**
- * Find-or-create each tag name and link it to the ticket. Idempotent — a tag
- * already linked to the ticket is skipped (the unique (ticketId, tagId) index
- * makes the insert a no-op via onConflictDoNothing). Names are normalized and
- * deduped first. Used by the public create API so an integrating backend can
- * tag a ticket at creation time, exactly like an agent adding tags by hand.
- */
+/** Find-or-create each tag and link it to the ticket. Names are normalized and
+ * deduped first, and the unique (ticketId, tagId) index makes a re-link a no-op,
+ * so this is idempotent. Lets the public create API tag exactly as an agent does. */
 export async function linkTagsToTicket(
   ticketId: string,
   rawNames: string[]

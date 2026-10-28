@@ -3,7 +3,9 @@
 // committed statement, runs the domain write, then FINALIZES the row in one
 // conditional UPDATE. A crash in between leaves a pending row whose lease
 // expires; the next call with the same key reconciles it instead of repeating
-// the write, and the daily sweeper settles what nobody retried.
+// the write, and the sweepers settle what nobody retried (the 5-minute one
+// for an expired lease, so a crashed lock holder frees its ticket within
+// minutes; the daily one for anything pending for over an hour).
 import { createId } from "@paralleldrive/cuid2";
 import { and, eq, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { mcpToolCalls } from "@/db/schema";

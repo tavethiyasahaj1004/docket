@@ -14,6 +14,11 @@ export const MCP_TOOL_CALL_RETENTION_DAYS = 30;
 export const MCP_WRITE_LEASE_MS = 60_000;
 /** A pending write call older than this is settled by the daily sweeper. */
 export const MCP_PENDING_SWEEP_AFTER_MS = 60 * 60 * 1000;
+/** A pending write call whose lease expired more than this long ago is
+ * settled by the 5-minute sweeper, so a crashed holder of the per-ticket lock
+ * blocks other calls for minutes rather than until the daily sweep. Well past
+ * MCP_WRITE_LEASE_MS, so a live (merely slow) attempt is never swept. */
+export const MCP_PENDING_QUICK_SWEEP_AFTER_LEASE_MS = 5 * 60 * 1000;
 
 export const MCP_RATE_LIMITS = {
   /** Every authenticated call, per user. */

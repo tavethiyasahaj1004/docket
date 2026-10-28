@@ -58,6 +58,9 @@ export async function startWorker() {
   const { handleMcpToolCallsPrune } = await import(
     "@/lib/worker/handlers/mcp-tool-calls-prune"
   );
+  const { handleMcpPendingCallsSweep } = await import(
+    "@/lib/worker/handlers/mcp-pending-calls-sweep"
+  );
   const { handleScaffoldHealthcheck } = await import(
     "@/lib/worker/handlers/scaffold-healthcheck"
   );
@@ -72,6 +75,7 @@ export async function startWorker() {
     work(JOB_NAMES.EMAIL_SEND, handleEmailSend),
     work(JOB_NAMES.EMAIL_OUTBOX_REAP, handleEmailOutboxReap),
     work(JOB_NAMES.EMAIL_EVENTS_PRUNE, handleEmailEventsPrune),
+    work(JOB_NAMES.MCP_PENDING_CALLS_SWEEP, handleMcpPendingCallsSweep),
     work(JOB_NAMES.MCP_TOOL_CALLS_PRUNE, handleMcpToolCallsPrune),
     work(JOB_NAMES.RATE_LIMIT_HITS_PRUNE, handleRateLimitHitsPrune),
     work(JOB_NAMES.SCAFFOLD_HEALTHCHECK, handleScaffoldHealthcheck),
@@ -81,6 +85,7 @@ export async function startWorker() {
 
   await boss.schedule(JOB_NAMES.EMAIL_OUTBOX_REAP, "*/15 * * * *", {});
   await boss.schedule(JOB_NAMES.EMAIL_EVENTS_PRUNE, "17 3 * * *", {});
+  await boss.schedule(JOB_NAMES.MCP_PENDING_CALLS_SWEEP, "*/5 * * * *", {});
   await boss.schedule(JOB_NAMES.MCP_TOOL_CALLS_PRUNE, "29 3 * * *", {});
   await boss.schedule(JOB_NAMES.RATE_LIMIT_HITS_PRUNE, "23 3 * * *", {});
   await boss.schedule(JOB_NAMES.SCAFFOLD_HEALTHCHECK, "*/10 * * * *", {});

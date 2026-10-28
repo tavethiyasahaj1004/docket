@@ -254,6 +254,15 @@ INDEX mcp_tool_calls_user_idx ON (user_id)
 
 `mcp_tool_call_status` is a PostgreSQL enum (`pending`, `succeeded`, `failed`).
 
+A write call that crashed leaves its row `pending`, and while it is pending it holds the per-ticket lock
+(`mcp_tool_calls_ticket_lock_idx`), so a call with a different `clientRequestId` on that ticket gets
+`in_progress`. The worker job `mcp.pending-calls-sweep` runs every 5 minutes and settles each `pending` row
+whose `lease_expires_at` passed more than 5 minutes ago (a row with no lease is aged by `updated_at`
+instead): it runs the tool's reconcile check, marking the row `succeeded` with `side_effects_uncertain` if the
+write turns out to have happened, or `failed` with `error_code = 'interrupted'` otherwise. That releases the
+lock, so a crashed holder blocks its ticket for at most about 6 to 11 minutes. The daily `mcp.tool-calls-prune`
+job does the same for any `pending` row created over an hour ago, then deletes rows older than 30 days.
+
 Every MCP call leaves exactly one row. A write call that claims the ledger is recorded on its ledger row
 (`client_request_id` when given, `planned_entity_id`, `target_ticket_id`, `result_json` of ids only). Every
 other call (reads, input or ticket-resolution failures, replays, `in_progress`, `idempotency_key_reused`)

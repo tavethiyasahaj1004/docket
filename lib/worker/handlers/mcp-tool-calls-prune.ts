@@ -1,8 +1,9 @@
-import { and, eq, lt } from "drizzle-orm";
+import { and, eq, isNull, lt, or, type SQL } from "drizzle-orm";
 import type { Job } from "pg-boss";
 import { mcpToolCalls } from "@/db/schema";
 import { db } from "@/lib/db";
 import {
+  MCP_PENDING_QUICK_SWEEP_AFTER_LEASE_MS,
   MCP_PENDING_SWEEP_AFTER_MS,
   MCP_TOOL_CALL_RETENTION_DAYS,
 } from "@/lib/mcp/limits";
@@ -47,27 +48,22 @@ async function isDone(
   }
 }
 
-/** Settles `pending` rows older than an hour: the same reconcile check as a
- * retry (7.3), then `failed: interrupted` for whatever it cannot confirm. Never
- * re-executes anything, and only touches a row still pending in the attempt it
- * read, so a late finalize or takeover is not overwritten. */
-export async function sweepStalePendingCalls(
-  reconcilers: Readonly<
-    Record<string, Reconciler>
-  > = DEFAULT_PENDING_RECONCILERS,
-  now: Date = new Date()
+/** Settles the `pending` rows picked by `stale` (an extra criterion, ANDed
+ * with `status = 'pending'`): the same reconcile check as a retry (7.3), then
+ * `failed: interrupted` for whatever it cannot confirm. Never re-executes
+ * anything, and only touches a row still pending in the attempt it read, so a
+ * late finalize or takeover is not overwritten. Shared by the daily and the
+ * 5-minute sweeper, which differ only in `stale`. */
+export async function settlePendingCalls(
+  stale: SQL,
+  reconcilers: Readonly<Record<string, Reconciler>>,
+  now: Date
 ) {
-  const cutoff = new Date(now.getTime() - MCP_PENDING_SWEEP_AFTER_MS);
-  const stale = await db
+  const rows = await db
     .select()
     .from(mcpToolCalls)
-    .where(
-      and(
-        eq(mcpToolCalls.status, "pending"),
-        lt(mcpToolCalls.createdAt, cutoff)
-      )
-    );
-  for (const row of stale) {
+    .where(and(eq(mcpToolCalls.status, "pending"), stale));
+  for (const row of rows) {
     const found = await isDone(row, reconcilers);
     await db
       .update(mcpToolCalls)
@@ -94,6 +90,50 @@ export async function sweepStalePendingCalls(
         )
       );
   }
+}
+
+/** The daily sweep: settles `pending` rows created more than an hour ago,
+ * whatever their lease says. */
+export async function sweepStalePendingCalls(
+  reconcilers: Readonly<
+    Record<string, Reconciler>
+  > = DEFAULT_PENDING_RECONCILERS,
+  now: Date = new Date()
+) {
+  const cutoff = new Date(now.getTime() - MCP_PENDING_SWEEP_AFTER_MS);
+  await settlePendingCalls(
+    lt(mcpToolCalls.createdAt, cutoff),
+    reconcilers,
+    now
+  );
+}
+
+/** The 5-minute sweep: settles `pending` rows whose lease expired more than
+ * 5 minutes ago, so a crashed holder of the per-ticket lock (`ticket_state`)
+ * stops blocking other calls with `in_progress` within minutes instead of at
+ * the daily sweep. A row with a NULL lease counts as expired, as it does in the
+ * takeover CAS (`takeOverExpiredCall`), but with no lease to age it is aged by
+ * `updatedAt` instead, so a row that was only just written is left alone. */
+export async function sweepExpiredLeasePendingCalls(
+  reconcilers: Readonly<
+    Record<string, Reconciler>
+  > = DEFAULT_PENDING_RECONCILERS,
+  now: Date = new Date()
+) {
+  const cutoff = new Date(
+    now.getTime() - MCP_PENDING_QUICK_SWEEP_AFTER_LEASE_MS
+  );
+  await settlePendingCalls(
+    or(
+      lt(mcpToolCalls.leaseExpiresAt, cutoff),
+      and(
+        isNull(mcpToolCalls.leaseExpiresAt),
+        lt(mcpToolCalls.updatedAt, cutoff)
+      )
+    ) as SQL,
+    reconcilers,
+    now
+  );
 }
 
 export async function handleMcpToolCallsPrune(

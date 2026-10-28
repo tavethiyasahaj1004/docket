@@ -27,6 +27,11 @@ export const QUEUE_OPTIONS: Record<
     policy: "exclusive",
     retryLimit: 0,
   },
+  [JOB_NAMES.MCP_PENDING_CALLS_SWEEP]: {
+    expireInSeconds: 300,
+    policy: "exclusive",
+    retryLimit: 0,
+  },
   [JOB_NAMES.MCP_TOOL_CALLS_PRUNE]: {
     expireInSeconds: 300,
     policy: "exclusive",

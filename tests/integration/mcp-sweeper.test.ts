@@ -9,12 +9,19 @@ import {
   webhookDeliveries,
 } from "@/db/schema";
 import { db } from "@/lib/db";
+import type { McpPrincipal } from "@/lib/mcp/auth";
+import { claimWriteCall } from "@/lib/mcp/idempotency";
+import { MCP_PENDING_QUICK_SWEEP_AFTER_LEASE_MS } from "@/lib/mcp/limits";
 import { type Reconciler, reconcileCloseCall } from "@/lib/mcp/reconcile";
+import { QUEUE_OPTIONS } from "@/lib/worker/ensure-queues";
+import { handleMcpPendingCallsSweep } from "@/lib/worker/handlers/mcp-pending-calls-sweep";
 import {
   DEFAULT_PENDING_RECONCILERS,
   handleMcpToolCallsPrune,
+  sweepExpiredLeasePendingCalls,
   sweepStalePendingCalls,
 } from "@/lib/worker/handlers/mcp-tool-calls-prune";
+import { JOB_NAMES } from "@/lib/worker/job-types";
 import { reseed } from "./characterization/helpers";
 import { seedWorld, tid, USERS } from "./fixtures";
 
@@ -315,5 +322,212 @@ describe("the job: reconcile first, then the 30-day delete", () => {
     expect(rows.find((r) => r.id === "keep-recent-pending")?.status).toBe(
       "pending"
     );
+  });
+});
+
+describe("the 5-minute sweep: pending rows whose lease expired", () => {
+  const principal: McpPrincipal = {
+    userId: USERS.alice.id,
+    name: USERS.alice.name,
+    email: USERS.alice.email,
+    role: "agent",
+    scopes: ["tickets:read"],
+    authMethod: "pat",
+    credentialId: "cred-1",
+    credentialName: "laptop",
+    credentialExpiresAt: new Date("2030-01-01T00:00:00.000Z"),
+  };
+  const lockedClaim = (clientRequestId: string) =>
+    claimWriteCall({
+      principal,
+      requestId: `req-${clientRequestId}`,
+      tool: "close_ticket",
+      args: { ticket: "t-101" },
+      clientRequestId,
+      lockGroup: "ticket_state",
+      targetTicketId: tid(101),
+    });
+  // A crashed attempt: pending, lease expired `leaseAgo` ago, claimed `createdAgo` ago.
+  const crashed = (
+    id: string,
+    createdAgo: number,
+    leaseAgo: number,
+    over: Partial<typeof mcpToolCalls.$inferInsert> = {}
+  ) =>
+    insertCall(id, ago(createdAgo), {
+      leaseExpiresAt: ago(leaseAgo),
+      ...over,
+    });
+
+  it("is registered like the daily prune job and runs every 5 minutes", () => {
+    expect(JOB_NAMES.MCP_PENDING_CALLS_SWEEP).toBe("mcp.pending-calls-sweep");
+    expect(QUEUE_OPTIONS[JOB_NAMES.MCP_PENDING_CALLS_SWEEP]).toEqual(
+      QUEUE_OPTIONS[JOB_NAMES.MCP_TOOL_CALLS_PRUNE]
+    );
+    expect(MCP_PENDING_QUICK_SWEEP_AFTER_LEASE_MS).toBe(5 * MINUTE);
+  });
+
+  it("frees a crashed lock holder within one sweep, so a new key can claim the ticket", async () => {
+    await crashed("holder", 7 * MINUTE, 6 * MINUTE, {
+      tool: "close_ticket",
+      lockGroup: "ticket_state",
+      targetTicketId: tid(101),
+      clientRequestId: "key-crashed-holder-0001",
+    });
+
+    // Before the sweep the dead holder still blocks other keys.
+    expect(await lockedClaim("key-other-caller-00001")).toMatchObject({
+      kind: "in_progress",
+    });
+
+    await handleMcpPendingCallsSweep([]);
+
+    expect(await rowOf("holder")).toMatchObject({
+      status: "failed",
+      errorCode: "interrupted",
+    });
+    const next = await lockedClaim("key-other-caller-00001");
+    expect(next.kind).toBe("claimed");
+  });
+
+  it("settles a stuck close through its reconciler, like the daily sweep", async () => {
+    await crashed("holder", 7 * MINUTE, 6 * MINUTE, {
+      tool: "close_ticket",
+      lockGroup: "ticket_state",
+      targetTicketId: tid(101),
+    });
+    await db
+      .update(tickets)
+      .set({ status: "closed", closedAt: ago(7 * MINUTE) })
+      .where(eq(tickets.id, tid(101)));
+    await db.insert(ticketActivity).values({
+      id: "planned-holder",
+      ticketId: tid(101),
+      actorId: USERS.alice.id,
+      actorName: USERS.alice.name,
+      actorRole: "agent",
+      action: "ticket_closed",
+      metadata: { from: "open", to: "closed" },
+      createdAt: ago(7 * MINUTE),
+    });
+    const before = await sideEffectCounts();
+
+    await handleMcpPendingCallsSweep([]);
+
+    expect(await rowOf("holder")).toMatchObject({
+      status: "succeeded",
+      sideEffectsUncertain: true,
+      resultJson: { activityId: "planned-holder" },
+    });
+    expect(await sideEffectCounts()).toEqual(before);
+  });
+
+  it("leaves a row with a live lease alone, however old it is", async () => {
+    await insertCall("live", ago(2 * HOUR), { leaseExpiresAt: ago(-MINUTE) });
+    const reconcile = found();
+    await sweepExpiredLeasePendingCalls({ add_internal_note: reconcile });
+    expect(reconcile).not.toHaveBeenCalled();
+    expect((await rowOf("live")).status).toBe("pending");
+  });
+
+  it("leaves a row whose lease expired only 2 minutes ago alone", async () => {
+    await crashed("recent", 10 * MINUTE, 2 * MINUTE);
+    await crashed("edge", 10 * MINUTE, 5 * MINUTE - 5000);
+    const reconcile = found();
+    await sweepExpiredLeasePendingCalls({ add_internal_note: reconcile });
+    expect(reconcile).not.toHaveBeenCalled();
+    expect((await rowOf("recent")).status).toBe("pending");
+    expect((await rowOf("edge")).status).toBe("pending");
+  });
+
+  it("settles a row whose lease expired more than 5 minutes ago, even though it is under an hour old", async () => {
+    await crashed("quick", 30 * MINUTE, 6 * MINUTE);
+    await sweepExpiredLeasePendingCalls({ add_internal_note: notFound() });
+    expect(await rowOf("quick")).toMatchObject({
+      status: "failed",
+      errorCode: "interrupted",
+    });
+  });
+
+  it("does not touch settled rows, delete anything or re-execute anything", async () => {
+    await crashed("done", 2 * HOUR, 90 * MINUTE, {
+      status: "succeeded",
+      resultJson: { commentId: "kept" },
+    });
+    await insertCall("ancient", ago(45 * DAY), { status: "succeeded" });
+    await crashed("stuck", 20 * MINUTE, 10 * MINUTE);
+    const before = await sideEffectCounts();
+    const reconcile = found();
+
+    await sweepExpiredLeasePendingCalls({ add_internal_note: reconcile });
+
+    expect(reconcile).toHaveBeenCalledTimes(1);
+    expect(await rowOf("done")).toMatchObject({
+      status: "succeeded",
+      resultJson: { commentId: "kept" },
+      sideEffectsUncertain: false,
+    });
+    expect(await rowOf("ancient")).toBeDefined(); // only the daily job prunes
+    expect(await sideEffectCounts()).toEqual(before);
+  });
+
+  it("does not overwrite a row taken over (attempts changed) while it is reconciled", async () => {
+    await crashed("stuck", 20 * MINUTE, 10 * MINUTE);
+    await sweepExpiredLeasePendingCalls({
+      add_internal_note: async (row) => {
+        // A retry takes the row over: new attempt, fresh lease.
+        await db
+          .update(mcpToolCalls)
+          .set({ attempts: row.attempts + 1, leaseExpiresAt: ago(-MINUTE) })
+          .where(eq(mcpToolCalls.id, row.id));
+        return { done: false };
+      },
+    });
+    expect(await rowOf("stuck")).toMatchObject({
+      status: "pending",
+      attempts: 2,
+    });
+  });
+
+  it("does not overwrite a row finalized while it is reconciled", async () => {
+    await crashed("stuck", 20 * MINUTE, 10 * MINUTE);
+    await sweepExpiredLeasePendingCalls({
+      add_internal_note: async (row) => {
+        // The slow original attempt finalizes just before the sweeper writes.
+        await db
+          .update(mcpToolCalls)
+          .set({ status: "succeeded", resultJson: { commentId: "real" } })
+          .where(eq(mcpToolCalls.id, row.id));
+        return { done: false };
+      },
+    });
+    expect(await rowOf("stuck")).toMatchObject({
+      status: "succeeded",
+      resultJson: { commentId: "real" },
+      sideEffectsUncertain: false,
+    });
+  });
+
+  it("treats a NULL lease as expired once the row has not been updated for 5 minutes", async () => {
+    await insertCall("null-old", ago(20 * MINUTE), { leaseExpiresAt: null });
+    await insertCall("null-new", ago(20 * MINUTE), {
+      leaseExpiresAt: null,
+      updatedAt: ago(MINUTE),
+    });
+    await sweepExpiredLeasePendingCalls({ add_internal_note: notFound() });
+    expect((await rowOf("null-old")).status).toBe("failed");
+    expect((await rowOf("null-new")).status).toBe("pending");
+  });
+
+  it("leaves the daily sweep exactly as it was: age counts, the lease does not", async () => {
+    // Over an hour old with a live lease: the daily sweep still settles it.
+    await insertCall("old-live", ago(2 * HOUR), { leaseExpiresAt: ago(-HOUR) });
+    // Under an hour old with an expired lease: the daily sweep still skips it.
+    await crashed("young-expired", 30 * MINUTE, 20 * MINUTE);
+
+    await sweepStalePendingCalls({ add_internal_note: notFound() });
+
+    expect((await rowOf("old-live")).status).toBe("failed");
+    expect((await rowOf("young-expired")).status).toBe("pending");
   });
 });

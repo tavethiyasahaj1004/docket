@@ -2,6 +2,7 @@ export const JOB_NAMES = {
   EMAIL_EVENTS_PRUNE: "email.events-prune",
   EMAIL_OUTBOX_REAP: "email.outbox-reap",
   EMAIL_SEND: "email.send",
+  MCP_PENDING_CALLS_SWEEP: "mcp.pending-calls-sweep",
   MCP_TOOL_CALLS_PRUNE: "mcp.tool-calls-prune",
   RATE_LIMIT_HITS_PRUNE: "rate-limit.hits-prune",
   SCAFFOLD_HEALTHCHECK: "scaffold.healthcheck",
@@ -23,6 +24,7 @@ export type JobPayloads = {
   [JOB_NAMES.EMAIL_EVENTS_PRUNE]: Record<string, never>;
   [JOB_NAMES.EMAIL_OUTBOX_REAP]: Record<string, never>;
   [JOB_NAMES.EMAIL_SEND]: EmailSendPayload;
+  [JOB_NAMES.MCP_PENDING_CALLS_SWEEP]: Record<string, never>;
   [JOB_NAMES.MCP_TOOL_CALLS_PRUNE]: Record<string, never>;
   [JOB_NAMES.RATE_LIMIT_HITS_PRUNE]: Record<string, never>;
   [JOB_NAMES.SCAFFOLD_HEALTHCHECK]: Record<string, never>;

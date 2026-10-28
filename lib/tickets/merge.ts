@@ -17,6 +17,11 @@ import { db } from "@/lib/db";
 import { enqueueEmail } from "@/lib/email";
 import { ticketMergedTemplate } from "@/lib/email/templates/ticket-merged";
 import {
+  type CancelledPendingAction,
+  cancelledActionAudit,
+  cancelPendingActionsForMergedTickets,
+} from "@/lib/mcp/pending-actions-core";
+import {
   createNotifications,
   ticketOwnerRecipients,
 } from "@/lib/notifications";
@@ -437,6 +442,9 @@ export async function mergeTicketsInto(
   // Each source's final status, re-derived from its locked row inside the
   // transaction (for the webhook payload).
   const sourceStatuses = new Map<string, string>();
+  // MCP approval requests on the merged-away tickets, cancelled in the
+  // transaction and audited once it commits.
+  const cancelledActions: CancelledPendingAction[] = [];
 
   const now = new Date();
 
@@ -488,6 +496,12 @@ export async function mergeTicketsInto(
         }
         await mergeOneSource(tx, source, lockedSource);
       }
+
+      // A pending AI-assistant request on a source would otherwise outlive the
+      // ticket it was made on. The target's own requests stay.
+      cancelledActions.push(
+        ...(await cancelPendingActionsForMergedTickets(tx, uniqueSourceIds))
+      );
 
       // The target's thread was rewritten — recompute "awaiting reply".
       // First response: the target's own; else the earliest source response
@@ -738,6 +752,16 @@ export async function mergeTicketsInto(
         createdAt: now,
       },
     ]);
+  }
+
+  for (const cancelled of cancelledActions) {
+    await audit(
+      cancelledActionAudit(cancelled, {
+        actorEmail: actor.email,
+        actorId: actor.id,
+        reason: "ticket_merged",
+      })
+    );
   }
 
   // Side effects, best effort — the merge itself is committed. Refresh anyone

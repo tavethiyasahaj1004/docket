@@ -7,6 +7,7 @@ import {
   MCP_PENDING_SWEEP_AFTER_MS,
   MCP_TOOL_CALL_RETENTION_DAYS,
 } from "@/lib/mcp/limits";
+import { expirePendingActions } from "@/lib/mcp/pending-actions-core";
 import {
   type McpToolCallRow,
   type Reconciler,
@@ -147,4 +148,6 @@ export async function handleMcpToolCallsPrune(
     Date.now() - MCP_TOOL_CALL_RETENTION_DAYS * 24 * 60 * 60 * 1000
   );
   await db.delete(mcpToolCalls).where(lt(mcpToolCalls.createdAt, cutoff));
+  // Settle approval requests that went unanswered past their 24 hours.
+  await expirePendingActions();
 }

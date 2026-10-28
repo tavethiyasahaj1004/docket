@@ -5,6 +5,10 @@ import { user } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { requireAdminFromRequest } from "@/lib/authz";
 import { db } from "@/lib/db";
+import {
+  cancelledActionAudit,
+  cancelPendingActionsForLiveTokens,
+} from "@/lib/mcp/pending-actions-core";
 import { getMcpToken, revokeMcpToken } from "@/lib/mcp-tokens";
 
 // DELETE /api/admin/mcp/tokens/:id — revoke any user's token. Revoking an
@@ -21,6 +25,20 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  // Cancel the token's pending approval requests first (once it is revoked they
+  // no longer match).
+  const cancelled = await cancelPendingActionsForLiveTokens(db, {
+    tokenId: id,
+  });
+  for (const c of cancelled) {
+    await audit(
+      cancelledActionAudit(c, {
+        actorEmail: admin.email,
+        actorId: admin.id,
+        reason: "token_revoked",
+      })
+    );
+  }
   const revoked = await revokeMcpToken({
     tokenId: id,
     reason: "revoked_by_admin",

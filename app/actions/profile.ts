@@ -8,6 +8,10 @@ import { account, session as sessionTable, user } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { requireSession } from "@/lib/authz";
 import { db } from "@/lib/db";
+import {
+  cancelledActionAudit,
+  cancelPendingActionsForLiveTokens,
+} from "@/lib/mcp/pending-actions-core";
 import { revokeAllMcpTokensForUser } from "@/lib/mcp-tokens";
 import { createPasswordSetupToken } from "@/lib/password-setup-token";
 import { anonymizeUserContent } from "@/lib/user-deletion";
@@ -159,7 +163,20 @@ export async function signOutOtherSessionsAction(): Promise<void> {
   }
 
   // MCP tokens are bearer credentials that outlive sessions, so signing out
-  // everywhere revokes them too.
+  // everywhere revokes them too. Their pending approval requests go first:
+  // once the tokens are revoked they no longer match.
+  const cancelledActions = await cancelPendingActionsForLiveTokens(db, {
+    userId: current.user.id,
+  });
+  for (const c of cancelledActions) {
+    await audit(
+      cancelledActionAudit(c, {
+        actorEmail: current.user.email,
+        actorId: current.user.id,
+        reason: "token_revoked",
+      })
+    );
+  }
   const revokedTokens = await revokeAllMcpTokensForUser(
     db,
     current.user.id,

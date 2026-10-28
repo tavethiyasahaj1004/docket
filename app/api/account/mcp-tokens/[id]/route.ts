@@ -2,6 +2,11 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { audit } from "@/lib/audit";
 import { getSessionUserFromRequest } from "@/lib/authz";
+import { db } from "@/lib/db";
+import {
+  cancelledActionAudit,
+  cancelPendingActionsForLiveTokens,
+} from "@/lib/mcp/pending-actions-core";
 import {
   getMcpToken,
   isEligibleMcpRole,
@@ -24,6 +29,21 @@ export async function DELETE(
   }
 
   const { id } = await params;
+  // Cancel the token's pending approval requests first (once it is revoked they
+  // no longer match). `ownerId` keeps this to the caller's own token.
+  const cancelled = await cancelPendingActionsForLiveTokens(db, {
+    tokenId: id,
+    ownerId: me.id,
+  });
+  for (const c of cancelled) {
+    await audit(
+      cancelledActionAudit(c, {
+        actorEmail: me.email,
+        actorId: me.id,
+        reason: "token_revoked",
+      })
+    );
+  }
   const revoked = await revokeMcpToken({
     tokenId: id,
     ownerId: me.id,

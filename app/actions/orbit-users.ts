@@ -7,6 +7,10 @@ import { user } from "@/db/schema";
 import { audit, auditOrThrow } from "@/lib/audit";
 import { requireAdmin } from "@/lib/authz";
 import { db } from "@/lib/db";
+import {
+  cancelledActionAudit,
+  cancelPendingActionsForLiveTokens,
+} from "@/lib/mcp/pending-actions-core";
 import { revokeAllMcpTokensForUser } from "@/lib/mcp-tokens";
 
 export async function setUserRoleAction(formData: FormData): Promise<void> {
@@ -59,6 +63,11 @@ export async function toggleUserBanAction(formData: FormData): Promise<void> {
       .where(eq(user.id, userId))
       .for("update");
 
+    // Pending approval requests are cancelled first: once the tokens are
+    // revoked they no longer match.
+    const cancelled = banned
+      ? await cancelPendingActionsForLiveTokens(tx, { userId })
+      : [];
     const revoked = banned
       ? await revokeAllMcpTokensForUser(tx, userId, "user_banned")
       : [];
@@ -87,6 +96,16 @@ export async function toggleUserBanAction(formData: FormData): Promise<void> {
           targetUserId: userId,
         },
       });
+    }
+    for (const c of cancelled) {
+      await auditOrThrow(
+        tx,
+        cancelledActionAudit(c, {
+          actorEmail: admin.email,
+          actorId: admin.id,
+          reason: "token_revoked",
+        })
+      );
     }
   });
 

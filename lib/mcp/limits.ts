@@ -20,6 +20,13 @@ export const MCP_PENDING_SWEEP_AFTER_MS = 60 * 60 * 1000;
  * MCP_WRITE_LEASE_MS, so a live (merely slow) attempt is never swept. */
 export const MCP_PENDING_QUICK_SWEEP_AFTER_LEASE_MS = 5 * 60 * 1000;
 
+/** How long an MCP request awaiting its owner's approval stays actionable. */
+export const MCP_PENDING_ACTION_TTL_MS = 24 * 60 * 60 * 1000;
+/** An approved action with no recorded result is reconciled from the database
+ * (never re-run) once its approval is older than this. Well past the time a
+ * live approval takes to finish, so a merely slow one is left alone. */
+export const MCP_PENDING_ACTION_RECONCILE_AFTER_MS = 5 * 60 * 1000;
+
 export const MCP_RATE_LIMITS = {
   /** Every authenticated call, per user. */
   allCallsPerMinute: 120,

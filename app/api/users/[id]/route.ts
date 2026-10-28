@@ -9,6 +9,10 @@ import { audit, auditOrThrow } from "@/lib/audit";
 import { auth } from "@/lib/auth";
 import { requireAdminFromRequest } from "@/lib/authz";
 import { db } from "@/lib/db";
+import {
+  cancelledActionAudit,
+  cancelPendingActionsForLiveTokens,
+} from "@/lib/mcp/pending-actions-core";
 import { revokeAllMcpTokensForUser } from "@/lib/mcp-tokens";
 import { getPlatformSettings } from "@/lib/settings";
 import { anonymizeUserContent } from "@/lib/user-deletion";
@@ -117,6 +121,11 @@ export async function PATCH(
           .where(eq(user.id, id))
           .for("update");
 
+        // Pending approval requests are cancelled first: once the tokens are
+        // revoked they no longer match.
+        const cancelled = body.banned
+          ? await cancelPendingActionsForLiveTokens(tx, { userId: id })
+          : [];
         const revoked = body.banned
           ? await revokeAllMcpTokensForUser(tx, id, "user_banned")
           : [];
@@ -146,6 +155,16 @@ export async function PATCH(
               targetEmail: target.email,
             },
           });
+        }
+        for (const c of cancelled) {
+          await auditOrThrow(
+            tx,
+            cancelledActionAudit(c, {
+              actorEmail: adminUser.email,
+              actorId: adminUser.id,
+              reason: "token_revoked",
+            })
+          );
         }
       });
     } catch (error) {

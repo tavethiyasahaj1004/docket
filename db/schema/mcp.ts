@@ -12,6 +12,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { user } from "@/db/schema/auth";
+import { tickets } from "@/db/schema/tickets";
 
 export const mcpToolCallStatus = pgEnum("mcp_tool_call_status", [
   "pending",
@@ -109,5 +110,84 @@ export const mcpToolCalls = pgTable(
       .where(sql`${t.status} = 'pending' AND ${t.lockGroup} IS NOT NULL`),
     index("mcp_tool_calls_created_at_idx").on(t.createdAt),
     index("mcp_tool_calls_user_idx").on(t.userId),
+  ]
+);
+
+export const mcpPendingActionKind = pgEnum("mcp_pending_action_kind", [
+  "close",
+  "reply",
+]);
+
+export const mcpPendingActionStatus = pgEnum("mcp_pending_action_status", [
+  "pending",
+  "approved",
+  "dismissed",
+  "expired",
+  "cancelled",
+  "failed",
+]);
+
+// A request an MCP client made that only its token owner can carry out, because
+// it reaches the customer (closing a ticket sends the close email, a reply
+// sends the reply email). The client creates a `pending` row; the owner then
+// approves or dismisses it in Docket, and an approval runs the same service the
+// UI runs, as the owner. The partial unique index allows one pending close and
+// one pending reply per ticket per person. A trigger cancels the pending rows of
+// a token the moment it is revoked (see the 0018 migration).
+//
+// Customers never see this table: the customer portal and the v1 API do not
+// read it. `payload.content` (a reply's Tiptap JSON) is shown only to the owner
+// and never copied into audit rows, notifications or push messages.
+export const mcpPendingActions = pgTable(
+  "mcp_pending_actions",
+  {
+    id: text("id").primaryKey().$defaultFn(createId),
+    kind: mcpPendingActionKind("kind").notNull(),
+    ticketId: text("ticket_id")
+      .notNull()
+      .references(() => tickets.id, { onDelete: "cascade" }),
+    // The token owner, and the only person who may approve or dismiss.
+    requestedById: text("requested_by_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    credentialId: text("credential_id").references(() => mcpAccessTokens.id, {
+      onDelete: "set null",
+    }),
+    // The mcp_tool_calls row that created it, for tracing. Deliberately NO
+    // foreign key: ledger rows are pruned after 30 days.
+    toolCallId: text("tool_call_id"),
+    // `{}` for a close; `{ content }` for a reply, where content is the Tiptap
+    // JSON string exactly as it is stored in ticket_comments.content.
+    payload: jsonb("payload").notNull().default({}),
+    status: mcpPendingActionStatus("status").notNull().default("pending"),
+    // Why a row was cancelled or failed: token_revoked, ticket_merged,
+    // ticket_closed, ticket_not_found, no_closed_status, interrupted.
+    statusReason: text("status_reason"),
+    // The activity or comment id an approval will create, set by the approving
+    // compare-and-set so a crash can be reconciled from the database alone.
+    plannedEntityId: text("planned_entity_id"),
+    // Ids and booleans only: { activityId }, { commentId },
+    // { alreadyClosed: true }, optionally notificationErrors.
+    result: jsonb("result"),
+    sideEffectsUncertain: boolean("side_effects_uncertain")
+      .notNull()
+      .default(false),
+    // When it was approved or dismissed.
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("mcp_pending_actions_pending_idx")
+      .on(t.ticketId, t.kind, t.requestedById)
+      .where(sql`${t.status} = 'pending'`),
+    index("mcp_pending_actions_credential_idx").on(t.credentialId),
+    index("mcp_pending_actions_status_idx").on(t.status),
+    index("mcp_pending_actions_requested_by_idx").on(t.requestedById),
   ]
 );

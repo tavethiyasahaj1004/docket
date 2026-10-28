@@ -25,10 +25,10 @@ import {
   resolveBrandName,
   resolveLogoUrl,
 } from "@/lib/settings";
-import { storage } from "@/lib/storage";
 import { getTicketCategories, getTicketStatuses } from "@/lib/ticket-config";
 import { COLOR_BADGE } from "@/lib/tickets";
 import { resolveAttachmentLimits } from "@/lib/tickets/attachment-limits";
+import { groupCustomerAttachments } from "@/lib/tickets/customer-attachments";
 import { resolveCustomerTicket } from "@/lib/tickets/merge";
 import { getInitials } from "@/lib/utils";
 import { ReplyForm } from "./reply-form";
@@ -138,19 +138,13 @@ export default async function TicketDetailPage({
     .from(ticketAttachments)
     .where(eq(ticketAttachments.ticketId, ticketId));
 
-  // Ticket-level attachments (not linked to a comment)
-  const ticketLevelAttachments = attachments.filter((a) => !a.commentId);
-
-  // Map commentId → attachments
-  const attachmentsByComment = new Map<string, typeof attachments>();
-  for (const a of attachments) {
-    if (a.commentId) {
-      if (!attachmentsByComment.has(a.commentId)) {
-        attachmentsByComment.set(a.commentId, []);
-      }
-      attachmentsByComment.get(a.commentId)!.push(a);
-    }
-  }
+  // Ticket-level attachments (not linked to a comment), and commentId →
+  // attachments for the public comments above, each with a signed, short-lived
+  // link. Attachments of any other comment get no link at all.
+  const {
+    ticketLevel: ticketLevelAttachments,
+    byComment: attachmentsByComment,
+  } = groupCustomerAttachments(attachments, new Set(comments.map((c) => c.id)));
 
   // Simplified activity (status changes only — no internal note events)
   const activity = await db
@@ -322,7 +316,7 @@ export default async function TicketDetailPage({
                   <TicketAttachments
                     items={ticketLevelAttachments.map((a) => ({
                       id: a.id,
-                      url: storage.url(a.storageKey),
+                      url: a.url,
                       filename: a.filename,
                       mimeType: a.mimeType,
                       fileSize: a.fileSize,
@@ -389,7 +383,7 @@ export default async function TicketDetailPage({
                           <TicketAttachments
                             items={commentAttachments.map((a) => ({
                               id: a.id,
-                              url: storage.url(a.storageKey),
+                              url: a.url,
                               filename: a.filename,
                               mimeType: a.mimeType,
                               fileSize: a.fileSize,

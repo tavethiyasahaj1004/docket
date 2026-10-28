@@ -42,6 +42,14 @@ function formatError(err: unknown): string {
   return lines.join("\n");
 }
 
+// Runs once when a server instance starts.
+export async function register() {
+  if (process.env.NEXT_RUNTIME === "nodejs") {
+    const { warnIfWeakAppSecret } = await import("@/lib/app-secret");
+    warnIfWeakAppSecret();
+  }
+}
+
 export const onRequestError: Instrumentation.onRequestError = async (
   error,
   request,

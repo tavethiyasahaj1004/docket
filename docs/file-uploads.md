@@ -143,6 +143,19 @@ deliberate, not a limitation:
 - Keeps ticket-attachment access control in Docket's own route
   rather than handing out cloud URLs (signed or public) directly.
 
+Who can read what through `/api/files`:
+
+- **`branding/*`** (logo, favicon): anyone. Emails embed the logo by URL.
+- **`tickets/*`** (attachments): an agent or admin who is signed in (the
+  agent pages use plain `storage.url(key)` links), or anyone holding a
+  **signed link** from the customer portal. The portal page mints those with
+  `signFileUrl(key)` (`lib/file-access.ts`), only for the files it shows, and
+  each one expires at the end of the next clock hour; reloading the page
+  mints fresh ones.
+- Anything else, including an expired or altered link, gets the same `404`
+  as a missing file. Files served to a signed-in agent are sent with
+  `Cache-Control: no-store`.
+
 ### DB Storage
 
 - The `ticket_attachments` table stores the **storage key**, never a full URL.
@@ -189,7 +202,7 @@ When a ticket is deleted (admin spam deletion):
 | Method | Route | Auth | Description |
 |--------|-------|------|-------------|
 | POST | `/api/tickets/{id}/attachments` | Customer (token) or Agent | Upload attachment(s) |
-| GET | `/api/files/[...key]` | Public | Serve file from storage |
+| GET | `/api/files/[...key]` | `branding/*`: public. `tickets/*`: Agent/Admin session or a signed portal link | Serve file from storage |
 | DELETE | `/api/tickets/{id}/attachments/{attachmentId}` | Agent/Admin | Delete attachment |
 
 ---

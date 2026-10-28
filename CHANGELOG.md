@@ -16,6 +16,20 @@ Anything needing manual work on upgrade is called out under **Upgrade notes**.
   and those on public replies, the files the `url` fields on `GET /tickets/:id` and
   `GET /tickets/:id/comments` point to. Any other attachment id gets the same `404` as an unknown
   one. Integrations that follow those `url` fields are unaffected.
+- **Ticket attachment links are tied to a sign-in or a portal visit.** Agents and admins open
+  attachments as before while signed in. The customer portal now shows each attachment through a
+  link that expires after one to two hours; reloading the page gives fresh links. Logos and other
+  branding images stay public, so emails are unaffected.
+
+### Upgrade notes
+
+- A raw `/api/files/tickets/...` attachment URL that was copied or saved elsewhere now opens only
+  for a signed-in agent or admin. Customers' portal links in emails keep working and always show
+  current attachment links.
+- Docket now logs a warning at startup when `APP_SECRET` is shorter than 32 characters. It still
+  starts; generate a longer value with `openssl rand -base64 32` when convenient. Changing
+  `APP_SECRET` signs everyone out and makes previously encrypted settings unreadable, so plan it.
+
 ## [0.8.0] - 2026-10-22
 
 ### Added

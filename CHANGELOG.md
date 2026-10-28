@@ -14,6 +14,8 @@ Anything needing manual work on upgrade is called out under **Upgrade notes**.
 - **A ticket closed twice at the same moment** (two tabs, the customer portal, the API) now sends
   one close email and one `ticket.closed` webhook instead of two. The second request gets the usual
   "Ticket is already closed." response.
+- **Closing from the status menu at the same moment as another close** no longer sends a
+  duplicate `ticket.closed` webhook or writes a second "closed" entry in the ticket activity.
 
 ## [0.9.0] - 2026-10-28
 

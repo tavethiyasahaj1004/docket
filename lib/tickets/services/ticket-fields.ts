@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, isNull, sql } from "drizzle-orm";
+import { and, eq, isNull, notInArray, sql } from "drizzle-orm";
 import { customers, ticketActivity, tickets } from "@/db/schema";
 import { db } from "@/lib/db";
 import {
@@ -146,15 +146,41 @@ export async function changeTicketStatusGeneric({
   }
   const previousStatus = ticket.status;
   const newStatus = value;
+  const previousStatusRow = validStatuses.find(
+    (s) => s.slug === previousStatus
+  );
 
-  await db
+  // A transition INTO a closed state from an open one is conditional on the
+  // ticket's CURRENT status (the snapshot is an earlier read): when a
+  // concurrent close already won, nothing changes here, so no activity row and
+  // no webhook is written and the caller sees an unchanged status. Other
+  // transitions (open->open, closed->closed, reopen) stay unconditional. The
+  // list is non-empty: `statusRow` is itself a closed state.
+  const closing =
+    statusRow.isClosedState && !(previousStatusRow?.isClosedState ?? false);
+  const closedSlugs = validStatuses
+    .filter((s) => s.isClosedState)
+    .map((s) => s.slug);
+  const updated = await db
     .update(tickets)
     .set({
       status: newStatus,
       closedAt: statusRow.isClosedState ? now : null,
       updatedAt: now,
     })
-    .where(notMerged(ticket.id));
+    .where(
+      closing
+        ? and(
+            eq(tickets.id, ticket.id),
+            isNull(tickets.mergedIntoTicketId),
+            notInArray(tickets.status, closedSlugs)
+          )
+        : notMerged(ticket.id)
+    )
+    .returning({ id: tickets.id });
+  if (closing && updated.length === 0) {
+    return { status: "unchanged" };
+  }
 
   const activityId = await insertActivity(
     snapshot,
@@ -168,9 +194,6 @@ export async function changeTicketStatusGeneric({
   // helper the dedicated /close and /reopen routes use, so closing via
   // this generic PATCH (e.g. the sidebar status dropdown) still fires the
   // same ticket.closed/ticket.reopened event an integrator would expect.
-  const previousStatusRow = validStatuses.find(
-    (s) => s.slug === previousStatus
-  );
   const webhook = await awaitWebhook(
     "[webhook.status_changed]",
     notifyTicketStatusChange(

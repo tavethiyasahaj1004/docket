@@ -52,10 +52,9 @@ export const reconcileCommentCall: Reconciler = async (row) => {
  * The claim time is the row's `createdAt` and the planned id is the id of the
  * `ticket_closed` activity row the call would write.
  *
- * Built and tested, but deliberately not registered with the sweeper or used
- * by any tool yet: cases 3 and 4 rely on P10 (only one closer's conditional
- * update can succeed), a later product change. It is wired in Phase 6 once P10
- * is merged. */
+ * Registered with the sweeper (`DEFAULT_PENDING_RECONCILERS`); no tool uses it
+ * until Phase 6. Cases 3 and 4 rely on P10 (only one closer's conditional
+ * update can succeed), which the email-sending close paths now have. */
 export const reconcileCloseCall: Reconciler = async (row) => {
   if (!(row.targetTicketId && row.plannedEntityId)) {
     return { done: false };

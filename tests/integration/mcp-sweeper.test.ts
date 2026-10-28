@@ -5,10 +5,11 @@ import {
   mcpToolCalls,
   ticketActivity,
   ticketComments,
+  tickets,
   webhookDeliveries,
 } from "@/db/schema";
 import { db } from "@/lib/db";
-import type { Reconciler } from "@/lib/mcp/reconcile";
+import { type Reconciler, reconcileCloseCall } from "@/lib/mcp/reconcile";
 import {
   DEFAULT_PENDING_RECONCILERS,
   handleMcpToolCallsPrune,
@@ -239,10 +240,41 @@ describe("sweeper: the default reconcilers", () => {
     });
   });
 
-  it("do not cover close_ticket: a stuck close is just interrupted", async () => {
-    expect(Object.keys(DEFAULT_PENDING_RECONCILERS)).not.toContain(
-      "close_ticket"
-    );
+  it("cover close_ticket: reconcileCloseCall is registered", () => {
+    expect(DEFAULT_PENDING_RECONCILERS.close_ticket).toBe(reconcileCloseCall);
+  });
+
+  it("settle a stuck close whose ticket was closed by its own planned activity row", async () => {
+    await insertCall("stuck-close", ago(2 * HOUR), {
+      tool: "close_ticket",
+      targetTicketId: tid(101),
+    });
+    await db
+      .update(tickets)
+      .set({ status: "closed", closedAt: ago(2 * HOUR - MINUTE) })
+      .where(eq(tickets.id, tid(101)));
+    await db.insert(ticketActivity).values({
+      id: "planned-stuck-close",
+      ticketId: tid(101),
+      actorId: USERS.alice.id,
+      actorName: USERS.alice.name,
+      actorRole: "agent",
+      action: "ticket_closed",
+      metadata: { from: "open", to: "closed" },
+      createdAt: ago(2 * HOUR - MINUTE),
+    });
+
+    await handleMcpToolCallsPrune([]);
+
+    expect(await rowOf("stuck-close")).toMatchObject({
+      status: "succeeded",
+      errorCode: null,
+      sideEffectsUncertain: true,
+      resultJson: { activityId: "planned-stuck-close" },
+    });
+  });
+
+  it("mark a stuck close failed: interrupted when its ticket is still open", async () => {
     await insertCall("stuck-close", ago(2 * HOUR), {
       tool: "close_ticket",
       targetTicketId: tid(101),
@@ -251,7 +283,13 @@ describe("sweeper: the default reconcilers", () => {
     expect(await rowOf("stuck-close")).toMatchObject({
       status: "failed",
       errorCode: "interrupted",
+      resultJson: null,
     });
+    const [ticket] = await db
+      .select({ status: tickets.status })
+      .from(tickets)
+      .where(eq(tickets.id, tid(101)));
+    expect(ticket.status).toBe("open");
   });
 });
 

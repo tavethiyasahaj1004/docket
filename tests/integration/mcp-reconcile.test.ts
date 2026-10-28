@@ -269,16 +269,12 @@ describe("reconcileCloseCall (7.3 cases 1-5)", () => {
   });
 });
 
-describe("close_ticket is not wired to the sweeper yet", () => {
-  it("is absent from the default reconciler map (Phase 6, after P10)", () => {
-    expect(Object.keys(DEFAULT_PENDING_RECONCILERS)).not.toContain(
-      "close_ticket"
-    );
-    expect(Object.values(DEFAULT_PENDING_RECONCILERS)).not.toContain(
-      reconcileCloseCall
-    );
+describe("close_ticket is wired to the sweeper (P10 is in)", () => {
+  it("is in the default reconciler map", () => {
+    expect(DEFAULT_PENDING_RECONCILERS.close_ticket).toBe(reconcileCloseCall);
     expect(Object.keys(DEFAULT_PENDING_RECONCILERS).sort()).toEqual([
       "add_internal_note",
+      "close_ticket",
       "reply_to_customer",
     ]);
   });

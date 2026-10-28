@@ -9,20 +9,21 @@ import {
 import {
   type McpToolCallRow,
   type Reconciler,
+  reconcileCloseCall,
   reconcileCommentCall,
 } from "@/lib/mcp/reconcile";
 import { sanitizeResultJson } from "@/lib/mcp/result-json";
 
 /** Which reconciler settles a stuck pending row of each tool.
  *
- * `close_ticket` is deliberately NOT registered: `reconcileCloseCall` needs
- * P10 (only one closer's conditional update can succeed), a later product
- * change. It is wired in here in Phase 6 once P10 is merged; until then a
- * stuck close is marked `interrupted`. The two comment tools don't exist yet,
- * so this map is inert for now. */
+ * `reconcileCloseCall` relies on P10 (only one closer's conditional update can
+ * succeed), which every email-sending close path now has. No `close_ticket`,
+ * `add_internal_note` or `reply_to_customer` tool exists yet in this build, so
+ * this map is inert until Phase 6 adds them. */
 export const DEFAULT_PENDING_RECONCILERS: Readonly<Record<string, Reconciler>> =
   {
     add_internal_note: reconcileCommentCall,
+    close_ticket: reconcileCloseCall,
     reply_to_customer: reconcileCommentCall,
   };
 

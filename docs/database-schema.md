@@ -268,6 +268,55 @@ Every MCP call leaves exactly one row. A write call that claims the ledger is re
 other call (reads, input or ticket-resolution failures, replays, `in_progress`, `idempotency_key_reused`)
 gets one trace row with no key.
 
+### `mcp_pending_actions`
+
+A close or a reply an MCP client asked for, waiting for the token owner to approve or dismiss it in Docket
+(see [mcp.md § Approval requests](./mcp.md#approval-requests-closing-and-replying)). Customers never see this
+table: the customer portal and the v1 API do not read it.
+
+```
+mcp_pending_actions
+├── id                      text PK (cuid2)
+├── kind                    mcp_pending_action_kind NOT NULL     ← close | reply
+├── ticket_id               text NOT NULL → tickets.id (CASCADE on delete)
+├── requested_by_id         text NOT NULL → user.id (CASCADE on delete)   ← the token owner, and the only person who may decide
+├── credential_id           text, nullable → mcp_access_tokens.id (SET NULL on delete)
+├── tool_call_id            text, nullable      ← the mcp_tool_calls row that created it; no foreign key, because ledger rows are pruned
+├── payload                 jsonb NOT NULL DEFAULT '{}'   ← {} for a close; { content } (Tiptap JSON, as stored on the comment) for a reply
+├── status                  mcp_pending_action_status NOT NULL DEFAULT 'pending'   ← pending | approved | dismissed | expired | cancelled | failed
+├── status_reason           text, nullable      ← why it was cancelled or failed: token_revoked | ticket_merged | ticket_closed | ticket_not_found | no_closed_status | interrupted
+├── planned_entity_id       text, nullable      ← the activity or comment id an approval will create; set by the approving compare-and-set
+├── result                  jsonb, nullable     ← ids and booleans only: { activityId } | { commentId } | { alreadyClosed: true }, optionally notificationErrors
+├── side_effects_uncertain  boolean NOT NULL DEFAULT false
+├── decided_at              timestamp with time zone, nullable   ← approved or dismissed
+├── expires_at              timestamp with time zone NOT NULL     ← created + 24 hours
+├── created_at              timestamp with time zone NOT NULL DEFAULT NOW()
+└── updated_at              timestamp with time zone NOT NULL DEFAULT NOW()
+
+UNIQUE INDEX mcp_pending_actions_pending_idx ON (ticket_id, kind, requested_by_id) WHERE status = 'pending'
+INDEX mcp_pending_actions_credential_idx ON (credential_id)
+INDEX mcp_pending_actions_status_idx ON (status)
+INDEX mcp_pending_actions_requested_by_idx ON (requested_by_id)
+```
+
+`mcp_pending_action_kind` and `mcp_pending_action_status` are PostgreSQL enums.
+
+- **One pending request** per ticket, kind and person (the partial unique index).
+- **Actionable** means `status = 'pending'`, not past `expires_at`, with a credential that is not revoked and still belongs to the requester, and a requester who is still an unbanned agent or admin. Token *expiry* does not matter, only revocation. Every read and the approve/dismiss compare-and-set use this one definition, so an expired or orphaned row is never actionable even before it is marked.
+- **Approving** is one conditional `UPDATE ... WHERE id = $id AND requested_by_id = $user AND <actionable> RETURNING`, which sets `status = 'approved'`, `planned_entity_id` and `decided_at`; only one concurrent approval can win. The service then runs, and writes `result` (or `status = 'failed'`) with an `UPDATE ... WHERE status = 'approved' AND result IS NULL`.
+- **Crash recovery.** The worker job `mcp.pending-calls-sweep` (every 5 minutes) settles `approved` rows with no `result` whose `decided_at` is more than 5 minutes old, from the database alone: it looks for the comment or `ticket_closed` activity row with `planned_entity_id`, records `result` (with `side_effects_uncertain`) if it exists, and otherwise sets `failed` / `interrupted`. It never runs the action or sends anything.
+- **Expiry.** The daily `mcp.tool-calls-prune` job marks pending rows past `expires_at` as `expired`.
+
+#### Cancellation trigger
+
+Migration `0018` installs `mcp_pending_actions_cancel_on_token_revoke`, an `AFTER UPDATE OF revoked_at ... FOR EACH ROW` trigger
+on `mcp_access_tokens` (function `mcp_cancel_pending_actions_on_token_revoke()`), firing when `revoked_at` goes from NULL to a value.
+It sets that token's pending rows to `cancelled` with `status_reason = 'token_revoked'`.
+
+- It covers every revoke path: Docket's own, the `"user"` trigger from `0017` (ban or role change), the verify-time backstop and direct SQL.
+- Trigger-driven cancellations write no audit row (like the token revocations themselves). Docket's own revoke paths (token revoke by the owner or an admin, the two ban paths, signing out other sessions) cancel and write `mcp.action_cancelled` first, with the acting user, so the trigger finds nothing left to do for them.
+- A ticket merge cancels the pending rows of the merged-away tickets (`status_reason = 'ticket_merged'`, audited with the merging user); the surviving ticket's rows are untouched.
+
 ### `webhook_endpoints` / `webhook_deliveries`
 
 Outbound webhooks — see `docs/webhooks.md`. Managed from `/admin/webhooks`.
@@ -604,7 +653,7 @@ db/schema/
 ├── settings.ts        ← platform_settings
 ├── push-subscriptions.ts ← push_subscriptions
 ├── ticket-links.ts    ← ticket_links
-├── mcp.ts             ← mcp_access_tokens, mcp_tool_calls, mcp_tool_call_status
+├── mcp.ts             ← mcp_access_tokens, mcp_tool_calls, mcp_tool_call_status, mcp_pending_actions, mcp_pending_action_kind, mcp_pending_action_status
 ├── audit-logs.ts      ← audit_logs (scaffold)
 ├── email-outbox.ts    ← email_outbox, email_events (scaffold)
 ├── job-logs.ts        ← job_logs (scaffold)

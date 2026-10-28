@@ -153,6 +153,22 @@ Four tools need the `tickets:write` scope. They do what the same action does in 
 
 **Who did it.** Every change appears in the ticket's history under the token owner's name, exactly as if they had made it, with `via: "mcp"` and the token id in the entry's metadata (the action names are the usual ones: `internal_note_added`, `tag_added`, `tag_removed`, `priority_changed`, `category_changed`). Every call that changes something also writes one entry to **Admin → Audit log** (`mcp.save_reply_draft`, `mcp.add_internal_note`, `mcp.update_ticket_tags`, `mcp.update_ticket_fields`). A call that changes nothing (an unchanged draft, tags already in place, values already set, or a replay) writes neither.
 
+### Approval requests (closing and replying)
+
+Closing a ticket and replying to a customer both reach the customer (a close email, a reply email, outbound webhooks), so an assistant is never allowed to do either by itself. It can only **ask**; the person who owns the token decides, in Docket. This is how it works from your side.
+
+- **The request.** When your assistant asks to close a ticket or send a reply, Docket records a pending request. Nothing is closed, sent or emailed, and your own reply draft is not touched. You get an in-app notification (`mcp_action_pending`) and an OS push if push is set up, both linking to the ticket.
+- **The banner.** Open the ticket: a banner above the conversation says "Your AI assistant asks to close this ticket" or "…to send this reply" (a reply is shown in full, read-only), with **Approve** and **Dismiss**. Approving a reply first asks you to confirm, because it emails the customer.
+- **Approving** does exactly what the same action does in the UI, **as you**: the close or reply is attributed to you in the ticket history (with `via: "mcp"`, the request id and the token id in the entry's metadata), the customer gets the usual email, and the usual webhooks fire. A reply is refused if the ticket has since been closed or merged. A close on a ticket that is already closed does nothing and sends nothing.
+- **Dismissing** discards the request and changes nothing.
+- **Only you can decide.** No other agent and no admin (not even one impersonating you) can approve or dismiss your assistant's request, and they cannot see it on the ticket; they get the same "not found" as for an unknown request. Admins see a read-only list of what is waiting, without reply text, under **Admin → AI assistant (MCP)**.
+- **One at a time.** There is one pending close and one pending reply per ticket per person; asking again while one is pending returns the existing request.
+- **Expiry.** A request expires 24 hours after it was made and can no longer be approved. A request does not depend on the token still being valid, but it does depend on it not being revoked.
+- **Cancellation.** A pending request is cancelled automatically when its token is revoked, when its owner is deactivated or stops being an agent or admin, when the owner signs out their other sessions, and when its ticket is merged into another (requests on the surviving ticket stay). Cancellations made through Docket are written to **Admin → Audit log** as `mcp.action_cancelled`; so are `mcp.action_requested`, `mcp.action_approved` and `mcp.action_dismissed`. None of these entries contains the reply text.
+- **If something goes wrong** while a request is being carried out (for example the server restarts), Docket checks what actually happened and records it; it never carries the action out a second time.
+
+The tools that create these requests (`close_ticket`, `reply_to_customer`) and the `tickets:reply` / `tickets:manage` scopes arrive in a later release; until then a token cannot create a request, and this page describes the approval side that is already in place.
+
 ### Result size
 
 Results are kept small. Above about 30,000 characters, list, thread and report tools drop trailing items and set `truncatedForSize: true` together with `hasMore`, `nextCursor` or `omittedRows`; other tools shorten bodies. No result exceeds 40,000 characters. If you see `truncatedForSize`, ask for a smaller `pageSize`, `limit` or `maxBodyChars`.

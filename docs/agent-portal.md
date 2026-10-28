@@ -170,6 +170,16 @@ The full ticket view for agents. Split into two panels:
 
 Full rules: [tickets.md § Merge, Split & Link](./tickets.md#merge-split--link).
 
+### AI assistant requests (banner)
+
+When the viewer's own AI assistant (an MCP token they own, see [mcp.md](./mcp.md)) has asked to close the ticket or send a reply, a banner appears between the breadcrumb and the conversation, outside the scrolling thread.
+
+- One row per request: "Your AI assistant asks to close this ticket" or "Your AI assistant asks to send this reply", the token name and when the request expires. A reply is rendered read-only through `RichTextContent`.
+- **Approve** and **Dismiss** buttons. Approving a reply opens a confirmation dialog first (it emails the customer); approving a close acts at once. Buttons are disabled while a request is in flight; the server decides who wins a double click.
+- Approving runs the normal close or reply as the viewer, so the result is an ordinary entry in the ticket history marked `via: "mcp"`. Dismissing changes nothing.
+- **Only the token owner sees the banner.** Other agents and admins never see it, and cannot act on it. A request that expired, was cancelled (token revoked, owner deactivated, ticket merged) or was already decided is not shown.
+- Requests also appear as an `mcp_action_pending` notification in the bell and as an OS push.
+
 ---
 
 ## 3. Activity History

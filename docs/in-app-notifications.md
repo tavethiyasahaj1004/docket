@@ -12,6 +12,7 @@ attention. Notifications appear in the bell menu in the top bar, with an unread 
 | Ticket linked to another ticket | `ticket_linked` | Owners of both tickets* |
 | Ticket merged into another | `ticket_merged` | Owners of both tickets* — opens the ticket it was merged into |
 | Reply split into a new ticket | `ticket_split` / `ticket_created` | `ticket_split` to the original ticket's owner*; `ticket_created` to every other active agent/admin; OS push to both. Both open the new ticket |
+| An AI assistant asked to close a ticket or send a reply | `mcp_action_pending` | Only the owner of the MCP token that made the request, plus an OS push; opens the ticket, where the Approve / Dismiss banner is. The title names the ticket ("Your AI assistant asks to close #101") and the body is its subject; a reply's text is never included. See [mcp.md](./mcp.md#approval-requests-closing-and-replying) |
 
 \* "Owner" = the ticket's assigned agent, or all active agents and admins if it's
 unassigned (`ticketOwnerRecipients()` in `lib/notifications.ts`). The agent who did the

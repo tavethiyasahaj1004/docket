@@ -300,6 +300,14 @@ Tokens are also revoked automatically when their owner is deactivated, when the 
 
 The sidebar entry is **AI assistant (MCP)**, next to API Keys.
 
+### 6c. Awaiting approval
+
+Below the token table, a read-only **Awaiting approval** list shows every request an AI assistant has made that is still waiting for its owner: the ticket (linked to `/tickets/{n}`), the kind (close or reply), the owner, when it was requested and when it expires. An empty list says nothing is waiting.
+
+- It is deliberately read-only. Only the token's owner can approve or dismiss a request, and an admin cannot do it on their behalf.
+- It never shows what a reply says.
+- Requests disappear from the list when they are decided, expire (after 24 hours), or are cancelled (token revoked, owner deactivated, ticket merged). See [mcp.md § Approval requests](./mcp.md#approval-requests-closing-and-replying).
+
 ---
 
 ## 7. Admin Access to Orbit Panel

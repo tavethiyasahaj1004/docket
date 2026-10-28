@@ -64,6 +64,20 @@ export async function getClosedStatus(): Promise<TicketStatus | undefined> {
   return row;
 }
 
+/** Slugs of every status flagged as a closed state. Used to make a close
+ * UPDATE conditional on the ticket's CURRENT status (`notInArray(status, …)`),
+ * so two concurrent closes can't both win. Read per call, not cached: the
+ * admin can flag statuses at any time and a stale list would let a ticket in a
+ * newly closed status be closed again. Call it AFTER `getClosedStatus()`
+ * returned a status, so the list is never empty. */
+export async function getClosedStatusSlugs(): Promise<string[]> {
+  const rows = await db
+    .select({ slug: ticketStatuses.slug })
+    .from(ticketStatuses)
+    .where(eq(ticketStatuses.isClosedState, true));
+  return rows.map((r) => r.slug);
+}
+
 /** Whether a given status slug represents a closed state. */
 export async function isClosedStatusSlug(slug: string): Promise<boolean> {
   const [row] = await db

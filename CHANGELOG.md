@@ -7,6 +7,14 @@ Notable changes to Docket. The format follows
 Docket is below 1.0.0, so a minor version bump can still contain a breaking change.
 Anything needing manual work on upgrade is called out under **Upgrade notes**.
 
+## [Unreleased]
+
+### Fixed
+
+- **A ticket closed twice at the same moment** (two tabs, the customer portal, the API) now sends
+  one close email and one `ticket.closed` webhook instead of two. The second request gets the usual
+  "Ticket is already closed." response.
+
 ## [0.9.0] - 2026-10-28
 
 ### Added

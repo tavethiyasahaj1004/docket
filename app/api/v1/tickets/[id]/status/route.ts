@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, notInArray } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { customers, ticketActivity, tickets } from "@/db/schema";
@@ -11,6 +11,7 @@ import { checkRateLimit } from "@/lib/rate-limit";
 import { computeSlaTransition } from "@/lib/sla";
 import {
   getClosedStatus,
+  getClosedStatusSlugs,
   getDefaultStatus,
   isClosedStatusSlug,
 } from "@/lib/ticket-config";
@@ -133,7 +134,11 @@ export async function PATCH(
       now,
       "closing"
     );
-    await db
+    // Conditional on the ticket's CURRENT status (the check above read an
+    // earlier snapshot): a concurrent close that got here first leaves nothing
+    // to update, and this request then writes no activity row, webhook or email.
+    const closedSlugs = await getClosedStatusSlugs();
+    const updated = await db
       .update(tickets)
       .set({
         status: closedStatus.slug,
@@ -143,7 +148,20 @@ export async function PATCH(
         pendingReplies: 0,
         ...slaUpdate,
       })
-      .where(and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId)));
+      .where(
+        and(
+          eq(tickets.id, ticketId),
+          isNull(tickets.mergedIntoTicketId),
+          notInArray(tickets.status, closedSlugs)
+        )
+      )
+      .returning({ id: tickets.id });
+    if (updated.length === 0) {
+      return NextResponse.json(
+        { error: "Ticket is already closed." },
+        { status: 400 }
+      );
+    }
 
     await db.insert(ticketActivity).values({
       id: createId(),

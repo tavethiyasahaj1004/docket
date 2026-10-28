@@ -1,10 +1,14 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, notInArray } from "drizzle-orm";
 import { customers, ticketActivity, tickets } from "@/db/schema";
 import { db } from "@/lib/db";
 import { ticketClosedTemplate } from "@/lib/email/templates/ticket-closed";
 import { computeSlaTransition } from "@/lib/sla";
-import { getClosedStatus, isClosedStatusSlug } from "@/lib/ticket-config";
+import {
+  getClosedStatus,
+  getClosedStatusSlugs,
+  isClosedStatusSlug,
+} from "@/lib/ticket-config";
 import { notifyTicketStatusChange } from "@/lib/tickets/notify-status-change";
 import { resolveTicketPortalUrl } from "@/lib/tickets/portal-url";
 import { awaitWebhook, queueTicketEmail } from "./outcomes";
@@ -86,7 +90,12 @@ export async function closeTicket(
     "closing"
   );
 
-  await db
+  // Conditional on the ticket's CURRENT status: the early check above reads an
+  // earlier snapshot, so two concurrent closes would both pass it. Only the
+  // request whose UPDATE changes a row writes the activity row and sends the
+  // webhook and email; the loser reports "already closed".
+  const closedSlugs = await getClosedStatusSlugs();
+  const updated = await db
     .update(tickets)
     .set({
       status: closedStatus.slug,
@@ -96,7 +105,17 @@ export async function closeTicket(
       pendingReplies: 0,
       ...slaUpdate,
     })
-    .where(and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId)));
+    .where(
+      and(
+        eq(tickets.id, ticketId),
+        isNull(tickets.mergedIntoTicketId),
+        notInArray(tickets.status, closedSlugs)
+      )
+    )
+    .returning({ id: tickets.id });
+  if (updated.length === 0) {
+    return { status: "already_closed" };
+  }
 
   const activityId = input.activityId ?? createId();
   await db.insert(ticketActivity).values({

@@ -146,6 +146,26 @@ describe("reconcileCloseCall (7.3 cases 1-5)", () => {
     });
   });
 
+  it("2. wins over 1: our close landed and the ticket was reopened since, so it is still done + uncertain", async () => {
+    // The ticket is OPEN again, but our own ticket_closed activity row exists.
+    await addClosedActivity(PLANNED, at(2 * SECOND));
+    const row = await claimRow();
+    expect(await reconcileCloseCall(row)).toEqual({
+      done: true,
+      result: { activityId: PLANNED },
+      sideEffectsUncertain: true,
+    });
+  });
+
+  it("2. a reopened ticket with only ANOTHER actor's close activity is still not done", async () => {
+    await addClosedActivity("other-closer", at(2 * SECOND), {
+      actorId: USERS.bob.id,
+      actorName: USERS.bob.name,
+    });
+    const row = await claimRow();
+    expect(await reconcileCloseCall(row)).toEqual({ done: false });
+  });
+
   it("3. closed before the claim: alreadyClosed, not uncertain", async () => {
     await closeTicketRow(at(-HOUR));
     await addClosedActivity("someone-else", at(-HOUR));

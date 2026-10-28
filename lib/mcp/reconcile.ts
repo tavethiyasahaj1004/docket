@@ -48,9 +48,18 @@ export const reconcileCommentCall: Reconciler = async (row) => {
   };
 };
 
-/** `close_ticket`: did this call cause the close? Cases 1-5 of 7.3, in order.
- * The claim time is the row's `createdAt` and the planned id is the id of the
+/** `close_ticket`: did this call cause the close? Cases 1-5 of 7.3. The claim
+ * time is the row's `createdAt` and the planned id is the id of the
  * `ticket_closed` activity row the call would write.
+ *
+ * The call's OWN activity row is checked first (7.3 case 2), before looking at
+ * the ticket's status. A close that landed and was then reopened (the call
+ * crashed before it was finalized, someone reopened the ticket) must still
+ * count as done: answering "not closed, run again" would let a retry close the
+ * reopened ticket a second time under the same planned id, with no new
+ * activity, email or webhook. Only when no such row exists does the ticket's
+ * state decide (cases 1, 3, 4, 5, in that order). Same order as `settleClose`
+ * in pending-actions-reconcile.ts.
  *
  * Registered with the sweeper (`DEFAULT_PENDING_RECONCILERS`); no tool uses it
  * until Phase 6. Cases 3 and 4 rely on P10 (only one closer's conditional
@@ -60,19 +69,10 @@ export const reconcileCloseCall: Reconciler = async (row) => {
     return { done: false };
   }
   const ticketId = row.targetTicketId;
-  const [ticket] = await db
-    .select({ status: tickets.status, closedAt: tickets.closedAt })
-    .from(tickets)
-    .where(eq(tickets.id, ticketId))
-    .limit(1);
 
-  // 1. Not closed: nothing happened yet, so the call can run again.
-  if (!(ticket && (await isClosedStatusSlug(ticket.status)))) {
-    return { done: false };
-  }
-
-  // 2. Our own activity row exists: this call closed it; the notifications
-  // after it may or may not have run.
+  // 2. Our own activity row exists: this call closed the ticket, whatever its
+  // status is now (it may have been reopened since). The notifications after
+  // the close may or may not have run.
   const [own] = await db
     .select({ id: ticketActivity.id })
     .from(ticketActivity)
@@ -84,6 +84,18 @@ export const reconcileCloseCall: Reconciler = async (row) => {
       result: { activityId: own.id },
       sideEffectsUncertain: true,
     };
+  }
+
+  const [ticket] = await db
+    .select({ status: tickets.status, closedAt: tickets.closedAt })
+    .from(tickets)
+    .where(eq(tickets.id, ticketId))
+    .limit(1);
+
+  // 1. Not closed and no activity row of ours: nothing happened yet, so the
+  // call can run again.
+  if (!(ticket && (await isClosedStatusSlug(ticket.status)))) {
+    return { done: false };
   }
 
   // 3. Closed clearly before the claim. A gap under the lease window could be

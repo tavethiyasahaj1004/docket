@@ -476,7 +476,7 @@ export function McpTokensCard() {
               <pre className="min-w-0 flex-1 overflow-x-auto font-mono text-xs text-base-content">
                 {snippet}
               </pre>
-              <McpCopyButton label="Copy setup commands" text={snippet} />
+              <McpCopyButton label="Copy setup command" text={snippet} />
             </div>
           </div>
 

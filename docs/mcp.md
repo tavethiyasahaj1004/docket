@@ -37,12 +37,13 @@ New tokens default to `tickets:read` and `customers:read`. **`tickets:write` is 
 
 ## 3. Connecting Claude Code
 
-Create a token, then run the command shown after creation. In a shell it looks like this:
+Create a token, then run the command shown after creation. It is one line with the token already in it, and runs the same in bash, zsh, PowerShell and cmd:
 
 ```bash
-export DOCKET_MCP_TOKEN="<your token>"
-claude mcp add --transport http docket https://your-docket.example.com/api/mcp --header "Authorization: Bearer ${DOCKET_MCP_TOKEN}"
+claude mcp add --transport http docket https://your-docket.example.com/api/mcp --header "Authorization: Bearer <your token>"
 ```
+
+Claude Code saves the token in its own configuration. Revoking the token in Docket is what stops it working. Removing the server with `claude mcp remove docket` only clears it from Claude Code.
 
 Replace the URL with your own Docket address followed by `/api/mcp` (the admin MCP page shows it). Inside Claude Code, `/mcp` lists the server and its tools; Claude Code names them `mcp__docket__<tool>`.
 

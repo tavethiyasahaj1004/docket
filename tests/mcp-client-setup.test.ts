@@ -2,14 +2,20 @@ import { describe, expect, it } from "vitest";
 import { buildClaudeCodeSetupSnippet } from "@/lib/mcp/client-setup";
 
 describe("buildClaudeCodeSetupSnippet", () => {
-  it("exports the token and registers the endpoint with a shell-expanded header", () => {
+  it("registers the endpoint in one command with the token written in", () => {
     expect(
       buildClaudeCodeSetupSnippet("dkm_abc", "https://help.example.com/api/mcp")
     ).toBe(
-      [
-        'export DOCKET_MCP_TOKEN="dkm_abc"',
-        `claude mcp add --transport http docket https://help.example.com/api/mcp --header "Authorization: Bearer \${DOCKET_MCP_TOKEN}"`,
-      ].join("\n")
+      'claude mcp add --transport http docket https://help.example.com/api/mcp --header "Authorization: Bearer dkm_abc"'
     );
+  });
+
+  it("leaves nothing for a shell to expand", () => {
+    const snippet = buildClaudeCodeSetupSnippet(
+      "dkm_abc",
+      "https://help.example.com/api/mcp"
+    );
+    expect(snippet).not.toContain("$");
+    expect(snippet).not.toContain("\n");
   });
 });

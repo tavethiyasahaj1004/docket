@@ -7,7 +7,20 @@ Notable changes to Docket. The format follows
 Docket is below 1.0.0, so a minor version bump can still contain a breaking change.
 Anything needing manual work on upgrade is called out under **Upgrade notes**.
 
-## [Unreleased]
+## [0.9.0] - 2026-10-28
+
+### Added
+
+- **AI assistant access (MCP).** Docket can expose a Model Context Protocol endpoint at `/api/mcp`,
+  so an assistant such as Claude Code can look up tickets, threads, customers, canned responses and
+  statistics as the agent or admin who created its token, seeing only what that person can see.
+  An admin switches it on under **Admin → AI assistant (MCP)**. It is off by default, and in
+  production it only turns on when `NEXT_PUBLIC_APP_URL` uses `https://`. Each person creates
+  their own tokens under **Settings → AI assistant access**. Tokens are read-only unless the
+  optional `tickets:write` scope is ticked; with it the assistant can save reply drafts, add
+  internal notes and change tags, priority and category. It cannot reply to a customer, close,
+  reopen or assign, and every change is recorded in the audit log and ticket activity. See
+  `docs/mcp.md`.
 
 ### Security
 

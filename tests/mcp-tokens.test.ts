@@ -150,24 +150,29 @@ describe("effectiveMcpScopes", () => {
 });
 
 describe("issuable scopes", () => {
-  it("issues read scopes only, in release 1", () => {
+  it("issues the read scopes and tickets:write, in release 2", () => {
     expect([...MCP_ISSUABLE_SCOPES]).toEqual([
       "tickets:read",
       "customers:read",
+      "tickets:write",
       "reports:read",
     ]);
   });
 
-  it("accepts the read scopes and rejects the rest", () => {
+  it("never puts tickets:write in the defaults", () => {
+    expect([...DEFAULT_MCP_SCOPES]).not.toContain("tickets:write");
+  });
+
+  it("accepts the read scopes and tickets:write, and rejects the rest", () => {
     for (const scope of [
       "tickets:read",
       "customers:read",
+      "tickets:write",
       "reports:read",
     ] as const) {
       expect(isIssuableMcpScope(scope)).toBe(true);
     }
     for (const scope of [
-      "tickets:write",
       "tickets:manage",
       "tickets:reply",
       "tickets:read_internal",

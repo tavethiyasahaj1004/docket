@@ -21,6 +21,10 @@ const TOOL_REGISTRY: readonly ToolPolicy[] = [
   { name: "search_canned_responses", scope: "tickets:read" },
   { name: "get_ticket_stats", scope: "tickets:read" },
   { name: "get_report", scope: "reports:read", role: "admin" },
+  { name: "save_reply_draft", scope: "tickets:write" },
+  { name: "add_internal_note", scope: "tickets:write" },
+  { name: "update_ticket_tags", scope: "tickets:write" },
+  { name: "update_ticket_fields", scope: "tickets:write" },
 ];
 
 /** The role is re-checked on every call (it comes from the database via the

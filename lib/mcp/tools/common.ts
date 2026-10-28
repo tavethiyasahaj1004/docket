@@ -101,3 +101,56 @@ export async function loadTicketConfig() {
     labels: buildConfigLabels({ statuses, priorities, categories }),
   };
 }
+
+/* ------------------------------------------------------------ write tools */
+
+/** Annotations of a write tool. All four are explicit; they are hints to the
+ * client, never security controls. `idempotent` is a promise: Claude Code may
+ * repeat such a call once on its own after a dropped connection, so it is set
+ * only where repeating the same arguments is harmless. `openWorld` marks tools
+ * that reach outside Docket (webhooks). */
+export function writeAnnotations(options: {
+  idempotent: boolean;
+  openWorld?: boolean;
+}) {
+  return {
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: options.idempotent,
+    openWorldHint: options.openWorld ?? false,
+  } as const;
+}
+
+const CLIENT_REQUEST_ID_DESCRIPTION =
+  "Idempotency key, 16-100 characters from A-Z a-z 0-9 _ -. Reuse the SAME key when retrying the same request (a repeat returns the stored result and changes nothing); use a NEW key for a new request.";
+
+const clientRequestIdBase = z
+  .string()
+  .min(16)
+  .max(100)
+  .regex(/^[A-Za-z0-9_-]+$/);
+
+/** Optional idempotency key (writes that are safe to repeat anyway). */
+export const clientRequestIdSchema = clientRequestIdBase
+  .optional()
+  .describe(CLIENT_REQUEST_ID_DESCRIPTION);
+
+/** Required idempotency key (writes that create a comment). */
+export const requiredClientRequestIdSchema = clientRequestIdBase.describe(
+  `Required. ${CLIENT_REQUEST_ID_DESCRIPTION}`
+);
+
+/** The ticket a write touched. */
+export const writtenTicketOutput = z.object({
+  number: z.number(),
+  agentUrl: z.string(),
+});
+
+/** Flags every write result may carry. `replayed`: the stored result of an
+ * earlier call with the same clientRequestId. `sideEffectsUncertain`: a
+ * recovered call whose follow-up work may not have run. */
+export const writeFlagsShape = {
+  replayed: z.boolean().optional(),
+  sideEffectsUncertain: z.boolean().optional(),
+  notificationErrors: z.array(z.string()).optional(),
+};

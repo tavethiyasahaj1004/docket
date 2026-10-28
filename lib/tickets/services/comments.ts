@@ -71,6 +71,11 @@ export interface AddTicketCommentInput {
   content: string;
   contentText: string;
   isInternal: boolean;
+  /** Keep the actor's saved reply draft instead of dropping it after the
+   * insert. Default false: sending from the composer clears its draft. The MCP
+   * internal-note tool sets it, because a note written by an assistant is not
+   * the reply the agent is drafting. */
+  keepReplyDraft?: boolean;
   maxPerTicketSizeBytes: number;
   now?: Date;
   target: CommentTarget;
@@ -144,9 +149,11 @@ export async function addTicketComment(
   // composer and the /tickets "Draft" marker don't resurrect it. Best
   // effort: the comment row is already written, so a failure here must not
   // report the reply as failed (the agent would resend it, duplicating it).
-  await deleteReplyDraft(ticketId, actor.id).catch((err) =>
-    console.error("[reply-draft.delete]", err)
-  );
+  if (!input.keepReplyDraft) {
+    await deleteReplyDraft(ticketId, actor.id).catch((err) =>
+      console.error("[reply-draft.delete]", err)
+    );
+  }
 
   // Maintain the "awaiting reply" flag + unread count. Internal notes don't
   // change it (they're not customer-facing conversation), nor SLA pause/resume

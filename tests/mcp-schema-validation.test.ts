@@ -69,6 +69,71 @@ async function rejected(name: string, args: Record<string, unknown>) {
   return { result, text };
 }
 
+describe("write tool input schema rejection (SDK level)", () => {
+  let writer: Client;
+
+  beforeEach(async () => {
+    const server = createDocketMcpServer(
+      { ...principal, scopes: ["tickets:read", "tickets:write"] },
+      "req-schema-write"
+    );
+    const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
+    writer = new Client({ name: "schema-test-write", version: "0.0.0" });
+    await server.connect(serverSide);
+    await writer.connect(clientSide);
+  });
+
+  afterEach(async () => {
+    await writer.close();
+  });
+
+  const validId = "a-valid-request-id-0001";
+
+  it.each([
+    [
+      "add_internal_note",
+      { ticket: 1, body: "x".repeat(20_001), clientRequestId: validId },
+      /body: /,
+    ],
+    ["add_internal_note", { ticket: 1, body: "hi" }, /clientRequestId: /],
+    [
+      "add_internal_note",
+      { ticket: 1, body: "hi", clientRequestId: "short" },
+      /clientRequestId: /,
+    ],
+    [
+      "save_reply_draft",
+      { ticket: 1, body: "hi", visibility: "everyone" },
+      /visibility: /,
+    ],
+    [
+      "update_ticket_tags",
+      { ticket: 1, add: Array.from({ length: 11 }, (_, i) => `t${i}`) },
+      /add: /,
+    ],
+    [
+      "update_ticket_fields",
+      { ticket: 1, priority: "high", expectedUpdatedAt: "yesterday" },
+      /expectedUpdatedAt: /,
+    ],
+  ] as const)("%s %j is a tool error with plain text", async (name, args, detail) => {
+    const result = await writer.callTool({ name, arguments: { ...args } });
+    const text = (result.content as { type: string; text: string }[])
+      .map((b) => b.text)
+      .join("");
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toBeUndefined();
+    expect(text).toMatch(
+      /^Input validation error: Invalid arguments for tool /
+    );
+    expect(text).toContain(`tool ${name}:`);
+    expect(text).toMatch(detail);
+    expect(() => JSON.parse(text)).toThrow();
+    // Rejected before the handler: no trace row.
+    expect(insertValues).not.toHaveBeenCalled();
+  });
+});
+
 describe("tool input schema rejection (SDK level)", () => {
   it.each([
     ["list_tickets", { pageSize: 0 }, /pageSize: .*>=1/],

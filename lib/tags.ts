@@ -5,6 +5,9 @@ import { db } from "@/lib/db";
 
 export type Tag = typeof tags.$inferSelect;
 
+/** Longest tag name the tag routes accept, after normalizing. */
+export const MAX_TAG_LENGTH = 50;
+
 /** Trim + collapse whitespace + lowercase, so "Billing" and "billing " share one row. */
 export function normalizeTagName(raw: string): string {
   return raw.trim().replace(/\s+/g, " ").toLowerCase();

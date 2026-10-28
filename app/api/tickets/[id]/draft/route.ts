@@ -6,11 +6,15 @@ import { tickets } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { MERGED_TICKET_CHANGE_MESSAGE } from "@/lib/tickets/merge";
-import { deleteReplyDraft, saveReplyDraft } from "@/lib/tickets/reply-drafts";
+import {
+  deleteReplyDraft,
+  MAX_DRAFT_LENGTH,
+  saveReplyDraft,
+} from "@/lib/tickets/reply-drafts";
 
-// Generous ceiling for a Tiptap JSON reply — only here to stop the autosave
-// endpoint from being used to park arbitrarily large blobs in the DB.
-const MAX_DRAFT_LENGTH = 200_000;
+// MAX_DRAFT_LENGTH (a generous ceiling for a Tiptap JSON reply) is only here
+// to stop the autosave endpoint from being used to park arbitrarily large
+// blobs in the DB.
 
 // /api/tickets/* is not covered by the proxy.ts middleware matcher, so we
 // check the session directly here (same pattern as

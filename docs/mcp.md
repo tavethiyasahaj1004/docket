@@ -1,6 +1,6 @@
 # AI Assistant Access (MCP)
 
-Docket can expose a read-only [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `/api/mcp`, so an AI assistant such as Claude Code can look up tickets, threads, customers, canned responses and statistics on behalf of an agent or admin. The assistant acts **as the person who created the token**: it sees what that person can see and nothing more, and it cannot change anything.
+Docket can expose a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `/api/mcp`, so an AI assistant such as Claude Code can look up tickets, threads, customers, canned responses and statistics on behalf of an agent or admin. The assistant acts **as the person who created the token**: it sees what that person can see and nothing more. Tokens are read-only unless the optional `tickets:write` scope is selected; with it the assistant can also save reply drafts, add internal notes and change tags, priority and category, and nothing it does is visible to a customer (§ 4, "Write tools").
 
 This page is for admins and agents. For the settings screens see `docs/admin-portal.md` § 6 and `docs/agent-portal.md` § Settings.
 
@@ -29,10 +29,11 @@ Once MCP is on, any agent or admin can create tokens for themselves under **Sett
 |---|---|---|
 | `tickets:read` | List and read tickets and threads, agents, canned responses, ticket configuration and statistics | agent, admin |
 | `customers:read` | Read customer profiles and ticket history (`get_customer`) | agent, admin |
+| `tickets:write` | Save reply drafts, add internal notes, change tags, priority and category. **Nothing a customer sees**: no replies, no closing, no assignment | agent, admin |
 | `reports:read` | Read admin reports (`get_report`) | **admin only**, checked again on every call |
 | `tickets:read_internal` | Read internal notes (together with `includeInternal: true` on the call) | agent, admin. **It exists but cannot currently be issued**, so no token can see internal notes |
 
-New tokens default to `tickets:read` and `customers:read`. A scope never raises a role: if an admin is demoted to agent, their token immediately loses `reports:read`.
+New tokens default to `tickets:read` and `customers:read`. **`tickets:write` is never pre-selected and never a default**: tick it explicitly when you create a token that should be able to change things. `tickets:manage` and `tickets:reply` are defined for later but **cannot be issued**, so no token can assign, change status, close, reopen or reply to a customer. A scope never raises a role: if an admin is demoted to agent, their token immediately loses `reports:read`.
 
 ## 3. Connecting Claude Code
 
@@ -49,7 +50,7 @@ Replace the URL with your own Docket address followed by `/api/mcp` (the admin M
 
 ## 4. Tools
 
-Every tool is read-only, safe to repeat, and returns structured JSON plus the same JSON as text. A tool only appears in the list if the token's scopes and the owner's current role allow it: a default agent token sees nine tools, and an admin token with `tickets:read`, `customers:read` and `reports:read` sees all ten.
+Every tool returns structured JSON plus the same JSON as text. The nine read tools and `get_report` are read-only and safe to repeat; the four write tools are described under "Write tools" below. A tool only appears in the list if the token's scopes and the owner's current role allow it: a default agent token sees nine tools, adding `tickets:write` adds four more, and an admin token with `tickets:read`, `customers:read` and `reports:read` sees ten (fourteen with `tickets:write`).
 
 | Tool | Scope | What it returns |
 |---|---|---|
@@ -63,6 +64,10 @@ Every tool is read-only, safe to repeat, and returns structured JSON plus the sa
 | `search_canned_responses` | `tickets:read` | Saved reply templates, by title |
 | `get_ticket_stats` | `tickets:read` | Ticket totals, average age of open tickets, daily volume |
 | `get_report` | `reports:read` and the admin role | One admin report |
+| `save_reply_draft` | `tickets:write` | Puts a proposed reply in your own composer for you to review and send |
+| `add_internal_note` | `tickets:write` | Adds an internal note to a ticket |
+| `update_ticket_tags` | `tickets:write` | Adds and removes tags on a ticket |
+| `update_ticket_fields` | `tickets:write` | Changes a ticket's priority and/or category |
 
 ### Referring to a ticket
 
@@ -96,6 +101,57 @@ Give exactly one of `customerId`, `email` or `ticket`. Returns the name, email, 
 
 `kind` is `by_agent`, `by_category`, `by_priority` or `by_tag`; `range` is `30d` (default), `90d` or `all`. `avgResolutionSeconds` in the by-agent report is the **time a ticket spent waiting for an agent**, accumulated, averaged over closed tickets; it is not the time elapsed between creation and closing. Rows come busiest first; if a very large team pushes the by-agent report over the size limit, the least busy rows are dropped and the result says `truncatedForSize: true` with `omittedRows`.
 
+### Write tools (Release 2)
+
+Four tools need the `tickets:write` scope. They do what the same action does in the Docket UI, **as the person who owns the token**, and nothing they do is visible to a customer: no email is sent, and no reply, close or assignment is possible.
+
+| Tool | Does | `clientRequestId` |
+|---|---|---|
+| `save_reply_draft` | Saves a proposed reply or internal note into your own composer. A person reviews and sends it from the UI | optional |
+| `add_internal_note` | Adds an internal note (agents only) | **required** |
+| `update_ticket_tags` | Adds and removes tags (up to 10 names in each list, 50 characters each, lower-cased) | optional |
+| `update_ticket_fields` | Sets `priority` and/or `category` by slug (see `get_ticket_config`) | optional |
+
+**`clientRequestId`.** A string of 16-100 characters from `A-Z a-z 0-9 _ -` that identifies one request.
+
+- **Reuse the same key when retrying the same request** (after a timeout, say). A repeat returns the stored result with `replayed: true` and changes nothing. Use a **new** key for a new request: two notes with two different keys are two notes.
+- The same key with different arguments is `idempotency_key_reused`. The same key while the first call is still running is `in_progress` (with `retryAfterSeconds`); try again shortly.
+- A call that failed for a lasting reason (for example `ticket_closed`) returns the same error when repeated with its key. One that failed with `internal` can be retried with the same key.
+- If a call was interrupted part-way, a retry with the same key finishes it without creating a duplicate; the result then carries `sideEffectsUncertain: true`.
+- Results are rebuilt from a small stored record of ids, so a replay shows the ticket's current state, not a copy of the original text.
+
+**`save_reply_draft`.** `{ ticket, body (1-20,000 characters), format: "text" | "html", visibility: "public" | "internal" }`. The draft lands in the composer on that ticket for the token's owner; nothing is sent.
+
+- It **never overwrites** a draft you already have. An identical draft (same text and visibility) succeeds with `unchanged: true`. A different one returns `draft_exists`, with `currentUpdatedAt` in `details`, and your own draft is left exactly as it was.
+- A body with no visible text (blank, or HTML such as `<p></p>`) is `invalid_input` and **never deletes** your existing draft.
+- Drafts on a closed ticket are allowed. A merged ticket returns `merged`.
+- Output: `{ ticket: { number, agentUrl }, draft: { visibility, updatedAt }, unchanged }`.
+
+**`add_internal_note`.** `{ ticket, body, format, clientRequestId }`. Writes the same internal note the UI writes: no customer email, no webhook, no change to the ticket's awaiting-reply flags or SLA clock.
+
+- It **does not delete your reply draft** (sending from the composer does; a note an assistant writes is not the reply you are drafting).
+- A merged ticket forwards to the ticket it was merged into (`mergedFrom` says so). A closed ticket returns `ticket_closed`.
+- Output: `{ commentId, ticket, visibility: "internal", createdAt }`. It never returns other notes. Reading internal notes still needs `tickets:read_internal` (§ 5), which cannot be issued.
+
+**`update_ticket_tags`.** `{ ticket, add?, remove? }`, at least one non-empty list. Names are trimmed, lower-cased and de-duplicated; an empty name, one over 50 characters, or a name in both lists is `invalid_input`. Adding a tag already on the ticket, or removing one that is not, is a no-op, so repeating a call is safe. Merged tickets forward. Output: `{ ticket, tags, added, removed }`, where `tags` is the ticket's tags afterwards and `added` / `removed` are what this call actually changed.
+
+**`update_ticket_fields`.** `{ ticket, priority?, category?, expectedUpdatedAt? }`, at least one of `priority` and `category`. An unknown slug is `invalid_input` with `details.field` and the allowed slugs, and nothing is written. A value the ticket already has is a no-op. Changes fire the same outbound webhooks as the UI; if a webhook could not be queued the result carries `notificationErrors: ["webhook_dispatch_failed"]` but the change stands. Merged tickets return `merged` (no forwarding). Output: `{ ticket: { id, number, agentUrl, priority, category, updatedAt }, changed }`.
+
+- **`expectedUpdatedAt`** (ISO 8601, optional) protects against overwriting a change made in the meantime. Pass the ticket's `updatedAt` as you read it (`get_ticket`). If the ticket changed since, nothing is written and the call returns `conflict` with `details.currentUpdatedAt`. Comparison is to the millisecond.
+- **Two fields, one concurrent change.** Category is applied first, then priority. If someone else changes the ticket between the two, the second returns `conflict` with `details.field` naming the field that was **not** applied, and the message says which one **was** applied (the first change stands and is written to the history and audit log). Re-read the ticket and send the remaining field again.
+- Without `expectedUpdatedAt`, the fields are applied one after the other, exactly like the UI.
+
+**Merged and closed tickets**
+
+| Tool | Merged ticket | Closed ticket |
+|---|---|---|
+| `save_reply_draft` | `merged`, naming the ticket to use (`details.mergedIntoTicketNumber`) | allowed |
+| `add_internal_note` | forwards to the target, `mergedFrom` reported | `ticket_closed` |
+| `update_ticket_tags` | forwards, `mergedFrom` reported | allowed |
+| `update_ticket_fields` | `merged`, naming the ticket to use | allowed |
+
+**Who did it.** Every change appears in the ticket's history under the token owner's name, exactly as if they had made it, with `via: "mcp"` and the token id in the entry's metadata (the action names are the usual ones: `internal_note_added`, `tag_added`, `tag_removed`, `priority_changed`, `category_changed`). Every call that changes something also writes one entry to **Admin → Audit log** (`mcp.save_reply_draft`, `mcp.add_internal_note`, `mcp.update_ticket_tags`, `mcp.update_ticket_fields`). A call that changes nothing (an unchanged draft, tags already in place, values already set, or a replay) writes neither.
+
 ### Result size
 
 Results are kept small. Above about 30,000 characters, list, thread and report tools drop trailing items and set `truncatedForSize: true` together with `hasMore`, `nextCursor` or `omittedRows`; other tools shorten bodies. No result exceeds 40,000 characters. If you see `truncatedForSize`, ask for a smaller `pageSize`, `limit` or `maxBodyChars`.
@@ -108,7 +164,7 @@ A failed call returns a tool error (`isError: true`) whose `structuredContent` i
 {"error":{"code":"not_found","message":"No such ticket."}}
 ```
 
-- **Codes you will see now:** `invalid_input` (a bad value, an unknown slug or assignee, a bad cursor, `includeInternal` without the scope, "exactly one of" broken), `not_found` and `internal`.
+- **Codes you will see:** `invalid_input` (a bad value, an unknown slug or assignee, a bad cursor, `includeInternal` without the scope, "exactly one of" broken, an empty note or draft), `not_found` and `internal`; and from the write tools `merged`, `ticket_closed`, `conflict`, `draft_exists`, `in_progress` and `idempotency_key_reused` (see "Write tools").
 - **`details`** is optional and limited to a fixed allowlist of small, non-sensitive keys: `mergedIntoTicketNumber`, `retryAfterSeconds`, `commentId`, `currentStatus`, `currentUpdatedAt`, `ticketNumber`, `field` and `allowed` (a list of slugs). Values must be numbers, booleans, `null`, or strings of at most 200 characters (lists of at most 50 strings or numbers). Anything else is dropped before the result is sent: unknown keys, nested objects, email addresses, and text containing a token, storage path or other forbidden pattern. Only the dropped key's name is logged, never its value. `details` is left out when nothing survives.
 - **`internal`** (an unexpected failure) is always `{"error":{"code":"internal","message":"Internal error (ref: <id>)"}}`: a reference id to give to your admin, never the cause and never any details.
 - **Schema-validation failures** (an argument of the wrong type or range, an unknown argument, a missing required one) are rejected by the MCP SDK before Docket's handler runs. They are still tool errors (`isError: true`, not a JSON-RPC error), but the text is the SDK's own plain text, for example `Input validation error: Invalid arguments for tool list_tickets: pageSize: Too small: expected number to be >=1`. They carry no `structuredContent`, no Docket error `code`, and leave no trace row. The text names the argument and the rule, never the value you sent.
@@ -153,7 +209,7 @@ What a tool returns is sent to the AI provider behind the assistant. The facts:
 
 **What is never returned:** customer portal links or access tokens, file storage paths or download links, passwords, sessions, API keys, other users' tokens, or raw editor documents.
 
-**What Docket keeps about calls:** one trace row per call (the tool, the user, the token, the outcome, the duration, and the ticket or customer it resolved to), pruned after 30 days. It holds no message text, no tool arguments (only a keyed hash of them) and no results. Server logs hold one line per call with the same kind of facts.
+**What Docket keeps about calls:** one trace row per call (the tool, the user, the token, the outcome, the duration, and the ticket or customer it resolved to), pruned after 30 days. It holds no message text, no tool arguments (only a keyed hash of them) and no results. For a write call the row is also its idempotency record: it additionally holds the `clientRequestId` you chose and a small result made only of ids, numbers, slugs and timestamps, never a note, draft or tag name. The notes, drafts and tags themselves are ordinary Docket data, kept like the ones you write in the UI. Server logs hold one line per call with the same kind of facts.
 
 **Deletion:** deleting a ticket or customer in Docket removes it from future tool results. It cannot reach copies the AI provider has already received, and Docket cannot delete those. The provider's own retention terms apply.
 
@@ -169,7 +225,11 @@ Tell customers and colleagues, as your policies require, that ticket content can
 | `401` with "token expired" or "token revoked" | Create a new token. **Claude Code may not show this reason**: see the note below. Check the token's status in Docket under Settings → AI assistant access |
 | `403` | The request's `Origin` was rejected |
 | `429` | More than 120 calls in a minute for this user, or too many failed sign-in attempts. Retry after the `Retry-After` header |
-| A tool is missing | The token lacks the scope (`customers:read` for `get_customer`), the owner's role no longer allows it (`get_report` is admin-only), or the tool does not exist in this version. Run `whoami` to see the tools available |
+| A tool is missing | The token lacks the scope (`customers:read` for `get_customer`, `tickets:write` for the four write tools), the owner's role no longer allows it (`get_report` is admin-only), or the tool does not exist in this version. Run `whoami` to see the tools available |
+| The write tools are not offered | `tickets:write` is never pre-selected. Create a new token and tick it (a token's scopes cannot be changed afterwards) |
+| `draft_exists` | You already have a different draft on that ticket. Send or discard it in Docket, or ask for a draft on another ticket |
+| `conflict` on `update_ticket_fields` | The ticket changed since `expectedUpdatedAt`. Read it again and retry; with two fields, check `details.field` |
+| `in_progress` | The same `clientRequestId` is still running. Retry after `retryAfterSeconds` with the **same** key |
 | `invalid_input` on `includeInternal` | The token has no `tickets:read_internal` scope (see § 5) |
 | Claude Code saved a result to a file | The result was very large. Lower `pageSize`, `limit` or `maxBodyChars` |
 | claude.ai says it couldn't reach the server | claude.ai, Claude Desktop and mobile need an OAuth sign-in, which Docket does not offer yet (see § 8). Use Claude Code with a token |
@@ -180,7 +240,8 @@ Tell customers and colleagues, as your policies require, that ticket content can
 
 ## 8. Known limitations
 
-- **Read-only.** There are no tools to reply, close, assign, tag or edit anything. The assistant cannot change Docket.
+- **Limited writes.** With `tickets:write` the assistant can save drafts, add internal notes and change tags, priority and category. There are no tools to reply to a customer, close or reopen, assign, change status, or edit anything else, and none can be unlocked by a token yet.
+- **Drafts are never overwritten**, and an assistant cannot clear one. It can only add a draft where you have none.
 - **Search is narrow.** `query` matches ticket subject, customer name or email, and ticket number only; it does not search descriptions or messages, and `%` / `_` are wildcards.
 - **Personal access tokens only.** There is no OAuth sign-in, so claude.ai, Claude Desktop and mobile connectors cannot connect yet. Use a client that can send an `Authorization` header, such as Claude Code.
 - **Internal notes are not reachable** (see § 5).

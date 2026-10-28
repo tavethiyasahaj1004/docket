@@ -41,7 +41,7 @@ const CREATE_ERRORS = {
   not_permitted: [403, "Your account can't create MCP tokens."],
   invalid_name: [400, "Name must be 1–100 characters."],
   invalid_scopes: [400, "Invalid scopes."],
-  scope_not_issuable: [400, "Only read scopes can be issued right now."],
+  scope_not_issuable: [400, "One of these scopes can't be issued right now."],
   scope_not_allowed: [400, "Your role can't grant one of these scopes."],
   invalid_expiry: [400, "Expiry must be a whole number of days from 1 to 90."],
 } as const;

@@ -78,6 +78,51 @@ describe("safeHandler", () => {
     expect(Object.values(row)).not.toContainEqual({ includeTags: true });
   });
 
+  it("skips its own trace row for a call the ledger already records", async () => {
+    vi.mocked(console.log).mockClear();
+    const ok = await safeHandler(ctx(), async (call) => {
+      call.markLedgered();
+      return { a: 1 };
+    });
+    expect(ok.structuredContent).toEqual({ a: 1 });
+    expect(insertValues).not.toHaveBeenCalled();
+    // The log line is still printed.
+    expect(vi.mocked(console.log).mock.calls[0][0]).toMatch(/outcome=ok /);
+
+    const failed = await safeHandler(ctx(), async (call) => {
+      call.markLedgered();
+      throw new McpToolError("conflict", "Changed in between.");
+    });
+    expect(failed.isError).toBe(true);
+    expect(textOf(failed)).toBe(JSON.stringify(failed.structuredContent));
+    expect(insertValues).not.toHaveBeenCalled();
+    expect(vi.mocked(console.log).mock.calls[1][0]).toMatch(
+      /outcome=conflict /
+    );
+
+    const internal = await safeHandler(ctx(), async (call) => {
+      call.markLedgered();
+      throw new Error("boom");
+    });
+    expect(internal.isError).toBe(true);
+    expect(insertValues).not.toHaveBeenCalled();
+  });
+
+  it("still records a trace row when markLedgered is never called", async () => {
+    await safeHandler(ctx(), async (call) => {
+      call.setTarget({ ticketId: "t-1" });
+      return { a: 1 };
+    });
+    await safeHandler(ctx(), async () => {
+      throw new McpToolError("not_found", "No such ticket.");
+    });
+    expect(insertValues).toHaveBeenCalledTimes(2);
+    expect(insertValues.mock.calls[0][0]).toMatchObject({
+      status: "succeeded",
+      targetTicketId: "t-1",
+    });
+  });
+
   it("logs one structured line with no bodies", async () => {
     await safeHandler(ctx(), async () => ({ secret: "customer@x.test" }));
     const log = vi.mocked(console.log).mock.calls[0][0] as string;

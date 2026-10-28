@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { customers, ticketActivity, tickets } from "@/db/schema";
 import { db } from "@/lib/db";
 import {
@@ -73,6 +73,32 @@ export type FieldChangeResult =
   | { status: "invalid" }
   | { status: "unchanged" }
   | { status: "changed"; activityId: string; webhook: WebhookOutcome };
+
+/** Input of the field changes that can be made conditional on the ticket's
+ * `updated_at` (optimistic concurrency). */
+export interface ConditionalFieldChangeInput<T> extends FieldChangeInput<T> {
+  /** When given, the update applies only while the ticket's `updated_at`
+   * (compared at millisecond precision, the precision the API exposes) still
+   * equals it; otherwise nothing is written and the result is `conflict`.
+   * Omitted: the update is unconditional, exactly as before. */
+  expectedUpdatedAt?: Date;
+}
+
+export type ConditionalFieldChangeResult =
+  | FieldChangeResult
+  | { status: "conflict" };
+
+/** The ticket is not merged and, when a version is expected, still at it. The
+ * column is timestamptz with microsecond precision while the API reports
+ * milliseconds, so the stored value is truncated before comparing. */
+const notMergedAndAt = (ticketId: string, expectedUpdatedAt?: Date) =>
+  expectedUpdatedAt
+    ? and(
+        eq(tickets.id, ticketId),
+        isNull(tickets.mergedIntoTicketId),
+        sql`date_trunc('milliseconds', ${tickets.updatedAt}) = ${expectedUpdatedAt.toISOString()}::timestamptz`
+      )
+    : and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId));
 
 async function insertActivity(
   snapshot: TicketSnapshot,
@@ -173,7 +199,8 @@ export async function setTicketCategory({
   value,
   now,
   activityMetadata,
-}: FieldChangeInput<string>): Promise<FieldChangeResult> {
+  expectedUpdatedAt,
+}: ConditionalFieldChangeInput<string>): Promise<ConditionalFieldChangeResult> {
   const { ticket, customer } = snapshot;
   if (value === ticket.category) {
     return { status: "unchanged" };
@@ -186,10 +213,15 @@ export async function setTicketCategory({
   const previousCategory = ticket.category;
   const newCategory = value;
 
-  await db
+  const updated = await db
     .update(tickets)
     .set({ category: newCategory, updatedAt: now })
-    .where(notMerged(ticket.id));
+    .where(notMergedAndAt(ticket.id, expectedUpdatedAt))
+    .returning({ id: tickets.id });
+  if (expectedUpdatedAt && updated.length === 0) {
+    // Lost the version check: no activity, no webhook.
+    return { status: "conflict" };
+  }
 
   const activityId = await insertActivity(
     snapshot,
@@ -226,7 +258,8 @@ export async function setTicketPriority({
   value,
   now,
   activityMetadata,
-}: FieldChangeInput<string>): Promise<FieldChangeResult> {
+  expectedUpdatedAt,
+}: ConditionalFieldChangeInput<string>): Promise<ConditionalFieldChangeResult> {
   const { ticket, customer } = snapshot;
   if (value === ticket.priority) {
     return { status: "unchanged" };
@@ -239,10 +272,15 @@ export async function setTicketPriority({
   const previousPriority = ticket.priority;
   const newPriority = value;
 
-  await db
+  const updated = await db
     .update(tickets)
     .set({ priority: newPriority, updatedAt: now })
-    .where(notMerged(ticket.id));
+    .where(notMergedAndAt(ticket.id, expectedUpdatedAt))
+    .returning({ id: tickets.id });
+  if (expectedUpdatedAt && updated.length === 0) {
+    // Lost the version check: no activity, no webhook.
+    return { status: "conflict" };
+  }
 
   const activityId = await insertActivity(
     snapshot,

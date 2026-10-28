@@ -84,6 +84,84 @@ describe("permittedToolNames", () => {
   });
 });
 
+const WRITE_TOOLS = [
+  "save_reply_draft",
+  "add_internal_note",
+  "update_ticket_tags",
+  "update_ticket_fields",
+];
+
+describe("tickets:write tools", () => {
+  it("lists the four write tools, after the read tools, for tickets:write", () => {
+    const names = permittedToolNames(
+      principal(["tickets:read", "customers:read", "tickets:write"])
+    );
+    expect(names).toEqual([...AGENT_TOOLS, ...WRITE_TOOLS]);
+    expect(names).toHaveLength(13);
+  });
+
+  it("lists them after get_report for an admin holding every issuable scope", () => {
+    const names = permittedToolNames(
+      principal(
+        ["tickets:read", "customers:read", "tickets:write", "reports:read"],
+        "admin"
+      )
+    );
+    expect(names).toEqual([...AGENT_TOOLS, "get_report", ...WRITE_TOOLS]);
+  });
+
+  it("lists nothing extra for a read-only token", () => {
+    const names = permittedToolNames(
+      principal(["tickets:read", "customers:read"])
+    );
+    for (const tool of WRITE_TOOLS) {
+      expect(names).not.toContain(tool);
+      expect(
+        canUseTool(principal(["tickets:read", "customers:read"]), tool)
+      ).toBe(false);
+    }
+  });
+
+  it("needs only tickets:write, not tickets:read", () => {
+    expect(permittedToolNames(principal(["tickets:write"]))).toEqual([
+      "whoami",
+      ...WRITE_TOOLS,
+    ]);
+  });
+
+  it("is not unlocked by tickets:manage or tickets:reply", () => {
+    expect(
+      permittedToolNames(principal(["tickets:manage", "tickets:reply"]))
+    ).toEqual(["whoami"]);
+  });
+
+  it("has no Phase 6 tools", () => {
+    const all = permittedToolNames(
+      principal(
+        [
+          "tickets:read",
+          "tickets:read_internal",
+          "customers:read",
+          "tickets:write",
+          "tickets:manage",
+          "tickets:reply",
+          "reports:read",
+        ],
+        "admin"
+      )
+    );
+    for (const tool of [
+      "assign_ticket",
+      "set_ticket_status",
+      "close_ticket",
+      "reopen_ticket",
+      "reply_to_customer",
+    ]) {
+      expect(all).not.toContain(tool);
+    }
+  });
+});
+
 describe("canUseTool", () => {
   it("denies unknown tools", () => {
     expect(canUseTool(principal(["tickets:read"]), "close_ticket")).toBe(false);

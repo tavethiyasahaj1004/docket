@@ -117,13 +117,16 @@ export function isEligibleMcpRole(role: string | null | undefined): boolean {
   return role === AGENT_ROLE || role === ADMIN_ROLE;
 }
 
-/** Scopes a NEW token may be issued with right now. Release 1 is read-only:
- * write scopes stay defined in MCP_SCOPES for later phases but cannot be issued.
- * tickets:read_internal is withheld until its internal-notes opt-in rule is
- * decided. */
+/** Scopes a NEW token may be issued with right now. tickets:write (drafts,
+ * internal notes, tags, priority and category: nothing a customer sees) is
+ * issuable but is never in DEFAULT_MCP_SCOPES, so it is always an explicit
+ * choice. tickets:manage and tickets:reply stay defined in MCP_SCOPES for a
+ * later phase but cannot be issued, and tickets:read_internal is withheld until
+ * its internal-notes opt-in rule is implemented. */
 export const MCP_ISSUABLE_SCOPES: readonly McpScope[] = [
   "tickets:read",
   "customers:read",
+  "tickets:write",
   "reports:read",
 ];
 

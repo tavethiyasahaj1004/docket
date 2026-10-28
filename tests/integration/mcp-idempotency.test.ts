@@ -261,7 +261,31 @@ describe("claimWriteCall: a fresh claim", () => {
   it("rejects a lock group without a target ticket", async () => {
     await expect(
       claimWriteCall(ctxFor({ targetTicketId: undefined }))
-    ).rejects.toThrow(/go together/);
+    ).rejects.toThrow(/needs a targetTicketId/);
+  });
+
+  it("records a target ticket without a lock group, and such calls never block each other", async () => {
+    const free = { lockGroup: undefined, targetTicketId: tid(101) };
+    const [first, second] = await Promise.all([
+      claimWriteCall(ctxFor({ ...free, clientRequestId: "key-aaaa-1" })),
+      claimWriteCall(ctxFor({ ...free, clientRequestId: "key-bbbb-2" })),
+    ]);
+    claimedOrThrow(first);
+    claimedOrThrow(second);
+    const rows = await probe`
+      SELECT target_ticket_id, lock_group, status FROM mcp_tool_calls
+      ORDER BY client_request_id`;
+    expect(
+      rows.map((r) => [r.target_ticket_id, r.lock_group, r.status])
+    ).toEqual([
+      [tid(101), null, "pending"],
+      [tid(101), null, "pending"],
+    ]);
+    // A locked call on the same ticket is not blocked by them either: the lock
+    // index only covers rows with a lock group.
+    claimedOrThrow(
+      await claimWriteCall(ctxFor({ clientRequestId: "key-cccc-3" }))
+    );
   });
 });
 

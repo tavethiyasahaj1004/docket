@@ -3,8 +3,12 @@ import type { McpPrincipal } from "@/lib/mcp/auth";
 import { permittedToolNames } from "@/lib/mcp/authorize";
 import { describeErrorForLog } from "@/lib/mcp/safe-handler";
 import { registerCustomerTools } from "@/lib/mcp/tools/customers";
+import { registerDraftTools } from "@/lib/mcp/tools/drafts";
+import { registerFieldTools } from "@/lib/mcp/tools/fields";
 import { registerMetaTools } from "@/lib/mcp/tools/meta";
+import { registerNoteTools } from "@/lib/mcp/tools/notes";
 import { registerStatsTools } from "@/lib/mcp/tools/stats";
+import { registerTagTools } from "@/lib/mcp/tools/tags";
 import { registerTeamTools } from "@/lib/mcp/tools/team";
 import { registerThreadTools } from "@/lib/mcp/tools/thread";
 import { registerTicketTools } from "@/lib/mcp/tools/tickets";
@@ -19,7 +23,7 @@ export const MCP_INSTRUCTIONS = [
 ].join("\n");
 
 // Reported to clients in the initialize handshake; bump with tool-surface changes.
-const MCP_SERVER_VERSION = "0.1.0";
+const MCP_SERVER_VERSION = "0.2.0";
 
 /** Builds a server for one request, exposing ONLY the tools this principal may
  * use, in a fixed order. */
@@ -40,6 +44,10 @@ export function createDocketMcpServer(
   registerCustomerTools(server, principal, requestId, permitted);
   registerTeamTools(server, principal, requestId, permitted);
   registerStatsTools(server, principal, requestId, permitted);
+  registerDraftTools(server, principal, requestId, permitted);
+  registerNoteTools(server, principal, requestId, permitted);
+  registerTagTools(server, principal, requestId, permitted);
+  registerFieldTools(server, principal, requestId, permitted);
   return server;
 }
 

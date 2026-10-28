@@ -33,6 +33,10 @@ type CallTarget = { ticketId?: string; customerId?: string };
 export type ToolCallInfo = {
   /** Records the entity a call resolved to (ids only, never names or bodies). */
   setTarget(target: CallTarget): void;
+  /** A write call that claimed (or took over) an `mcp_tool_calls` ledger row
+   * is recorded on that row, so the handler must not add a trace row of its
+   * own: every call leaves exactly one row. The log line is still printed. */
+  markLedgered(): void;
 };
 
 let argsHmacKey: Buffer | null = null;
@@ -238,11 +242,20 @@ export async function safeHandler<T extends Record<string, unknown>>(
   }
 
   const target: CallTarget = {};
+  let ledgered = false;
   const call: ToolCallInfo = {
     setTarget: (t) => {
       Object.assign(target, t);
     },
+    markLedgered: () => {
+      ledgered = true;
+    },
   };
+  // The trace row is skipped for a call whose outcome the ledger row holds.
+  const record = (
+    outcome: { status: "succeeded" | "failed"; errorCode: McpErrorCode | null },
+    ms: number
+  ) => (ledgered ? Promise.resolve() : recordCall(ctx, outcome, ms, target));
 
   try {
     let result = await fn(call);
@@ -258,7 +271,7 @@ export async function safeHandler<T extends Record<string, unknown>>(
     }
     const ms = Date.now() - started;
     console.log(line("ok", ms));
-    await recordCall(ctx, { status: "succeeded", errorCode: null }, ms, target);
+    await record({ status: "succeeded", errorCode: null }, ms);
     return {
       content: [{ type: "text", text }],
       structuredContent: result,
@@ -268,22 +281,12 @@ export async function safeHandler<T extends Record<string, unknown>>(
     if (error instanceof McpToolError) {
       // A deliberate domain error: its message was written for the model.
       console.log(line(error.code, ms));
-      await recordCall(
-        ctx,
-        { status: "failed", errorCode: error.code },
-        ms,
-        target
-      );
+      await record({ status: "failed", errorCode: error.code }, ms);
       return errorResult(error.code, error.message, requestId, error.details);
     }
     // The detail goes to the server log only, never into the result.
     console.error(line("internal", ms), describeErrorForLog(error));
-    await recordCall(
-      ctx,
-      { status: "failed", errorCode: "internal" },
-      ms,
-      target
-    );
+    await record({ status: "failed", errorCode: "internal" }, ms);
     return errorResult(
       "internal",
       `Internal error (ref: ${requestId})`,

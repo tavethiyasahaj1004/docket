@@ -241,10 +241,10 @@ describe("createMcpToken", () => {
   it("refuses scopes that are not issuable yet, for agents and admins", async () => {
     for (const userId of [ALICE, BOB]) {
       for (const scopes of [
-        ["tickets:write"],
         ["tickets:manage"],
         ["tickets:reply"],
-        ["tickets:read", "tickets:write"],
+        ["tickets:read", "tickets:manage"],
+        ["tickets:write", "tickets:reply"],
         ["tickets:read_internal"],
         [...MCP_SCOPES],
       ]) {

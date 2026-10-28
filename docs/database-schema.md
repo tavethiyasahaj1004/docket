@@ -234,7 +234,7 @@ mcp_tool_calls
 ├── args_hmac           text, nullable            ← keyed HMAC of the arguments, never the arguments
 ├── planned_entity_id   text, nullable
 ├── lock_group          text, nullable
-├── target_ticket_id    text, nullable            ← no foreign key; read tools record the ticket a call resolved to
+├── target_ticket_id    text, nullable            ← no foreign key; the ticket a call resolved to (read tools, and write tools on their ledger row, with or without a lock_group)
 ├── target_customer_id  text, nullable            ← no foreign key; `get_customer` records the customer it resolved to
 ├── body_hmac           text, nullable            ← keyed HMAC of a message body, never the body
 ├── lease_expires_at    timestamp with time zone, nullable
@@ -253,6 +253,11 @@ INDEX mcp_tool_calls_user_idx ON (user_id)
 ```
 
 `mcp_tool_call_status` is a PostgreSQL enum (`pending`, `succeeded`, `failed`).
+
+Every MCP call leaves exactly one row. A write call that claims the ledger is recorded on its ledger row
+(`client_request_id` when given, `planned_entity_id`, `target_ticket_id`, `result_json` of ids only). Every
+other call (reads, input or ticket-resolution failures, replays, `in_progress`, `idempotency_key_reused`)
+gets one trace row with no key.
 
 ### `webhook_endpoints` / `webhook_deliveries`
 

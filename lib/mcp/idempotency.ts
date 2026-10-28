@@ -44,8 +44,13 @@ export type WriteCallContext = {
   /** The validated arguments. Only a keyed hash of them is stored. */
   args: unknown;
   clientRequestId?: string;
-  /** Calls in one lock group may not overlap on the same ticket. */
+  /** Calls in one lock group may not overlap on the same ticket. Needs
+   * `targetTicketId`. */
   lockGroup?: "ticket_state";
+  /** The ticket the call is about. Without a `lockGroup` it is only recorded
+   * on the row: the per-ticket lock index (mcp_tool_calls_ticket_lock_idx) is
+   * partial on `lock_group IS NOT NULL`, so rows with a null group never
+   * conflict on it. */
   targetTicketId?: string;
   /** HMAC of the normalized reply body (reply_to_customer content dedupe). */
   bodyHmac?: string;
@@ -408,8 +413,8 @@ async function applyExistingRow(
 export async function claimWriteCall(
   ctx: WriteCallContext
 ): Promise<ClaimResult> {
-  if ((ctx.lockGroup === undefined) !== (ctx.targetTicketId === undefined)) {
-    throw new Error("lockGroup and targetTicketId go together.");
+  if (ctx.lockGroup !== undefined && ctx.targetTicketId === undefined) {
+    throw new Error("lockGroup needs a targetTicketId.");
   }
   const now = ctx.now ?? new Date();
   const argsHmac = hmacToolArgs(ctx.args);

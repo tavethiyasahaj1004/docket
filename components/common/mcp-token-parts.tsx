@@ -34,6 +34,8 @@ export interface McpTokenItem {
 export const MCP_SCOPE_DESCRIPTIONS: Record<string, string> = {
   "tickets:read": "Tickets, statuses, tags and stats",
   "customers:read": "Customer profiles",
+  "tickets:write":
+    "Drafts, internal notes, tags, priority and category (nothing customers see)",
   "reports:read": "Admin reports",
 };
 

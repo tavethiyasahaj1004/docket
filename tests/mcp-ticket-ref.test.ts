@@ -3,7 +3,12 @@ import { describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({ db: {} }));
 
-import { parseTicketRef } from "@/lib/mcp/ticket-ref";
+import { McpToolError } from "@/lib/mcp/errors";
+import {
+  parseTicketRef,
+  resolveTicketRef,
+  resolveTicketRefForChange,
+} from "@/lib/mcp/ticket-ref";
 
 describe("parseTicketRef", () => {
   it("parses numbers in every accepted spelling", () => {
@@ -54,6 +59,18 @@ describe("parseTicketRef", () => {
       true,
     ]) {
       expect(parseTicketRef(value), String(value)).toBeNull();
+    }
+  });
+});
+
+describe("resolveTicketRefForChange parsing", () => {
+  it("rejects a malformed reference exactly like the read resolver", async () => {
+    for (const value of ["", "abc", "t-101", "0", null, undefined, {}]) {
+      const forChange = await resolveTicketRefForChange(value).catch((e) => e);
+      const forRead = await resolveTicketRef(value).catch((e) => e);
+      expect(forChange, String(value)).toBeInstanceOf(McpToolError);
+      expect(forChange.code).toBe("invalid_input");
+      expect(forChange.message).toBe(forRead.message);
     }
   });
 });

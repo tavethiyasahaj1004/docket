@@ -403,6 +403,7 @@ describe("error details are sanitized", () => {
       mergedIntoTicketNumber: 12,
       retryAfterSeconds: 30,
       commentId: "ck1abc",
+      requestId: "ck1req",
       currentStatus: "closed",
       currentUpdatedAt: "2026-01-01T00:00:00.000Z",
       ticketNumber: 5,

@@ -284,7 +284,7 @@ mcp_pending_actions
 ├── tool_call_id            text, nullable      ← the mcp_tool_calls row that created it; no foreign key, because ledger rows are pruned
 ├── payload                 jsonb NOT NULL DEFAULT '{}'   ← {} for a close; { content } (Tiptap JSON, as stored on the comment) for a reply
 ├── status                  mcp_pending_action_status NOT NULL DEFAULT 'pending'   ← pending | approved | dismissed | expired | cancelled | failed
-├── status_reason           text, nullable      ← why it was cancelled or failed: token_revoked | ticket_merged | ticket_closed | ticket_not_found | no_closed_status | interrupted
+├── status_reason           text, nullable      ← why it was cancelled or failed: token_revoked | ticket_merged | replies_disabled | ticket_closed | ticket_not_found | no_closed_status | interrupted
 ├── planned_entity_id       text, nullable      ← the activity or comment id an approval will create; set by the approving compare-and-set
 ├── result                  jsonb, nullable     ← ids and booleans only: { activityId } | { commentId } | { alreadyClosed: true }, optionally notificationErrors
 ├── side_effects_uncertain  boolean NOT NULL DEFAULT false
@@ -616,7 +616,10 @@ ticket's attachments, summed live from `ticket_attachments.file_size`). Out-of-r
 *count*; the column was left in place to avoid a destructive migration.
 
 `platform_settings` also holds `mcp_enabled` (`boolean NOT NULL DEFAULT false`), the admin switch for the
-MCP endpoint — off by default.
+MCP endpoint — off by default — and `mcp_customer_replies_enabled` (`boolean NOT NULL DEFAULT false`, migration
+`0019`), the admin gate for customer replies requested over MCP (`reply_to_customer`). While it is false the tool is not
+registered and a pending reply request cannot be approved; turning it off cancels the pending reply requests
+(`mcp_pending_actions.status_reason = 'replies_disabled'`) in the same transaction.
 
 `integration_settings` also gained `push_provider` (`pusher` | `webpush`, null = env/`pusher`) and the Web Push VAPID columns (`web_push_vapid_public_key`, `web_push_vapid_private_key_encrypted`, plus the usual `web_push_last_test_*` trio).
 

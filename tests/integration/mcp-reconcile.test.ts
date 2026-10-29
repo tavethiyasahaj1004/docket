@@ -13,6 +13,7 @@ import {
   type McpToolCallRow,
   reconcileCloseCall,
   reconcileCommentCall,
+  reconcilePendingActionCall,
 } from "@/lib/mcp/reconcile";
 import { DEFAULT_PENDING_RECONCILERS } from "@/lib/worker/handlers/mcp-tool-calls-prune";
 import { reseed } from "./characterization/helpers";
@@ -291,7 +292,16 @@ describe("reconcileCloseCall (7.3 cases 1-5)", () => {
 
 describe("close_ticket is wired to the sweeper (P10 is in)", () => {
   it("is in the default reconciler map", () => {
-    expect(DEFAULT_PENDING_RECONCILERS.close_ticket).toBe(reconcileCloseCall);
+    // close_ticket and reply_to_customer only create an approval request now.
+    expect(DEFAULT_PENDING_RECONCILERS.close_ticket).toBe(
+      reconcilePendingActionCall
+    );
+    expect(DEFAULT_PENDING_RECONCILERS.reply_to_customer).toBe(
+      reconcilePendingActionCall
+    );
+    expect(DEFAULT_PENDING_RECONCILERS.add_internal_note).toBe(
+      reconcileCommentCall
+    );
     expect(Object.keys(DEFAULT_PENDING_RECONCILERS).sort()).toEqual([
       "add_internal_note",
       "close_ticket",

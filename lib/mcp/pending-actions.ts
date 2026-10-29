@@ -18,6 +18,7 @@ import {
   actionablePendingSql,
   type PendingAction,
   type PendingActionKind,
+  replyGateOpenSql,
 } from "@/lib/mcp/pending-actions-core";
 import { isEligibleMcpRole } from "@/lib/mcp-tokens";
 import { createNotifications } from "@/lib/notifications";
@@ -53,6 +54,11 @@ function logFailure(label: string, err: unknown) {
 /* ------------------------------------------------------------- creating */
 
 export type CreatePendingActionInput = {
+  /** The id to create the request under: the ledger call's planned entity id.
+   * A request that already exists under it (in any state) is returned as
+   * `existing` and nothing else happens, so re-running the same ledger call
+   * can never create a second request. Omitted: a fresh id. */
+  id?: string;
   userId: string;
   credentialId: string;
   ticketId: string;
@@ -119,6 +125,19 @@ export async function createPendingAction(
   // so racing one while a stale row is being expired can deadlock; PostgreSQL
   // then aborts one transaction and nothing is left half-done.
   const outcome = await db.transaction(async (tx) => {
+    // A re-execution of the ledger call that already created this request. Checked
+    // first so it touches nothing: no expiry sweep, no notification, no audit.
+    if (input.id !== undefined) {
+      const [known] = await tx
+        .select()
+        .from(mcpPendingActions)
+        .where(eq(mcpPendingActions.id, input.id))
+        .limit(1);
+      if (known) {
+        return { status: "existing" as const, action: known };
+      }
+    }
+
     // FOR SHARE conflicts with a merge's lock on the ticket, so the merge either
     // commits first (we then see it merged) or waits for us (its cancel sweep
     // then sees our new row).
@@ -191,7 +210,7 @@ export async function createPendingAction(
       const [created] = await tx
         .insert(mcpPendingActions)
         .values({
-          id: createId(),
+          id: input.id ?? createId(),
           kind: input.kind,
           ticketId: input.ticketId,
           requestedById: input.userId,
@@ -528,7 +547,8 @@ export async function approvePendingAction(input: {
       and(
         eq(mcpPendingActions.id, input.actionId),
         eq(mcpPendingActions.requestedById, input.userId),
-        actionablePendingSql(now)
+        actionablePendingSql(now),
+        replyGateOpenSql()
       )
     )
     .returning();
@@ -591,7 +611,8 @@ export async function dismissPendingAction(input: {
       and(
         eq(mcpPendingActions.id, input.actionId),
         eq(mcpPendingActions.requestedById, input.userId),
-        actionablePendingSql(now)
+        actionablePendingSql(now),
+        replyGateOpenSql()
       )
     )
     .returning();

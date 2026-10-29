@@ -4,6 +4,7 @@
 // the database alone. None of them re-executes or notifies anything.
 import { and, eq, gte, ne } from "drizzle-orm";
 import {
+  mcpPendingActions,
   type mcpToolCalls,
   ticketActivity,
   ticketComments,
@@ -48,6 +49,31 @@ export const reconcileCommentCall: Reconciler = async (row) => {
   };
 };
 
+/** `close_ticket` and `reply_to_customer` only create an approval request,
+ * under the call's planned id: the request insert is atomic, so it either
+ * exists under that id or it does not. Creating a request has no
+ * customer-facing side effect, and the owner notification that follows it is
+ * best effort and only ever shown to the owner, so a recovered call is not
+ * "uncertain": nothing a customer sees can have been skipped or doubled. */
+export const reconcilePendingActionCall: Reconciler = async (row) => {
+  if (!row.plannedEntityId) {
+    return { done: false };
+  }
+  const [action] = await db
+    .select({ id: mcpPendingActions.id })
+    .from(mcpPendingActions)
+    .where(eq(mcpPendingActions.id, row.plannedEntityId))
+    .limit(1);
+  if (!action) {
+    return { done: false };
+  }
+  return {
+    done: true,
+    result: { requestId: action.id },
+    sideEffectsUncertain: false,
+  };
+};
+
 /** `close_ticket`: did this call cause the close? Cases 1-5 of 7.3. The claim
  * time is the row's `createdAt` and the planned id is the id of the
  * `ticket_closed` activity row the call would write.
@@ -61,8 +87,9 @@ export const reconcileCommentCall: Reconciler = async (row) => {
  * state decide (cases 1, 3, 4, 5, in that order). Same order as `settleClose`
  * in pending-actions-reconcile.ts.
  *
- * Registered with the sweeper (`DEFAULT_PENDING_RECONCILERS`); no tool uses it
- * until Phase 6. Cases 3 and 4 rely on P10 (only one closer's conditional
+ * No tool registers it any more (`close_ticket` only creates an approval
+ * request; see {@link reconcilePendingActionCall}); it is kept exported for the
+ * direct-close recovery rules it documents. Cases 3 and 4 rely on P10 (only one closer's conditional
  * update can succeed), which the email-sending close paths now have. */
 export const reconcileCloseCall: Reconciler = async (row) => {
   if (!(row.targetTicketId && row.plannedEntityId)) {

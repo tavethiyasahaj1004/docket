@@ -79,6 +79,12 @@ export const platformSettings = pgTable("platform_settings", {
     .default(250),
   // Admin toggle for the MCP endpoint — off by default.
   mcpEnabled: boolean("mcp_enabled").notNull().default(false),
+  // Admin gate for customer replies requested over MCP (reply_to_customer) —
+  // off by default. A reply still needs its token owner's approval in Docket;
+  // turning this off cancels the pending reply requests.
+  mcpCustomerRepliesEnabled: boolean("mcp_customer_replies_enabled")
+    .notNull()
+    .default(false),
   // Set only once the wizard's Integrations step is finished or skipped. Null
   // means the admin account exists but the wizard doesn't, so `/setup` resumes
   // rather than treating setup as done — see isSetupComplete vs hasAdminUser.

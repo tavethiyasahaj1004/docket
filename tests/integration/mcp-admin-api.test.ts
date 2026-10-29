@@ -79,6 +79,7 @@ describe("GET /api/admin/mcp/settings", () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       enabled: false,
+      customerRepliesEnabled: false,
       httpsRequirementMet: true,
       mcpUrl: "http://localhost:3000/api/mcp",
     });

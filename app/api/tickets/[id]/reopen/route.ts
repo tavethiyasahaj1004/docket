@@ -72,6 +72,12 @@ export async function PATCH(
           { error: "No default status is configured." },
           { status: 400 }
         );
+      case "conflict":
+        // Only when an expected version is passed, which this route never does.
+        return NextResponse.json(
+          { error: "The ticket changed. Please try again." },
+          { status: 409 }
+        );
       default:
         return NextResponse.json({ status: result.slug });
     }

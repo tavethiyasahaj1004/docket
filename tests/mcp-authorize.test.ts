@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { McpPrincipal } from "@/lib/mcp/auth";
-import { canUseTool, permittedToolNames } from "@/lib/mcp/authorize";
+import {
+  canUseTool,
+  permittedToolNames,
+  REPLY_GATED_TOOLS,
+} from "@/lib/mcp/authorize";
 import type { McpScope } from "@/lib/mcp-tokens";
 
 function principal(scopes: McpScope[], role = "agent"): McpPrincipal {
@@ -130,41 +134,98 @@ describe("tickets:write tools", () => {
   });
 
   it("is not unlocked by tickets:manage or tickets:reply", () => {
-    expect(
-      permittedToolNames(principal(["tickets:manage", "tickets:reply"]))
-    ).toEqual(["whoami"]);
+    for (const tool of WRITE_TOOLS) {
+      expect(
+        canUseTool(principal(["tickets:manage", "tickets:reply"]), tool)
+      ).toBe(false);
+    }
+  });
+});
+
+const MANAGE_TOOLS = [
+  "assign_ticket",
+  "set_ticket_status",
+  "close_ticket",
+  "reopen_ticket",
+];
+
+describe("tickets:manage and tickets:reply tools", () => {
+  it("lists the manage tools and get_action_status for tickets:manage, in registry order", () => {
+    expect(permittedToolNames(principal(["tickets:manage"]))).toEqual([
+      "whoami",
+      ...MANAGE_TOOLS,
+      "get_action_status",
+    ]);
   });
 
-  it("has no Phase 6 tools", () => {
-    const all = permittedToolNames(
-      principal(
-        [
-          "tickets:read",
-          "tickets:read_internal",
-          "customers:read",
-          "tickets:write",
-          "tickets:manage",
-          "tickets:reply",
-          "reports:read",
-        ],
-        "admin"
-      )
-    );
-    for (const tool of [
-      "assign_ticket",
-      "set_ticket_status",
-      "close_ticket",
-      "reopen_ticket",
+  it("lists reply_to_customer and get_action_status for tickets:reply", () => {
+    expect(permittedToolNames(principal(["tickets:reply"]))).toEqual([
+      "whoami",
       "reply_to_customer",
-    ]) {
-      expect(all).not.toContain(tool);
+      "get_action_status",
+    ]);
+  });
+
+  it("lists everything, once and in order, for both scopes", () => {
+    expect(
+      permittedToolNames(principal(["tickets:reply", "tickets:manage"]))
+    ).toEqual([
+      "whoami",
+      ...MANAGE_TOOLS,
+      "reply_to_customer",
+      "get_action_status",
+    ]);
+  });
+
+  it("treats get_action_status as any-of its two scopes", () => {
+    const status = (scopes: McpScope[]) =>
+      canUseTool(principal(scopes), "get_action_status");
+    expect(status(["tickets:manage"])).toBe(true);
+    expect(status(["tickets:reply"])).toBe(true);
+    expect(status(["tickets:read", "tickets:write", "customers:read"])).toBe(
+      false
+    );
+  });
+
+  it("keeps the other tools single-scope", () => {
+    const p = principal(["tickets:reply"]);
+    for (const tool of MANAGE_TOOLS) {
+      expect(canUseTool(p, tool)).toBe(false);
     }
+    expect(canUseTool(principal(["tickets:manage"]), "reply_to_customer")).toBe(
+      false
+    );
+  });
+
+  it("lists them after the write tools", () => {
+    const names = permittedToolNames(
+      principal([
+        "tickets:read",
+        "customers:read",
+        "tickets:write",
+        "tickets:manage",
+        "tickets:reply",
+      ])
+    );
+    expect(names).toEqual([
+      ...AGENT_TOOLS,
+      ...WRITE_TOOLS,
+      ...MANAGE_TOOLS,
+      "reply_to_customer",
+      "get_action_status",
+    ]);
+  });
+
+  it("marks reply_to_customer as the only admin-gated tool", () => {
+    expect([...REPLY_GATED_TOOLS]).toEqual(["reply_to_customer"]);
   });
 });
 
 describe("canUseTool", () => {
   it("denies unknown tools", () => {
-    expect(canUseTool(principal(["tickets:read"]), "close_ticket")).toBe(false);
+    expect(canUseTool(principal(["tickets:read"]), "close_everything")).toBe(
+      false
+    );
   });
 
   it("checks the scope per tool", () => {

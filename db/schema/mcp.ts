@@ -161,7 +161,7 @@ export const mcpPendingActions = pgTable(
     payload: jsonb("payload").notNull().default({}),
     status: mcpPendingActionStatus("status").notNull().default("pending"),
     // Why a row was cancelled or failed: token_revoked, ticket_merged,
-    // ticket_closed, ticket_not_found, no_closed_status, interrupted.
+    // replies_disabled, ticket_closed, ticket_not_found, no_closed_status, interrupted.
     statusReason: text("status_reason"),
     // The activity or comment id an approval will create, set by the approving
     // compare-and-set so a crash can be reconciled from the database alone.

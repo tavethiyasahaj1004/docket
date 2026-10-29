@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/table";
 
 interface McpSettings {
+  customerRepliesEnabled: boolean;
   enabled: boolean;
   httpsRequirementMet: boolean;
   mcpUrl: string;
@@ -65,6 +66,8 @@ export function McpAdminManager() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [toggleError, setToggleError] = useState<string | null>(null);
+  const [savingReplies, setSavingReplies] = useState(false);
+  const [repliesError, setRepliesError] = useState<string | null>(null);
 
   const [revokeTarget, setRevokeTarget] = useState<AdminMcpToken | null>(null);
   const [revoking, setRevoking] = useState(false);
@@ -134,6 +137,43 @@ export function McpAdminManager() {
       toast.error("Network error. Please try again.");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleRepliesToggle(next: boolean) {
+    if (!settings) {
+      return;
+    }
+    const previous = settings.customerRepliesEnabled;
+    setSettings({ ...settings, customerRepliesEnabled: next });
+    setRepliesError(null);
+    setSavingReplies(true);
+    try {
+      const res = await fetch("/api/admin/mcp/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ customerRepliesEnabled: next }),
+      });
+      if (!res.ok) {
+        const message = await readError(res, "Failed to save.");
+        setSettings((s) =>
+          s ? { ...s, customerRepliesEnabled: previous } : s
+        );
+        setRepliesError(message);
+        toast.error(message);
+        return;
+      }
+      toast.success(
+        next
+          ? "Customer replies via MCP allowed."
+          : "Customer replies via MCP turned off. Pending reply requests were cancelled."
+      );
+    } catch {
+      setSettings((s) => (s ? { ...s, customerRepliesEnabled: previous } : s));
+      setRepliesError("Network error. Please try again.");
+      toast.error("Network error. Please try again.");
+    } finally {
+      setSavingReplies(false);
     }
   }
 
@@ -247,6 +287,31 @@ export function McpAdminManager() {
           {toggleError && (
             <p className="text-xs text-error" role="alert">
               {toggleError}
+            </p>
+          )}
+
+          <div className="flex items-center justify-between gap-4 rounded-box border border-base-300 p-4">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-base-content">
+                Allow customer replies via MCP
+              </p>
+              <p className="text-xs text-base-content-muted mt-0.5">
+                Lets an assistant request a reply to a customer. Each reply
+                still needs the token owner's approval in Docket before it is
+                sent. Turning this off cancels pending reply requests.
+              </p>
+            </div>
+            <Switch
+              aria-label="Allow customer replies via MCP"
+              checked={settings.customerRepliesEnabled}
+              disabled={savingReplies}
+              onCheckedChange={handleRepliesToggle}
+            />
+          </div>
+
+          {repliesError && (
+            <p className="text-xs text-error" role="alert">
+              {repliesError}
             </p>
           )}
 

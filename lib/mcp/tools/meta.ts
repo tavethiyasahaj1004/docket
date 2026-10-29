@@ -81,7 +81,12 @@ export function registerMetaTools(
       },
       (args) =>
         safeHandler({ tool: "whoami", principal, requestId, args }, async () =>
-          toWhoamiDto(principal, permittedToolNames(principal))
+          // The tools this request actually registered (an admin setting can
+          // hide one the scopes would allow), in registry order.
+          toWhoamiDto(
+            principal,
+            permittedToolNames(principal).filter((name) => permitted.has(name))
+          )
         )
     );
   }

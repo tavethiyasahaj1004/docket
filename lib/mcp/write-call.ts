@@ -84,6 +84,11 @@ export type RunWriteToolInput = {
   args: unknown;
   clientRequestId?: string;
   targetTicketId: string;
+  /** Calls in one lock group may not overlap on the same ticket (a second one
+   * answers `in_progress`). Omitted: no per-ticket lock. */
+  lockGroup?: "ticket_state";
+  /** HMAC of the normalized reply body, for the reply content dedupe. */
+  bodyHmac?: string;
   execute: WriteHooks["execute"];
   reconcile?: WriteHooks["reconcile"];
 };
@@ -107,6 +112,8 @@ export async function runWriteTool(
       args: input.args,
       clientRequestId: input.clientRequestId,
       targetTicketId: input.targetTicketId,
+      lockGroup: input.lockGroup,
+      bodyHmac: input.bodyHmac,
     },
     { execute: input.execute, reconcile: input.reconcile }
   );

@@ -223,8 +223,10 @@ describe("close landed, call crashed, ticket reopened", () => {
   it("sweeper: settles the row as succeeded + uncertain with the planned activity id, then a same-key retry replays it without re-closing", async () => {
     const { planned, afterCrash } = await crashedCloseThenReopen();
 
+    // close_ticket's default reconciler now looks for an approval request; this
+    // test is about reconcileCloseCall's own rules, so it is passed explicitly.
     await sweepExpiredLeasePendingCalls(
-      DEFAULT_PENDING_RECONCILERS,
+      { ...DEFAULT_PENDING_RECONCILERS, close_ticket: reconcileCloseCall },
       new Date()
     );
 

@@ -12,7 +12,11 @@ import { db } from "@/lib/db";
 import type { McpPrincipal } from "@/lib/mcp/auth";
 import { claimWriteCall } from "@/lib/mcp/idempotency";
 import { MCP_PENDING_QUICK_SWEEP_AFTER_LEASE_MS } from "@/lib/mcp/limits";
-import { type Reconciler, reconcileCloseCall } from "@/lib/mcp/reconcile";
+import {
+  type Reconciler,
+  reconcileCloseCall,
+  reconcilePendingActionCall,
+} from "@/lib/mcp/reconcile";
 import { QUEUE_OPTIONS } from "@/lib/worker/ensure-queues";
 import { handleMcpPendingCallsSweep } from "@/lib/worker/handlers/mcp-pending-calls-sweep";
 import {
@@ -29,6 +33,16 @@ const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 const ago = (ms: number) => new Date(Date.now() - ms);
+
+// close_ticket now only creates an approval request, so its default reconciler
+// looks for that request (reconcilePendingActionCall). These tests exercise
+// reconcileCloseCall's rules (a close that landed under its planned activity
+// row) through the sweepers, so they hand the sweeper that reconciler for
+// close_ticket explicitly.
+const DIRECT_CLOSE_RECONCILERS = {
+  ...DEFAULT_PENDING_RECONCILERS,
+  close_ticket: reconcileCloseCall,
+};
 
 beforeEach(async () => {
   await reseed(seedWorld);
@@ -220,7 +234,7 @@ describe("sweeper: stale pending rows", () => {
 describe("sweeper: the default reconcilers", () => {
   it("settle a comment tool whose comment exists, via the real reconciler", async () => {
     await insertCall("with-comment", ago(2 * HOUR), {
-      tool: "reply_to_customer",
+      tool: "add_internal_note",
     });
     await insertCall("without-comment", ago(2 * HOUR), {
       tool: "add_internal_note",
@@ -247,8 +261,13 @@ describe("sweeper: the default reconcilers", () => {
     });
   });
 
-  it("cover close_ticket: reconcileCloseCall is registered", () => {
-    expect(DEFAULT_PENDING_RECONCILERS.close_ticket).toBe(reconcileCloseCall);
+  it("cover close_ticket and reply_to_customer: the approval-request reconciler is registered", () => {
+    expect(DEFAULT_PENDING_RECONCILERS.close_ticket).toBe(
+      reconcilePendingActionCall
+    );
+    expect(DEFAULT_PENDING_RECONCILERS.reply_to_customer).toBe(
+      reconcilePendingActionCall
+    );
   });
 
   it("settle a stuck close whose ticket was closed by its own planned activity row", async () => {
@@ -271,7 +290,7 @@ describe("sweeper: the default reconcilers", () => {
       createdAt: ago(2 * HOUR - MINUTE),
     });
 
-    await handleMcpToolCallsPrune([]);
+    await handleMcpToolCallsPrune([], DIRECT_CLOSE_RECONCILERS);
 
     expect(await rowOf("stuck-close")).toMatchObject({
       status: "succeeded",
@@ -412,7 +431,7 @@ describe("the 5-minute sweep: pending rows whose lease expired", () => {
     });
     const before = await sideEffectCounts();
 
-    await handleMcpPendingCallsSweep([]);
+    await handleMcpPendingCallsSweep([], DIRECT_CLOSE_RECONCILERS);
 
     expect(await rowOf("holder")).toMatchObject({
       status: "succeeded",

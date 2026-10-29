@@ -11,6 +11,9 @@ export const MCP_ERROR_DETAIL_KEYS = [
   "retryAfterSeconds",
   /** Id of an existing comment the call duplicates or conflicts with. */
   "commentId",
+  /** Id of the existing approval request a call duplicates (code
+   * `duplicate_suspected`). */
+  "requestId",
   /** Slug of the ticket status found when a precondition failed. */
   "currentStatus",
   /** ISO timestamp of the ticket's current `updatedAt` (stale-write conflicts). */

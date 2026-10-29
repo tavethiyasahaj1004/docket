@@ -150,11 +150,13 @@ describe("effectiveMcpScopes", () => {
 });
 
 describe("issuable scopes", () => {
-  it("issues the read scopes and tickets:write, in release 2", () => {
+  it("issues the read, write, manage and reply scopes", () => {
     expect([...MCP_ISSUABLE_SCOPES]).toEqual([
       "tickets:read",
       "customers:read",
       "tickets:write",
+      "tickets:manage",
+      "tickets:reply",
       "reports:read",
     ]);
   });
@@ -163,22 +165,22 @@ describe("issuable scopes", () => {
     expect([...DEFAULT_MCP_SCOPES]).not.toContain("tickets:write");
   });
 
-  it("accepts the read scopes and tickets:write, and rejects the rest", () => {
+  it("never puts tickets:manage or tickets:reply in the defaults", () => {
+    expect([...DEFAULT_MCP_SCOPES]).toEqual(["tickets:read", "customers:read"]);
+  });
+
+  it("accepts the read, write, manage and reply scopes, and rejects the rest", () => {
     for (const scope of [
       "tickets:read",
       "customers:read",
       "tickets:write",
+      "tickets:manage",
+      "tickets:reply",
       "reports:read",
     ] as const) {
       expect(isIssuableMcpScope(scope)).toBe(true);
     }
-    for (const scope of [
-      "tickets:manage",
-      "tickets:reply",
-      "tickets:read_internal",
-    ] as const) {
-      expect(isIssuableMcpScope(scope)).toBe(false);
-    }
+    expect(isIssuableMcpScope("tickets:read_internal")).toBe(false);
   });
 
   it("keeps the full scope catalog defined for later phases", () => {

@@ -37,6 +37,8 @@ export const MCP_RATE_LIMITS = {
   // Not enforced yet — reserved for the write tools of later phases.
   writesPerMinute: 30,
   manageWritesPerMinute: 20,
+  // Enforced by reply_to_customer, per user: every call that reaches the
+  // approval step counts, including repeats and ones that end in an error.
   repliesPerMinute: 10,
   repliesPerDay: 100,
 } as const;

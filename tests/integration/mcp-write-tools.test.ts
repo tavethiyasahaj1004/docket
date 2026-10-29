@@ -368,7 +368,7 @@ describe("scope enforcement", () => {
     expect(draft?.inputSchema.required ?? []).not.toContain("clientRequestId");
   });
 
-  it("has none of the Phase 6 tools, even with every scope", async () => {
+  it("lists the Phase 6 tools after the Phase 5 ones, without reply_to_customer while the admin setting is off", async () => {
     const { client } = await writer(BOB, [
       "tickets:read",
       "tickets:read_internal",
@@ -379,15 +379,16 @@ describe("scope enforcement", () => {
       "reports:read",
     ]);
     const { tools } = await client.listTools();
-    for (const name of [
+    expect(tools.map((t) => t.name)).toEqual([
+      ...READ_TOOLS,
+      "get_report",
+      ...WRITE_TOOLS,
       "assign_ticket",
       "set_ticket_status",
       "close_ticket",
       "reopen_ticket",
-      "reply_to_customer",
-    ]) {
-      expect(tools.map((t) => t.name)).not.toContain(name);
-    }
+      "get_action_status",
+    ]);
   });
 });
 

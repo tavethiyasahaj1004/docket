@@ -12,11 +12,17 @@ import {
   isNotNull,
   isNull,
   lte,
+  or,
   type SQL,
   sql,
 } from "drizzle-orm";
 import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
-import { mcpAccessTokens, mcpPendingActions, user } from "@/db/schema";
+import {
+  mcpAccessTokens,
+  mcpPendingActions,
+  platformSettings,
+  user,
+} from "@/db/schema";
 import type { AuditInput } from "@/lib/audit";
 import { db } from "@/lib/db";
 import type { DbOrTx } from "@/lib/user-deletion";
@@ -25,7 +31,10 @@ export type PendingAction = typeof mcpPendingActions.$inferSelect;
 export type PendingActionKind = PendingAction["kind"];
 
 /** Why a pending action was cancelled (the cancellation audit's `reason`). */
-export type CancelReason = "token_revoked" | "ticket_merged";
+export type CancelReason =
+  | "token_revoked"
+  | "ticket_merged"
+  | "replies_disabled";
 
 /** What a cancellation returns, for the caller's audit rows. */
 export type CancelledPendingAction = Pick<
@@ -74,6 +83,27 @@ export function actionablePendingSql(now: Date): SQL {
             eq(user.id, mcpPendingActions.requestedById),
             inArray(user.role, [AGENT_ROLE, ADMIN_ROLE]),
             sql`${user.banned} IS NOT TRUE`
+          )
+        )
+    )
+  ) as SQL;
+}
+
+/** The extra condition on approving or dismissing a request: a close always
+ * passes, a reply only while the admin setting for customer replies is on, so a
+ * reply can't be decided once the setting is off (turning it off also cancels
+ * the pending ones, see {@link cancelPendingRepliesForGateOff}). */
+export function replyGateOpenSql(): SQL {
+  return or(
+    eq(mcpPendingActions.kind, "close"),
+    exists(
+      db
+        .select({ one: sql`1` })
+        .from(platformSettings)
+        .where(
+          and(
+            eq(platformSettings.id, "default"),
+            eq(platformSettings.mcpCustomerRepliesEnabled, true)
           )
         )
     )
@@ -140,6 +170,28 @@ export async function cancelPendingActionsForMergedTickets(
     .where(
       and(
         inArray(mcpPendingActions.ticketId, sourceTicketIds),
+        eq(mcpPendingActions.status, "pending")
+      )
+    )
+    .returning(CANCELLED_COLUMNS);
+}
+
+/** Cancels every pending reply request (closes are untouched). Runs in the same
+ * transaction that turns the customer-replies setting off. Returns the
+ * cancelled rows for the caller to audit. */
+export async function cancelPendingRepliesForGateOff(
+  tx: DbOrTx
+): Promise<CancelledPendingAction[]> {
+  return await tx
+    .update(mcpPendingActions)
+    .set({
+      status: "cancelled",
+      statusReason: "replies_disabled",
+      updatedAt: new Date(),
+    })
+    .where(
+      and(
+        eq(mcpPendingActions.kind, "reply"),
         eq(mcpPendingActions.status, "pending")
       )
     )

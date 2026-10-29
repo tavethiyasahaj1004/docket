@@ -9,6 +9,7 @@ import {
   emailOutbox,
   mcpPendingActions,
   notifications,
+  platformSettings,
   ticketActivity,
   ticketComments,
   tickets,
@@ -107,6 +108,12 @@ export async function seedPendingWorld() {
       // Inserting a token fires no trigger, so these exist for ineligible owners.
       await addToken(seedDb, CAROL, { id: TOK_CAROL });
       await addToken(seedDb, DAVE, { id: TOK_DAVE });
+      // Reply requests are only actionable while the admin's customer-reply
+      // gate is on; these tests cover the approval flow with replies allowed
+      // (gate-off behaviour lives in mcp-reply-gate.test.ts).
+      await seedDb
+        .insert(platformSettings)
+        .values({ id: "default", mcpCustomerRepliesEnabled: true });
     },
   });
 }

@@ -118,12 +118,8 @@ describe("POST /api/account/mcp-tokens", () => {
     expect(days).toBeLessThan(7.1);
   });
 
-  it("refuses tickets:manage, tickets:reply and tickets:read_internal", async () => {
-    for (const scope of [
-      "tickets:manage",
-      "tickets:reply",
-      "tickets:read_internal",
-    ]) {
+  it("refuses tickets:read_internal", async () => {
+    for (const scope of ["tickets:read_internal"]) {
       const res = await post({ name: "x", scopes: [scope] });
       expect(res.status, scope).toBe(400);
       expect(await res.json()).toEqual({
@@ -132,9 +128,40 @@ describe("POST /api/account/mcp-tokens", () => {
     }
     const mixed = await post({
       name: "x",
-      scopes: ["tickets:read", "tickets:manage"],
+      scopes: ["tickets:read", "tickets:read_internal"],
     });
     expect(mixed.status).toBe(400);
+  });
+
+  it("issues tickets:manage and tickets:reply only when asked for explicitly, to an agent and an admin", async () => {
+    const plain = await post({ name: "default" });
+    expect((await plain.json()).token.scopes).toEqual([
+      "tickets:read",
+      "customers:read",
+    ]);
+
+    for (const headers of [undefined, BOB_H]) {
+      const res = await post(
+        {
+          name: "operator",
+          scopes: ["tickets:read", "tickets:manage", "tickets:reply"],
+        },
+        headers
+      );
+      expect(res.status).toBe(201);
+      expect((await res.json()).token.scopes).toEqual([
+        "tickets:read",
+        "tickets:manage",
+        "tickets:reply",
+      ]);
+    }
+
+    // The create form offers them, without pre-selecting them.
+    const config = await (await get()).json();
+    expect(config.issuableScopes).toEqual(
+      expect.arrayContaining(["tickets:manage", "tickets:reply"])
+    );
+    expect(config.defaultScopes).toEqual(["tickets:read", "customers:read"]);
   });
 
   it("issues tickets:write only when it is asked for explicitly", async () => {
@@ -313,7 +340,13 @@ describe("GET /api/account/mcp-tokens", () => {
     expect(agent).toMatchObject({
       mcpEnabled: true,
       mcpUrl: "http://localhost:3000/api/mcp",
-      issuableScopes: ["tickets:read", "customers:read", "tickets:write"],
+      issuableScopes: [
+        "tickets:read",
+        "customers:read",
+        "tickets:write",
+        "tickets:manage",
+        "tickets:reply",
+      ],
       defaultScopes: ["tickets:read", "customers:read"],
       maxTtlDays: 90,
       defaultTtlDays: 30,
@@ -323,6 +356,8 @@ describe("GET /api/account/mcp-tokens", () => {
       "tickets:read",
       "customers:read",
       "tickets:write",
+      "tickets:manage",
+      "tickets:reply",
       "reports:read",
     ]);
   });

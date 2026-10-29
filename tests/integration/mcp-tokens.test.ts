@@ -241,11 +241,9 @@ describe("createMcpToken", () => {
   it("refuses scopes that are not issuable yet, for agents and admins", async () => {
     for (const userId of [ALICE, BOB]) {
       for (const scopes of [
-        ["tickets:manage"],
-        ["tickets:reply"],
-        ["tickets:read", "tickets:manage"],
-        ["tickets:write", "tickets:reply"],
         ["tickets:read_internal"],
+        ["tickets:read", "tickets:read_internal"],
+        ["tickets:manage", "tickets:read_internal"],
         [...MCP_SCOPES],
       ]) {
         const result = await createMcpToken({
@@ -260,6 +258,37 @@ describe("createMcpToken", () => {
         });
       }
       expect(await tokenRows(userId)).toHaveLength(0);
+    }
+  });
+
+  it("issues tickets:manage and tickets:reply, to agents and admins, only when asked for", async () => {
+    for (const userId of [ALICE, BOB]) {
+      for (const scopes of [
+        ["tickets:manage"],
+        ["tickets:reply"],
+        ["tickets:read", "tickets:manage", "tickets:reply"],
+      ]) {
+        const result = await createMcpToken({
+          userId,
+          name: "x",
+          scopes,
+          impersonatedBy: null,
+        });
+        expect(result.ok, `${userId} ${JSON.stringify(scopes)}`).toBe(true);
+        if (result.ok) {
+          expect(result.token.scopes).toEqual(scopes);
+        }
+      }
+      // Without an explicit list a token still gets only the read defaults.
+      const plain = await createMcpToken({
+        userId,
+        name: "plain",
+        impersonatedBy: null,
+      });
+      expect(plain.ok && plain.token.scopes).toEqual([
+        "tickets:read",
+        "customers:read",
+      ]);
     }
   });
 

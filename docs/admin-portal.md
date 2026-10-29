@@ -274,7 +274,7 @@ Every report has its own "Download CSV" link — a plain download, no dialog or 
 
 A system-wide, admin-only trail of sensitive actions — separate from `ticket_activity` (which is per-ticket and shown in the ticket detail sidebar; see `docs/tickets.md`). Newest first, paginated 25 per page.
 
-Logged today: user role changes/bans/deletes, ticket deletion (single and bulk), ticket bulk actions, every ticket-config change (statuses/categories/priorities/SLA policies/custom fields), email template edits, platform/appearance settings changes (including the sign-in method toggles), API key create/revoke, MCP token create/revoke and the MCP on/off switch (`mcp_token.created`, `mcp_token.revoked`, `mcp.enabled_changed`), every ticket change an MCP token makes (`mcp.save_reply_draft`, `mcp.add_internal_note`, `mcp.update_ticket_tags`, `mcp.update_ticket_fields`), plus all the auth/profile/session events from the Better Auth side. See `docs/plans/07-audit-log-viewer.md`'s addendum for the full list and the reasoning behind what's deliberately *not* logged (read-only routes, field-level renames that don't change access or config).
+Logged today: user role changes/bans/deletes, ticket deletion (single and bulk), ticket bulk actions, every ticket-config change (statuses/categories/priorities/SLA policies/custom fields), email template edits, platform/appearance settings changes (including the sign-in method toggles), API key create/revoke, MCP token create/revoke and the MCP on/off switch (`mcp_token.created`, `mcp_token.revoked`, `mcp.enabled_changed`), the customer-replies-via-MCP switch (`mcp.customer_replies_changed`), every ticket change an MCP token makes (`mcp.save_reply_draft`, `mcp.add_internal_note`, `mcp.update_ticket_tags`, `mcp.update_ticket_fields`, `mcp.assign_ticket`, `mcp.set_ticket_status`, `mcp.reopen_ticket`), plus all the auth/profile/session events from the Better Auth side. See `docs/plans/07-audit-log-viewer.md`'s addendum for the full list and the reasoning behind what's deliberately *not* logged (read-only routes, field-level renames that don't change access or config).
 
 - **Search** — matches `description` or `actorEmail` (`ilike`).
 - **Action filter** — a dropdown populated from a live `SELECT DISTINCT action` over the table itself, not a hardcoded list, so it can never miss an action type that's actually been logged.
@@ -291,6 +291,7 @@ Admin-only page that controls whether agents and admins can connect an AI assist
 - A **Data-sharing notice** callout sits next to the switch. Its wording is a placeholder for now and will be replaced once the final text is approved.
 - In production the switch can only be turned on when `NEXT_PUBLIC_APP_URL` uses `https://`, because tokens travel in a request header. When that is not the case the page shows a warning and the switch cannot be turned on; if the server still rejects the request, its message is shown.
 - While enabled, the endpoint URL (`<app URL>/api/mcp`) is shown read-only for client setup.
+- A second switch, **Allow customer replies via MCP**, controls whether an assistant can *request* a reply to a customer (the `reply_to_customer` tool). It is **off by default**; while it is off the tool does not exist for any token. Even when it is on, every reply still needs the token owner's approval in Docket before it is sent. **Turning it off cancels all pending reply requests** (close requests are not affected), and a reply cannot be approved while it is off. Each change is written to the audit log (`mcp.customer_replies_changed`, and `mcp.action_cancelled` for each cancelled request). It does not require https; only turning the endpoint on does.
 
 ### 6b. Token Oversight
 
@@ -306,7 +307,7 @@ Below the token table, a read-only **Awaiting approval** list shows every reques
 
 - It is deliberately read-only. Only the token's owner can approve or dismiss a request, and an admin cannot do it on their behalf.
 - It never shows what a reply says.
-- Requests disappear from the list when they are decided, expire (after 24 hours), or are cancelled (token revoked, owner deactivated, ticket merged). See [mcp.md § Approval requests](./mcp.md#approval-requests-closing-and-replying).
+- Requests disappear from the list when they are decided, expire (after 24 hours), or are cancelled (token revoked, owner deactivated, ticket merged, or customer replies turned off for a reply). See [mcp.md § Approval requests](./mcp.md#approval-requests-closing-and-replying).
 
 ---
 

@@ -122,18 +122,24 @@ async function insertActivity(
   return activityId;
 }
 
-const notMerged = (ticketId: string) =>
-  and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId));
+/** The version check of {@link notMergedAndAt} on its own (undefined = none). */
+const atVersion = (expectedUpdatedAt?: Date) =>
+  expectedUpdatedAt
+    ? sql`date_trunc('milliseconds', ${tickets.updatedAt}) = ${expectedUpdatedAt.toISOString()}::timestamptz`
+    : undefined;
 
 /** Generic PATCH status change. Closing through here is deliberately NOT the
- * dedicated close path: no SLA/awaiting-reply reset and no customer email. */
+ * dedicated close path: no SLA/awaiting-reply reset and no customer email.
+ * `expectedUpdatedAt` (optional, as for the other conditional changes) makes it
+ * conflict instead of overwriting a ticket that changed since it was read. */
 export async function changeTicketStatusGeneric({
   snapshot,
   actor,
   value,
   now,
   activityMetadata,
-}: FieldChangeInput<string>): Promise<FieldChangeResult> {
+  expectedUpdatedAt,
+}: ConditionalFieldChangeInput<string>): Promise<ConditionalFieldChangeResult> {
   const { ticket, customer } = snapshot;
   if (value === ticket.status) {
     return { status: "unchanged" };
@@ -173,11 +179,20 @@ export async function changeTicketStatusGeneric({
         ? and(
             eq(tickets.id, ticket.id),
             isNull(tickets.mergedIntoTicketId),
-            notInArray(tickets.status, closedSlugs)
+            notInArray(tickets.status, closedSlugs),
+            atVersion(expectedUpdatedAt)
           )
-        : notMerged(ticket.id)
+        : and(
+            eq(tickets.id, ticket.id),
+            isNull(tickets.mergedIntoTicketId),
+            atVersion(expectedUpdatedAt)
+          )
     )
     .returning({ id: tickets.id });
+  if (updated.length === 0 && expectedUpdatedAt) {
+    // Lost the version check: no activity, no webhook.
+    return { status: "conflict" };
+  }
   if (closing && updated.length === 0) {
     return { status: "unchanged" };
   }
@@ -336,24 +351,33 @@ export async function setTicketPriority({
 
 /** Assigns (agent id) or unassigns (null) a ticket. Does NO validation of the
  * agent id: an unknown id surfaces as the foreign-key error, as it always did
- * from the PATCH route. */
+ * from the PATCH route. `expectedUpdatedAt` (optional) makes it conflict
+ * instead of overwriting a ticket that changed since it was read. */
 export async function assignTicket({
   snapshot,
   actor,
   value,
   now,
   activityMetadata,
-}: FieldChangeInput<string | null>): Promise<FieldChangeResult> {
+  expectedUpdatedAt,
+}: ConditionalFieldChangeInput<
+  string | null
+>): Promise<ConditionalFieldChangeResult> {
   const { ticket, customer } = snapshot;
   const newAgentId = value;
   if (newAgentId === ticket.assignedAgentId) {
     return { status: "unchanged" };
   }
 
-  await db
+  const updated = await db
     .update(tickets)
     .set({ assignedAgentId: newAgentId, updatedAt: now })
-    .where(notMerged(ticket.id));
+    .where(notMergedAndAt(ticket.id, expectedUpdatedAt))
+    .returning({ id: tickets.id });
+  if (expectedUpdatedAt && updated.length === 0) {
+    // Lost the version check: no activity, no webhook.
+    return { status: "conflict" };
+  }
 
   const activityId = await insertActivity(
     snapshot,

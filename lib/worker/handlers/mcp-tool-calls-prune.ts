@@ -11,22 +11,23 @@ import { expirePendingActions } from "@/lib/mcp/pending-actions-core";
 import {
   type McpToolCallRow,
   type Reconciler,
-  reconcileCloseCall,
   reconcileCommentCall,
+  reconcilePendingActionCall,
 } from "@/lib/mcp/reconcile";
 import { sanitizeResultJson } from "@/lib/mcp/result-json";
 
 /** Which reconciler settles a stuck pending row of each tool.
  *
- * `reconcileCloseCall` relies on P10 (only one closer's conditional update can
- * succeed), which every email-sending close path now has. No `close_ticket`,
- * `add_internal_note` or `reply_to_customer` tool exists yet in this build, so
- * this map is inert until Phase 6 adds them. */
+ * `close_ticket` and `reply_to_customer` no longer close or reply themselves:
+ * they only create an approval request under the call's planned id, so their
+ * rows are settled by checking for that request (the approval path has its own
+ * recovery in pending-actions-reconcile.ts). `add_internal_note` writes a
+ * comment under its planned id. */
 export const DEFAULT_PENDING_RECONCILERS: Readonly<Record<string, Reconciler>> =
   {
     add_internal_note: reconcileCommentCall,
-    close_ticket: reconcileCloseCall,
-    reply_to_customer: reconcileCommentCall,
+    close_ticket: reconcilePendingActionCall,
+    reply_to_customer: reconcilePendingActionCall,
   };
 
 async function isDone(

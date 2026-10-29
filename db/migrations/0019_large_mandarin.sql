@@ -1,0 +1,1 @@
+ALTER TABLE "platform_settings" ADD COLUMN "mcp_customer_replies_enabled" boolean DEFAULT false NOT NULL;

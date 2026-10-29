@@ -1,7 +1,10 @@
+import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { tickets } from "@/db/schema/tickets";
+import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import type { McpPrincipal } from "@/lib/mcp/auth";
-import { invalidInput } from "@/lib/mcp/errors";
+import { invalidInput, McpToolError } from "@/lib/mcp/errors";
 import { buildConfigLabels, MCP_BODY_CHARS } from "@/lib/mcp/read-dto";
 import {
   getTicketCategories,
@@ -121,6 +124,13 @@ export function writeAnnotations(options: {
   } as const;
 }
 
+/** `_meta` of the tools whose effect the user should confirm first (D6): a
+ * hint for clients, never a control. Set on close_ticket, reply_to_customer and
+ * assign_ticket only. */
+export const REQUIRES_USER_INTERACTION_META = {
+  "anthropic/requiresUserInteraction": true,
+} as const;
+
 const CLIENT_REQUEST_ID_DESCRIPTION =
   "Idempotency key, 16-100 characters from A-Z a-z 0-9 _ -. Reuse the SAME key when retrying the same request (a repeat returns the stored result and changes nothing); use a NEW key for a new request.";
 
@@ -139,6 +149,54 @@ export const clientRequestIdSchema = clientRequestIdBase
 export const requiredClientRequestIdSchema = clientRequestIdBase.describe(
   `Required. ${CLIENT_REQUEST_ID_DESCRIPTION}`
 );
+
+/** Optimistic-concurrency guard shared by the ticket-state tools. */
+export const expectedUpdatedAtSchema = z.iso
+  .datetime({ offset: true })
+  .optional()
+  .describe(
+    "The ticket's updatedAt (ISO 8601) as you last read it. If the ticket changed since, nothing is written and the call returns conflict with the current updatedAt."
+  );
+
+/** The parsed guard, or undefined when the caller sent none. */
+export function parseExpectedUpdatedAt(value: string | undefined) {
+  if (value === undefined) {
+    return;
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new McpToolError(
+      "invalid_input",
+      "expectedUpdatedAt is not a valid date.",
+      { field: "expectedUpdatedAt" }
+    );
+  }
+  return date;
+}
+
+/** The ticket's current `updatedAt`, or null when it is gone. */
+export async function currentUpdatedAt(ticketId: string): Promise<Date | null> {
+  const [row] = await db
+    .select({ updatedAt: tickets.updatedAt })
+    .from(tickets)
+    .where(eq(tickets.id, ticketId))
+    .limit(1);
+  return row?.updatedAt ?? null;
+}
+
+/** The `conflict` error for a ticket that changed since the caller read it. */
+export function staleTicketError(
+  ticketNumber: number,
+  currentUpdatedAt: Date | null,
+  message = "The ticket changed since expectedUpdatedAt. Nothing was applied. Read the ticket again and retry with its current updatedAt."
+): McpToolError {
+  return new McpToolError("conflict", message, {
+    ...(currentUpdatedAt
+      ? { currentUpdatedAt: currentUpdatedAt.toISOString() }
+      : {}),
+    ticketNumber,
+  });
+}
 
 /** The ticket a write touched. */
 export const writtenTicketOutput = z.object({

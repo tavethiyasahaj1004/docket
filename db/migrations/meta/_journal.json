@@ -134,6 +134,13 @@
       "when": 1793182227510,
       "tag": "0018_magical_blazing_skull",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793189310137,
+      "tag": "0019_large_mandarin",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { customers, ticketActivity, tickets } from "@/db/schema";
 import { db } from "@/lib/db";
 import { computeSlaTransition } from "@/lib/sla";
@@ -17,6 +17,11 @@ export interface ReopenTicketInput {
   activityId?: string;
   activityMetadata?: ActivityMetadataExtra;
   actor: ServiceActor;
+  /** When given, the reopen applies only while the ticket's `updated_at`
+   * (compared at millisecond precision, the precision the API exposes) still
+   * equals it; otherwise nothing is written and the result is `conflict`.
+   * Omitted: unconditional, exactly as before. */
+  expectedUpdatedAt?: Date;
   now?: Date;
   ticketId: string;
 }
@@ -26,6 +31,7 @@ export type ReopenTicketResult =
   | { status: "merged" }
   | { status: "not_closed" }
   | { status: "no_default_status" }
+  | { status: "conflict" }
   | {
       status: "reopened";
       slug: string;
@@ -89,7 +95,7 @@ export async function reopenTicket(
     "reopening"
   );
 
-  await db
+  const updated = await db
     .update(tickets)
     .set({
       status: defaultStatus.slug,
@@ -99,7 +105,20 @@ export async function reopenTicket(
       pendingReplies: reopenedByCustomer ? 1 : 0,
       ...slaUpdate,
     })
-    .where(and(eq(tickets.id, ticketId), isNull(tickets.mergedIntoTicketId)));
+    .where(
+      and(
+        eq(tickets.id, ticketId),
+        isNull(tickets.mergedIntoTicketId),
+        input.expectedUpdatedAt
+          ? sql`date_trunc('milliseconds', ${tickets.updatedAt}) = ${input.expectedUpdatedAt.toISOString()}::timestamptz`
+          : undefined
+      )
+    )
+    .returning({ id: tickets.id });
+  if (input.expectedUpdatedAt && updated.length === 0) {
+    // Lost the version check: no activity, no webhook.
+    return { status: "conflict" };
+  }
 
   const activityId = input.activityId ?? createId();
   await db.insert(ticketActivity).values({

@@ -12,14 +12,18 @@ describe("MCP server instructions", () => {
     );
   });
 
-  it("mention no write tools", () => {
-    for (const tool of [
-      "save_reply_draft",
-      "reply_to_customer",
-      "close_ticket",
-    ]) {
-      expect(MCP_INSTRUCTIONS).not.toContain(tool);
-    }
+  it("steer replies to drafts and say that close and reply need approval", () => {
+    expect(MCP_INSTRUCTIONS).toContain("prefer `save_reply_draft`");
+    expect(MCP_INSTRUCTIONS).toContain(
+      "`close_ticket` and `reply_to_customer` only create a request that the token owner must approve in Docket."
+    );
+    expect(MCP_INSTRUCTIONS).toContain("`get_action_status`");
+    expect(MCP_INSTRUCTIONS).toContain(
+      "only after the user approved the exact text"
+    );
+    expect(MCP_INSTRUCTIONS).toContain(
+      "Confirm with the user before closing, reopening or reassigning"
+    );
   });
 
   it("say what search covers", () => {
@@ -33,7 +37,14 @@ describe("MCP server instructions", () => {
       (m) => m[1]
     );
     for (const name of named) {
-      expect(["whoami", "get_ticket_config"]).toContain(name);
+      expect([
+        "whoami",
+        "get_ticket_config",
+        "save_reply_draft",
+        "close_ticket",
+        "reply_to_customer",
+        "get_action_status",
+      ]).toContain(name);
     }
   });
 });

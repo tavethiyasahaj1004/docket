@@ -36,6 +36,10 @@ export const MCP_SCOPE_DESCRIPTIONS: Record<string, string> = {
   "customers:read": "Customer profiles",
   "tickets:write":
     "Drafts, internal notes, tags, priority and category (nothing customers see)",
+  "tickets:manage":
+    "Assign, change status, reopen; request closes (a close needs your approval in Docket)",
+  "tickets:reply":
+    "Request customer replies (needs your approval in Docket and the admin setting)",
   "reports:read": "Admin reports",
 };
 

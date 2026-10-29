@@ -8,8 +8,15 @@
 // concurrent clicks, retries and the sweeper can never both win. Customers never
 // see any of this: the portal and the v1 API do not read mcp_pending_actions.
 import { createId } from "@paralleldrive/cuid2";
-import { and, asc, desc, eq, isNull, lte } from "drizzle-orm";
-import { mcpAccessTokens, mcpPendingActions, tickets, user } from "@/db/schema";
+import { and, asc, desc, eq, isNull, lte, sql } from "drizzle-orm";
+import {
+  mcpAccessTokens,
+  mcpPendingActions,
+  oauthClient,
+  oauthConsent,
+  tickets,
+  user,
+} from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
@@ -60,7 +67,11 @@ export type CreatePendingActionInput = {
    * can never create a second request. Omitted: a fresh id. */
   id?: string;
   userId: string;
-  credentialId: string;
+  /** Exactly one of these identifies who is asking: the personal access token
+   * (`credentialId`) or the OAuth grant (`oauthConsentId`, the principal's
+   * `consentId`). Neither confers any power to approve. */
+  credentialId?: string;
+  oauthConsentId?: string;
   ticketId: string;
   kind: PendingActionKind;
   /** `{}` (or omitted) for a close; `{ content }` for a reply, where content is
@@ -168,16 +179,46 @@ export async function createPendingAction(
       );
 
     // FOR SHARE: a revoke (or a ban's trigger) must wait for this transaction,
-    // and its cancel trigger then sees the row inserted below.
-    const [token] = await tx
-      .select({
-        userId: mcpAccessTokens.userId,
-        revokedAt: mcpAccessTokens.revokedAt,
-        expiresAt: mcpAccessTokens.expiresAt,
-      })
-      .from(mcpAccessTokens)
-      .where(eq(mcpAccessTokens.id, input.credentialId))
-      .for("share");
+    // and its cancel trigger then sees the row inserted below. The same for an
+    // OAuth grant: deleting the grant row waits for us, and the trigger on that
+    // delete then cancels the row inserted below.
+    let credentialLive = false;
+    if (
+      input.credentialId !== undefined &&
+      input.oauthConsentId === undefined
+    ) {
+      const [token] = await tx
+        .select({
+          userId: mcpAccessTokens.userId,
+          revokedAt: mcpAccessTokens.revokedAt,
+          expiresAt: mcpAccessTokens.expiresAt,
+        })
+        .from(mcpAccessTokens)
+        .where(eq(mcpAccessTokens.id, input.credentialId))
+        .for("share");
+      credentialLive =
+        token !== undefined &&
+        token.userId === input.userId &&
+        token.revokedAt === null &&
+        token.expiresAt.getTime() > now.getTime();
+    } else if (
+      input.oauthConsentId !== undefined &&
+      input.credentialId === undefined
+    ) {
+      const [grant] = await tx
+        .select({
+          userId: oauthConsent.userId,
+          clientDisabled: oauthClient.disabled,
+        })
+        .from(oauthConsent)
+        .innerJoin(oauthClient, eq(oauthClient.clientId, oauthConsent.clientId))
+        .where(eq(oauthConsent.id, input.oauthConsentId))
+        .for("share", { of: oauthConsent });
+      credentialLive =
+        grant !== undefined &&
+        grant.userId === input.userId &&
+        grant.clientDisabled !== true;
+    }
     const [owner] = await tx
       .select({ email: user.email, role: user.role, banned: user.banned })
       .from(user)
@@ -185,10 +226,7 @@ export async function createPendingAction(
       .limit(1);
 
     if (
-      !(token && owner) ||
-      token.userId !== input.userId ||
-      token.revokedAt !== null ||
-      token.expiresAt.getTime() <= now.getTime() ||
+      !(credentialLive && owner) ||
       !isEligibleMcpRole(owner.role) ||
       owner.banned === true
     ) {
@@ -214,7 +252,8 @@ export async function createPendingAction(
           kind: input.kind,
           ticketId: input.ticketId,
           requestedById: input.userId,
-          credentialId: input.credentialId,
+          credentialId: input.credentialId ?? null,
+          oauthConsentId: input.oauthConsentId ?? null,
           toolCallId: input.toolCallId ?? null,
           payload,
           status: "pending",
@@ -294,7 +333,8 @@ export async function createPendingAction(
           : `AI assistant asked to send a reply on ticket #${ticketNumber}`,
       metadata: {
         via: "mcp",
-        credentialId: input.credentialId,
+        credentialId: input.credentialId ?? null,
+        oauthConsentId: input.oauthConsentId ?? null,
         kind: action.kind,
         ticketId: input.ticketId,
         ticketNumber,
@@ -321,22 +361,39 @@ async function classifyRefusal(
     .select({
       requestedById: mcpPendingActions.requestedById,
       credentialId: mcpPendingActions.credentialId,
+      oauthConsentId: mcpPendingActions.oauthConsentId,
     })
     .from(mcpPendingActions)
     .where(eq(mcpPendingActions.id, actionId))
     .limit(1);
-  if (!row || row.requestedById !== userId || !row.credentialId) {
+  if (
+    !row ||
+    row.requestedById !== userId ||
+    !(row.credentialId || row.oauthConsentId)
+  ) {
     return { status: "not_found" };
   }
-  const [[token], [owner]] = await Promise.all([
-    db
-      .select({
-        userId: mcpAccessTokens.userId,
-        revokedAt: mcpAccessTokens.revokedAt,
-      })
-      .from(mcpAccessTokens)
-      .where(eq(mcpAccessTokens.id, row.credentialId))
-      .limit(1),
+  const credentialLive = async (): Promise<boolean> => {
+    if (row.credentialId) {
+      const [token] = await db
+        .select({
+          userId: mcpAccessTokens.userId,
+          revokedAt: mcpAccessTokens.revokedAt,
+        })
+        .from(mcpAccessTokens)
+        .where(eq(mcpAccessTokens.id, row.credentialId))
+        .limit(1);
+      return !!token && token.userId === userId && token.revokedAt === null;
+    }
+    const [grant] = await db
+      .select({ userId: oauthConsent.userId })
+      .from(oauthConsent)
+      .where(eq(oauthConsent.id, row.oauthConsentId ?? ""))
+      .limit(1);
+    return !!grant && grant.userId === userId;
+  };
+  const [live, [owner]] = await Promise.all([
+    credentialLive(),
     db
       .select({ role: user.role, banned: user.banned })
       .from(user)
@@ -344,9 +401,7 @@ async function classifyRefusal(
       .limit(1),
   ]);
   if (
-    !(token && owner) ||
-    token.userId !== userId ||
-    token.revokedAt !== null ||
+    !(live && owner) ||
     !isEligibleMcpRole(owner.role) ||
     owner.banned === true
   ) {
@@ -574,6 +629,7 @@ export async function approvePendingAction(input: {
       metadata: {
         via: "mcp",
         credentialId: action.credentialId,
+        oauthConsentId: action.oauthConsentId,
         kind: action.kind,
         ticketId: action.ticketId,
         ticketNumber,
@@ -634,6 +690,7 @@ export async function dismissPendingAction(input: {
     metadata: {
       via: "mcp",
       credentialId: action.credentialId,
+      oauthConsentId: action.oauthConsentId,
       kind: action.kind,
       ticketId: action.ticketId,
       ticketNumber,
@@ -668,13 +725,20 @@ export async function listActionablePendingActionsForViewer(
       payload: mcpPendingActions.payload,
       createdAt: mcpPendingActions.createdAt,
       expiresAt: mcpPendingActions.expiresAt,
-      credentialName: mcpAccessTokens.name,
+      credentialName: sql<
+        string | null
+      >`coalesce(${mcpAccessTokens.name}, ${oauthClient.name})`,
     })
     .from(mcpPendingActions)
     .leftJoin(
       mcpAccessTokens,
       eq(mcpAccessTokens.id, mcpPendingActions.credentialId)
     )
+    .leftJoin(
+      oauthConsent,
+      eq(oauthConsent.id, mcpPendingActions.oauthConsentId)
+    )
+    .leftJoin(oauthClient, eq(oauthClient.clientId, oauthConsent.clientId))
     .where(
       and(
         eq(mcpPendingActions.ticketId, ticketId),

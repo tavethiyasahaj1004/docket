@@ -9,6 +9,7 @@ import { audit, auditOrThrow } from "@/lib/audit";
 import { auth } from "@/lib/auth";
 import { requireAdminFromRequest } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { grantRevokedAudit, revokeOAuthGrants } from "@/lib/mcp/oauth-grants";
 import {
   cancelledActionAudit,
   cancelPendingActionsForLiveTokens,
@@ -129,6 +130,11 @@ export async function PATCH(
         const revoked = body.banned
           ? await revokeAllMcpTokensForUser(tx, id, "user_banned")
           : [];
+        // OAuth grants go the same way (the trigger would catch them, but not
+        // with this admin as the audited actor).
+        const oauth = body.banned
+          ? await revokeOAuthGrants(tx, { userId: id })
+          : { revoked: [], cancelled: [] };
 
         await tx
           .update(user)
@@ -156,13 +162,23 @@ export async function PATCH(
             },
           });
         }
-        for (const c of cancelled) {
+        for (const c of [...cancelled, ...oauth.cancelled]) {
           await auditOrThrow(
             tx,
             cancelledActionAudit(c, {
               actorEmail: adminUser.email,
               actorId: adminUser.id,
               reason: "token_revoked",
+            })
+          );
+        }
+        for (const g of oauth.revoked) {
+          await auditOrThrow(
+            tx,
+            grantRevokedAudit(g, {
+              actorEmail: adminUser.email,
+              actorId: adminUser.id,
+              reason: "user_banned",
             })
           );
         }

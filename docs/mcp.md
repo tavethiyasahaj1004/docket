@@ -50,6 +50,34 @@ Claude Code saves the token in its own configuration. Revoking the token in Dock
 
 Replace the URL with your own Docket address followed by `/api/mcp` (the admin MCP page shows it). Inside Claude Code, `/mcp` lists the server and its tools; Claude Code names them `mcp__docket__<tool>`.
 
+## 3a. Connecting with OAuth (claude.ai, Claude Desktop, mobile, Claude Code login)
+
+Assistants that sign in with OAuth instead of a pasted token connect to the same URL, `<your Docket address>/api/mcp`, and send you to Docket to sign in and approve access.
+
+**Requirements**
+- MCP access is switched on (§ 1).
+- `NEXT_PUBLIC_APP_URL` is `https://` (or `http://localhost` / `127.0.0.1` for local development). On any other plain-`http` deployment OAuth is switched off entirely and only tokens work.
+- For claude.ai, Claude Desktop and mobile, Docket must be reachable over public HTTPS: those apps connect from Anthropic's servers (`160.79.104.0/21`), not from your computer. A `localhost` URL can't work for them.
+- A reverse proxy must forward `/.well-known/oauth-protected-resource/…`, `/.well-known/oauth-authorization-server/…` and `/api/auth/…` unchanged.
+
+**What happens**
+1. Add Docket as a custom connector (claude.ai: Settings → Connectors → Add custom connector; Claude Code: `claude mcp add --transport http docket <url>` with no header, then `/mcp` → Authenticate).
+2. The assistant opens Docket. Sign in as usual. Every sign-in method the admin has enabled works, and the same method switches apply.
+3. Docket shows a consent screen: the application, where it will send you back, your account, and the permissions it asked for. `tickets:read` and `customers:read` are ticked by default, `tickets:write` is never ticked by default, and `reports:read` is offered to admins only. Untick anything you don't want, then **Allow**, or **Deny**.
+4. The assistant receives a token that only works for `/api/mcp` and acts as you, with the permissions you approved.
+
+**Rules**
+- Only agents and admins can approve. Banned users and impersonated sessions can't, and a permission your role can't hold is refused by the server even if the request asks for it.
+- OAuth can grant only `tickets:read`, `customers:read`, `tickets:write` and `reports:read`. `tickets:read_internal`, `tickets:manage` and `tickets:reply` can't be granted over OAuth.
+- Access tokens last 1 hour; the assistant renews them with a refresh token (30 days, replaced on every renewal). Your role is re-read on every call: a demotion narrows access at once, and a ban or a change away from agent/admin ends it.
+- Applications identify themselves with a Client ID Metadata Document (an HTTPS URL they publish). Docket does **not** offer open dynamic client registration.
+
+**Revoking**
+- **Settings → Connected apps** lists the assistants you've connected; **Revoke** stops one on its very next call and ends its refresh token. You can connect it again later.
+- Admins see every connected app under **Admin → AI assistant (MCP)** and can revoke any of them.
+- Banning a user, changing their role away from agent/admin, or **Sign out other sessions** revokes all their connected apps. Signing out of the browser alone does not.
+- Pending approval requests (§ 4, "Approval requests") made through a connected app are cancelled when that app is revoked, exactly as for a revoked token. Approving still happens only in Docket, by you.
+
 ---
 
 ## 4. Tools
@@ -292,9 +320,13 @@ Tell customers and colleagues, as your policies require, that ticket content can
 | `in_progress` | The same `clientRequestId` is still running. Retry after `retryAfterSeconds` with the **same** key |
 | `invalid_input` on `includeInternal` | The token has no `tickets:read_internal` scope (see § 5) |
 | Claude Code saved a result to a file | The result was very large. Lower `pageSize`, `limit` or `maxBodyChars` |
-| claude.ai says it couldn't reach the server | claude.ai, Claude Desktop and mobile need an OAuth sign-in, which Docket does not offer yet (see § 8). Use Claude Code with a token |
+| claude.ai says it couldn't reach the server | Docket isn't reachable over public HTTPS from Anthropic's servers, a `localhost` URL was used, the URL isn't exactly `<NEXT_PUBLIC_APP_URL>/api/mcp`, MCP is switched off, or `NEXT_PUBLIC_APP_URL` is plain `http` (OAuth off) (§ 3a) |
+| The consent screen says your account isn't permitted | Only agents and admins on their own (not impersonated) session can connect an assistant |
+| A connected assistant suddenly gets `401` "token revoked" | The app was revoked in Settings → Connected apps or by an admin, or your account was banned or changed role. Connect it again |
 
-**Why Claude Code says "failed" instead of "token expired".** After *any* `401`, Claude Code 2.1.148 assumes the server wants OAuth and probes five discovery paths: `/.well-known/oauth-protected-resource/api/mcp`, `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`, `/.well-known/openid-configuration` and finally `POST /register`. Docket has no `/register` route, so Next.js answers with an HTML 404; Claude Code then reports the server as `failed` with an OAuth parse error (`Invalid OAuth error response: SyntaxError: JSON Parse error`), and the server's reason ("token expired" / "token revoked") never reaches you. When you see this, open **Settings → AI assistant access** in Docket and check whether the token is `expired` or `revoked`, then create a new one. If MCP access was switched off, the server answers `404` instead and no OAuth probing happens.
+**When OAuth is available** (§ 3a), Claude Code can discover Docket's OAuth server after a `401` (observed with no token configured: it shows the server as needing authentication). What it shows when a pasted token is rejected has not been re-checked. Either authenticate in `/mcp` (OAuth) or replace the token; the token's status in Docket still tells you why it was rejected.
+
+**Why Claude Code says "failed" instead of "token expired" (OAuth unavailable).** After *any* `401`, Claude Code 2.1.148 assumes the server wants OAuth and probes five discovery paths: `/.well-known/oauth-protected-resource/api/mcp`, `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`, `/.well-known/openid-configuration` and finally `POST /register`. Docket has no `/register` route, so Next.js answers with an HTML 404; Claude Code then reports the server as `failed` with an OAuth parse error (`Invalid OAuth error response: SyntaxError: JSON Parse error`), and the server's reason ("token expired" / "token revoked") never reaches you. When you see this, open **Settings → AI assistant access** in Docket and check whether the token is `expired` or `revoked`, then create a new one. If MCP access was switched off, the server answers `404` instead and no OAuth probing happens.
 
 ---
 
@@ -304,7 +336,7 @@ Tell customers and colleagues, as your policies require, that ticket content can
 - **Requests wait for you.** A close or reply request expires after 24 hours, and an assistant has to check `get_action_status` to learn the outcome.
 - **Drafts are never overwritten**, and an assistant cannot clear one. It can only add a draft where you have none.
 - **Search is narrow.** `query` matches ticket subject, customer name or email, and ticket number only; it does not search descriptions or messages, and `%` / `_` are wildcards.
-- **Personal access tokens only.** There is no OAuth sign-in, so claude.ai, Claude Desktop and mobile connectors cannot connect yet. Use a client that can send an `Authorization` header, such as Claude Code.
+- **OAuth needs HTTPS.** On a plain-`http` deployment (other than localhost) only personal access tokens work. There is no open dynamic client registration, so an assistant that supports neither Client ID Metadata Documents nor a pasted token can't connect.
 - **Internal notes are not reachable** (see § 5).
 - **Results are trimmed**, never larger than 40,000 characters, and message bodies are plain text (no formatting).
 - **A token cannot be extended.** Create a new one before it expires.

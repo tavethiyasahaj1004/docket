@@ -129,7 +129,8 @@ export function McpRevokeDialog({
   error: string | null;
   onCancel: () => void;
   onConfirm: () => void;
-  token: McpTokenItem | null;
+  /** A token, or any named thing being revoked (an OAuth grant). */
+  token: Pick<McpTokenItem, "name"> | null;
 }) {
   return (
     <Dialog onOpenChange={(open) => !open && onCancel()} open={token !== null}>

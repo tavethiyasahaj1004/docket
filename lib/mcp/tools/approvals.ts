@@ -131,7 +131,12 @@ async function createRequest(input: {
   const created = await createPendingAction({
     id: input.plannedEntityId,
     userId: input.principal.userId,
-    credentialId: input.principal.credentialId,
+    // The request is tied to the credential that asked: the PAT row, or for
+    // OAuth the grant (an OAuth principal's credentialId is the client id, not
+    // a PAT). A missing consentId leaves neither set and the request is refused.
+    ...(input.principal.authMethod === "oauth"
+      ? { oauthConsentId: input.principal.consentId }
+      : { credentialId: input.principal.credentialId }),
     ticketId: input.ref.id,
     kind: input.kind,
     payload: input.payload,

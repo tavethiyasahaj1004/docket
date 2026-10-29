@@ -5,6 +5,10 @@ import { DELETE as adminRevoke } from "@/app/api/admin/mcp/tokens/[id]/route";
 import { DELETE as mcpDelete, GET as mcpGet } from "@/app/api/mcp/route";
 import { env } from "@/lib/env";
 import { hashMcpToken } from "@/lib/mcp-tokens";
+import {
+  OAUTH_CHALLENGE_SCOPE,
+  protectedResourceMetadataUrl,
+} from "@/lib/oauth";
 import { callMcp, INITIALIZE_BODY, retryAfter } from "./mcp-endpoint-helpers";
 import { addToken, PAST, setupMcpWorld, USERS } from "./mcp-helpers";
 
@@ -91,7 +95,11 @@ describe("disabled by default", () => {
 });
 
 describe("authentication failures", () => {
-  const BASIC_CHALLENGE = 'Bearer realm="docket"';
+  // The test app URL is loopback, so OAuth is on and every challenge also points
+  // an assistant at the protected-resource metadata (see oauth-unavailable for
+  // the byte-for-byte old challenge on a plain-http deployment).
+  const OAUTH_HINT = `resource_metadata="${protectedResourceMetadataUrl()}", scope="${OAUTH_CHALLENGE_SCOPE}"`;
+  const BASIC_CHALLENGE = `Bearer realm="docket", ${OAUTH_HINT}`;
 
   it("answers a missing token with the bare challenge and no error param", async () => {
     const cases = [
@@ -124,7 +132,7 @@ describe("authentication failures", () => {
     const res = await callMcp({ token: token.raw });
     expect(res.status).toBe(401);
     expect(res.headers.get("www-authenticate")).toBe(
-      'Bearer realm="docket", error="invalid_token", error_description="token expired"'
+      `Bearer realm="docket", ${OAUTH_HINT}, error="invalid_token", error_description="token expired"`
     );
     expect(await res.json()).toEqual({ error: "token expired" });
     await new Promise((r) => setTimeout(r, 100));
@@ -165,7 +173,7 @@ describe("authentication failures", () => {
     const res = await callMcp({ token: token.raw });
     expect(res.status).toBe(401);
     expect(res.headers.get("www-authenticate")).toBe(
-      'Bearer realm="docket", error="invalid_token", error_description="token revoked"'
+      `Bearer realm="docket", ${OAUTH_HINT}, error="invalid_token", error_description="token revoked"`
     );
     expect(await res.json()).toEqual({ error: "token revoked" });
   });
@@ -207,7 +215,7 @@ describe("authentication failures", () => {
       const res = await callMcp({ token: raw });
       expect(res.status).toBe(401);
       expect(res.headers.get("www-authenticate")).toBe(
-        'Bearer realm="docket", error="invalid_token", error_description="invalid token"'
+        `Bearer realm="docket", ${OAUTH_HINT}, error="invalid_token", error_description="invalid token"`
       );
       expect(await res.json()).toEqual({ error: "invalid token" });
     }

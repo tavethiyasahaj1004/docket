@@ -9,6 +9,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { authClient } from "@/lib/auth-client";
+import {
+  isOAuthContinuationQuery,
+  oauthResumeAuthorizeUrl,
+} from "@/lib/oauth-scopes";
 import { getInitials } from "@/lib/utils";
 
 interface AuthFormProps {
@@ -49,7 +53,25 @@ function AuthFormInner({
   const [submitting, setSubmitting] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
+  // An assistant (claude.ai, Claude Desktop, ...) sent the browser here with a
+  // signed OAuth query. The auth client plugin sends it along with the sign-in
+  // request and the server answers with where to go next (the consent page, or
+  // straight back to the assistant), so the normal redirect is skipped.
+  const oauthContinuation = isOAuthContinuationQuery(searchParams);
   const callbackURL = searchParams.get("next") ?? "/post-auth";
+  // A magic link is opened in a new request that cannot carry the signed query,
+  // so its callback is the authorize URL itself.
+  const magicLinkCallbackURL = oauthContinuation
+    ? oauthResumeAuthorizeUrl(searchParams)
+    : callbackURL;
+
+  /** Follows the server's "go here next" answer when the client did not. */
+  function followOAuthRedirect(data: unknown) {
+    const next = data as { redirect?: boolean; url?: string } | null;
+    if (next?.redirect && typeof next.url === "string") {
+      window.location.assign(next.url);
+    }
+  }
   const passwordJustReset = searchParams.get("passwordReset") === "1";
 
   async function handleGoogleSignIn() {
@@ -67,7 +89,10 @@ function AuthFormInner({
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    const result = await authClient.signIn.magicLink({ email, callbackURL });
+    const result = await authClient.signIn.magicLink({
+      email,
+      callbackURL: magicLinkCallbackURL,
+    });
     setSubmitting(false);
     if (result.error) {
       setError(result.error.message ?? "Failed to send sign-in link.");
@@ -88,6 +113,10 @@ function AuthFormInner({
     setSubmitting(false);
     if (result.error) {
       setError(result.error.message ?? "Invalid email or password.");
+      return;
+    }
+    if (oauthContinuation) {
+      followOAuthRedirect(result.data);
       return;
     }
     router.push(callbackURL);

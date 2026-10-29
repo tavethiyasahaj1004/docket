@@ -8,6 +8,7 @@ import { account, session as sessionTable, user } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { requireSession } from "@/lib/authz";
 import { db } from "@/lib/db";
+import { grantRevokedAudit, revokeOAuthGrants } from "@/lib/mcp/oauth-grants";
 import {
   cancelledActionAudit,
   cancelPendingActionsForLiveTokens,
@@ -182,6 +183,26 @@ export async function signOutOtherSessionsAction(): Promise<void> {
     current.user.id,
     "sessions_signed_out"
   );
+  // OAuth grants are bearer access that outlives sessions too.
+  const oauth = await revokeOAuthGrants(db, { userId: current.user.id });
+  for (const c of oauth.cancelled) {
+    await audit(
+      cancelledActionAudit(c, {
+        actorEmail: current.user.email,
+        actorId: current.user.id,
+        reason: "token_revoked",
+      })
+    );
+  }
+  for (const g of oauth.revoked) {
+    await audit(
+      grantRevokedAudit(g, {
+        actorEmail: current.user.email,
+        actorId: current.user.id,
+        reason: "sessions_signed_out",
+      })
+    );
+  }
   for (const t of revokedTokens) {
     await audit({
       action: "mcp_token.revoked",
@@ -208,6 +229,7 @@ export async function signOutOtherSessionsAction(): Promise<void> {
     metadata: {
       revokedCount: ids.length,
       mcpTokensRevoked: revokedTokens.length,
+      oauthGrantsRevoked: oauth.revoked.length,
     },
   });
 

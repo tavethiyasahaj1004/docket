@@ -281,6 +281,7 @@ mcp_pending_actions
 ├── ticket_id               text NOT NULL → tickets.id (CASCADE on delete)
 ├── requested_by_id         text NOT NULL → user.id (CASCADE on delete)   ← the token owner, and the only person who may decide
 ├── credential_id           text, nullable → mcp_access_tokens.id (SET NULL on delete)
+├── oauth_consent_id        text, nullable → oauth_consent.id (SET NULL on delete)   ← set instead of credential_id for a request made over OAuth
 ├── tool_call_id            text, nullable      ← the mcp_tool_calls row that created it; no foreign key, because ledger rows are pruned
 ├── payload                 jsonb NOT NULL DEFAULT '{}'   ← {} for a close; { content } (Tiptap JSON, as stored on the comment) for a reply
 ├── status                  mcp_pending_action_status NOT NULL DEFAULT 'pending'   ← pending | approved | dismissed | expired | cancelled | failed
@@ -316,6 +317,23 @@ It sets that token's pending rows to `cancelled` with `status_reason = 'token_re
 - It covers every revoke path: Docket's own, the `"user"` trigger from `0017` (ban or role change), the verify-time backstop and direct SQL.
 - Trigger-driven cancellations write no audit row (like the token revocations themselves). Docket's own revoke paths (token revoke by the owner or an admin, the two ban paths, signing out other sessions) cancel and write `mcp.action_cancelled` first, with the acting user, so the trigger finds nothing left to do for them.
 - A ticket merge cancels the pending rows of the merged-away tickets (`status_reason = 'ticket_merged'`, audited with the merging user); the surviving ticket's rows are untouched.
+
+**OAuth grants (migration `0020`).** A request carries either a `credential_id` or an `oauth_consent_id`, never both (CHECK `mcp_pending_actions_one_credential_chk`), and is actionable only while that token is unrevoked or that grant still exists, owned by the requester. A `BEFORE DELETE` trigger on `oauth_consent` (`mcp_cancel_pending_actions_on_consent_delete()`) cancels the grant's pending rows with `status_reason = 'token_revoked'` before the foreign key nulls them.
+
+### OAuth tables (managed by Better Auth, migration `0020`)
+
+Present only for the MCP OAuth provider (`docs/authentication.md` § MCP OAuth); schema in `db/schema/oauth.ts`.
+
+| Table | Holds |
+|---|---|
+| `jwks` | The access-token signing key pair (private key encrypted by Better Auth) |
+| `oauth_client` | Clients Docket has met, created from Client ID Metadata Documents; `disabled` stops a client |
+| `oauth_resource`, `oauth_client_resource` | The protected resource (`<APP_URL>/api/mcp`) and client links |
+| `oauth_consent` | One grant per user and client (`UNIQUE (user_id, client_id)`), with its scopes. Deleting it is what revokes access |
+| `oauth_access_token`, `oauth_refresh_token` | Stored tokens (refresh tokens hashed); deleted with the grant |
+| `oauth_client_assertion` | Replay guard for client assertions (unused by Docket's public clients) |
+
+Migration `0020` also extends `mcp_revoke_tokens_for_ineligible_user()` (the `0017` trigger function): a ban or a role change away from agent/admin now also deletes the user's OAuth access tokens, refresh tokens and grants. Unbanning does not restore them.
 
 ### `webhook_endpoints` / `webhook_deliveries`
 

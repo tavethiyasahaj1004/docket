@@ -20,6 +20,7 @@ import { ADMIN_ROLE, AGENT_ROLE } from "@/config/platform";
 import {
   mcpAccessTokens,
   mcpPendingActions,
+  oauthConsent,
   platformSettings,
   user,
 } from "@/db/schema";
@@ -39,7 +40,12 @@ export type CancelReason =
 /** What a cancellation returns, for the caller's audit rows. */
 export type CancelledPendingAction = Pick<
   PendingAction,
-  "id" | "ticketId" | "kind" | "credentialId" | "requestedById"
+  | "id"
+  | "ticketId"
+  | "kind"
+  | "credentialId"
+  | "oauthConsentId"
+  | "requestedById"
 >;
 
 const CANCELLED_COLUMNS = {
@@ -47,12 +53,17 @@ const CANCELLED_COLUMNS = {
   ticketId: mcpPendingActions.ticketId,
   kind: mcpPendingActions.kind,
   credentialId: mcpPendingActions.credentialId,
+  oauthConsentId: mcpPendingActions.oauthConsentId,
   requestedById: mcpPendingActions.requestedById,
 };
 
 /** The one definition of "this request can still be decided", reused by the
  * approve/dismiss compare-and-set and by every read: still pending, not past
- * its expiry, and its credential and owner both still in good standing.
+ * its expiry, and its credential and owner both still in good standing. The
+ * credential is either a personal access token (not revoked, owned by the
+ * requester) or an OAuth grant (its oauth_consent row still exists and belongs
+ * to the requester). Neither path can approve anything: the decision is always
+ * the owner's, made in Docket.
  *
  * Token *expiry* is deliberately not part of it — only revocation is. The
  * human approval inside Docket is the control, so a request an assistant made
@@ -61,18 +72,36 @@ export function actionablePendingSql(now: Date): SQL {
   return and(
     eq(mcpPendingActions.status, "pending"),
     gt(mcpPendingActions.expiresAt, now),
-    isNotNull(mcpPendingActions.credentialId),
-    exists(
-      db
-        .select({ one: sql`1` })
-        .from(mcpAccessTokens)
-        .where(
-          and(
-            eq(mcpAccessTokens.id, mcpPendingActions.credentialId),
-            eq(mcpAccessTokens.userId, mcpPendingActions.requestedById),
-            isNull(mcpAccessTokens.revokedAt)
-          )
+    or(
+      and(
+        isNotNull(mcpPendingActions.credentialId),
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(mcpAccessTokens)
+            .where(
+              and(
+                eq(mcpAccessTokens.id, mcpPendingActions.credentialId),
+                eq(mcpAccessTokens.userId, mcpPendingActions.requestedById),
+                isNull(mcpAccessTokens.revokedAt)
+              )
+            )
         )
+      ),
+      and(
+        isNotNull(mcpPendingActions.oauthConsentId),
+        exists(
+          db
+            .select({ one: sql`1` })
+            .from(oauthConsent)
+            .where(
+              and(
+                eq(oauthConsent.id, mcpPendingActions.oauthConsentId),
+                eq(oauthConsent.userId, mcpPendingActions.requestedById)
+              )
+            )
+        )
+      )
     ),
     exists(
       db
@@ -220,6 +249,7 @@ export function cancelledActionAudit(
       kind: row.kind,
       ticketId: row.ticketId,
       credentialId: row.credentialId,
+      oauthConsentId: row.oauthConsentId,
       requestedById: row.requestedById,
       reason: input.reason,
     },

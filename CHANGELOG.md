@@ -9,6 +9,38 @@ Anything needing manual work on upgrade is called out under **Upgrade notes**.
 
 ## [Unreleased]
 
+### Added
+
+- **OAuth sign-in for AI assistants (MCP).** claude.ai, Claude Desktop, mobile and Claude Code's
+  login can now connect to `/api/mcp` by signing in to Docket and approving access on a consent
+  screen, instead of pasting a personal access token. Only agents and admins can approve, only the
+  permissions their role allows, and every connected app can be revoked from **Settings → Connected
+  apps** (or by an admin), effective on the next call. Applications identify themselves with Client
+  ID Metadata Documents; open dynamic client registration is not offered. Personal access tokens
+  keep working unchanged. See `docs/mcp.md` § 3a.
+
+### Changed
+
+- **Better Auth upgraded from 1.6.18 to 1.7.14.** No code or configuration changes were
+  needed. Checked against a fresh database: password and magic-link sign-in, sign-out,
+  sessions, creating users and setting their passwords, banning, password reset, and the
+  admin switches for each sign-in method all work as before. Google sign-in was only checked
+  with no Google credentials set up.
+
+### Upgrade notes
+
+- **Two additive migrations.** `0019` adds the admin switch for MCP customer replies; `0020` adds
+  the OAuth tables and an optional column on MCP approval requests. No existing data changes, and the
+  tables Better Auth uses are unchanged by the 1.7 upgrade.
+- **OAuth needs HTTPS.** OAuth is switched on only when `NEXT_PUBLIC_APP_URL` is `https://` (or a
+  `localhost` / `127.0.0.1` address). Any other plain-`http` deployment starts as before, with
+  personal access tokens only.
+- **Reverse proxies** must pass `/.well-known/oauth-protected-resource/…`,
+  `/.well-known/oauth-authorization-server/…` and `/api/auth/…` through unchanged for OAuth to work.
+- Known issue, not fixed yet: a magic-link sign-in to an email address changed on the profile
+  page now removes that account's password and signs out its other sessions. An admin can
+  set a new password. Tracked as Pending in the README's Roadmap.
+
 ### Fixed
 
 - **A ticket closed twice at the same moment** (two tabs, the customer portal, the API) now sends

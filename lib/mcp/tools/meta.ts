@@ -25,7 +25,7 @@ const whoamiOutput = z.object({
     role: z.string(),
   }),
   scopes: z.array(z.string()),
-  authMethod: z.literal("pat"),
+  authMethod: z.enum(["pat", "oauth"]),
   credential: z.object({
     id: z.string(),
     name: z.string(),

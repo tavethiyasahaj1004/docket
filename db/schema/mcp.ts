@@ -2,6 +2,7 @@ import { createId } from "@paralleldrive/cuid2";
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -12,6 +13,7 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { user } from "@/db/schema/auth";
+import { oauthConsent } from "@/db/schema/oauth";
 import { tickets } from "@/db/schema/tickets";
 
 export const mcpToolCallStatus = pgEnum("mcp_tool_call_status", [
@@ -153,6 +155,13 @@ export const mcpPendingActions = pgTable(
     credentialId: text("credential_id").references(() => mcpAccessTokens.id, {
       onDelete: "set null",
     }),
+    // The OAuth grant the request came in on, when it did not come from a
+    // personal access token. At most one of credential_id / oauth_consent_id is
+    // set (CHECK below). The grant row keeps the request actionable: revoking the
+    // grant deletes it, and a trigger cancels the request first.
+    oauthConsentId: text("oauth_consent_id").references(() => oauthConsent.id, {
+      onDelete: "set null",
+    }),
     // The mcp_tool_calls row that created it, for tracing. Deliberately NO
     // foreign key: ledger rows are pruned after 30 days.
     toolCallId: text("tool_call_id"),
@@ -187,6 +196,11 @@ export const mcpPendingActions = pgTable(
       .on(t.ticketId, t.kind, t.requestedById)
       .where(sql`${t.status} = 'pending'`),
     index("mcp_pending_actions_credential_idx").on(t.credentialId),
+    index("mcp_pending_actions_oauth_consent_idx").on(t.oauthConsentId),
+    check(
+      "mcp_pending_actions_one_credential_chk",
+      sql`${t.credentialId} IS NULL OR ${t.oauthConsentId} IS NULL`
+    ),
     index("mcp_pending_actions_status_idx").on(t.status),
     index("mcp_pending_actions_requested_by_idx").on(t.requestedById),
   ]

@@ -1,8 +1,10 @@
+import { McpConnectedAppsCard } from "@/components/settings/mcp-connected-apps-card";
 import { McpTokensCard } from "@/components/settings/mcp-tokens-card";
 import { ReplyComposerPreferencesCard } from "@/components/settings/reply-composer-preferences-card";
 // import { SlaDisplayPreferencesCard } from "@/components/settings/sla-display-preferences-card";
 import { requireAgent } from "@/lib/authz";
 import { isMcpServing } from "@/lib/mcp/http";
+import { isOAuthAvailable } from "@/lib/oauth";
 import { getPlatformSettings } from "@/lib/settings";
 import {
   getSendReplyOnEnterPref,
@@ -34,6 +36,7 @@ export default async function SettingsPage() {
         initialSendReplyOnEnter={sendReplyOnEnter}
       />
       {mcpServing && <McpTokensCard />}
+      {mcpServing && isOAuthAvailable() && <McpConnectedAppsCard />}
     </div>
   );
 }

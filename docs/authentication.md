@@ -192,6 +192,16 @@ if (!['agent', 'admin'].includes(session.user.role)) {
 
 A third credential type exists for AI assistants: an agent or admin can create a personal access token (prefix `dkm_`) that authenticates requests to the MCP endpoint `/api/mcp` with `Authorization: Bearer <token>`. Tokens act as the user who created them, are limited to the scopes chosen at creation, and expire after at most 90 days. Only a hash is stored, so a token is shown once at creation. They are separate from session cookies and from `dk_live_` API keys, work only while an admin has enabled MCP (`docs/admin-portal.md` § 6), and are revoked when the user signs out their other sessions or is deactivated. They are not revoked by a password reset. See `docs/agent-portal.md` § Settings.
 
+### MCP OAuth (authorization server)
+
+When `NEXT_PUBLIC_APP_URL` is `https://` or a loopback address, Better Auth is also an OAuth 2.1 authorization server for `/api/mcp` only (`jwt()`, `@better-auth/mcp` and `@better-auth/cimd` in `lib/auth.ts`). On any other plain-`http` URL these plugins are not registered and nothing below exists.
+
+- **Flow:** authorization code with PKCE (S256 only, required), exact redirect-URI match (a loopback redirect may change port only), clients identified by Client ID Metadata Documents. Dynamic client registration and every other grant type are off. Only `/oauth2/authorize`, `/oauth2/token`, `/oauth2/consent`, `/oauth2/revoke` and `/jwks` are routable under `/api/auth`; the plugin's other endpoints, and the jwt plugin's session `/token`, are refused by `app/api/auth/[...all]/route.ts`. All of them refuse while MCP is switched off.
+- **Login and consent:** the provider sends a signed-out user to `/login` with a signed query; password and Google sign-in resume the authorization through `oauthProviderClient()`, and magic link returns to the authorize URL. The consent page is `/oauth/consent`. Admin sign-in method toggles apply unchanged.
+- **Who may grant what** is enforced server-side in `hooks.before` (`/oauth2/consent`) and again when the authorization code is created (`databaseHooks.verification`): an unbanned agent or admin on a non-impersonated session, and only scopes within their role (`lib/mcp/oauth-policy.ts`).
+- **Tokens:** access tokens are EdDSA JWTs bound to `<APP_URL>/api/mcp` (1 hour); refresh tokens need `offline_access` (30 days, rotated on every use, 30-second retry window, reuse after that revokes the family). `/api/mcp` verifies the JWT locally and then, on every call, re-reads the user and requires the grant (`oauth_consent` row) to still exist (`lib/mcp/oauth-verify.ts`), so a revoked grant stops working on the next call.
+- **Revocation:** the user (Settings → Connected apps), an admin, a ban, a role change away from agent/admin (database trigger) and signing out other sessions all delete the grant with its tokens. Signing out of the browser does not. Changing Google credentials still needs a restart; the OAuth provider config is built once at startup like the rest of `betterAuth()`.
+
 ### Customer API Routes
 
 Customer-facing routes (e.g. posting a reply on a ticket) validate the customer token:
